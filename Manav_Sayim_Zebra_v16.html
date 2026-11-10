@@ -1607,39 +1607,47 @@ nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff;
 .chk p{margin:2px 0 6px 18px;color:var(--mute);font-size:13px}
 .camb{flex:none;padding:10px 14px}
 
-/* ===== MODERN CAMERA SCANNER HUD ===== */
+/* ===== MODERN CAMERA SCANNER (MATCHING REFERENCE DESIGN) ===== */
 .cam{position:fixed;inset:0;z-index:10000;background:#050810;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;user-select:none;-webkit-user-select:none}
 .cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 
-/* Top Navigation Bar */
-.cam .bar2{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 14px;background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,0) 100%);gap:10px}
-.cam .bar2 button{width:44px;height:44px;border-radius:22px;background:rgba(20,26,40,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;transition:transform .1s,background .15s}
+/* Top Navigation Bar: Matching Reference */
+.cam .bar2{position:absolute;top:0;left:0;right:0;z-index:15;display:flex;align-items:center;justify-content:space-between;padding:calc(16px + env(safe-area-inset-top,0px)) 18px 14px;background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,rgba(0,0,0,0) 100%)}
+.cam .bar2 .cam-actions-right{display:flex;align-items:center;gap:12px}
+.cam .bar2 button{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.4);cursor:pointer;transition:transform .12s,background .15s}
 .cam .bar2 button:active{transform:scale(.92)}
-.cam .bar2 button.on{background:#10b981;border-color:#34d399;color:#fff}
-.cam-top-title{color:#fff;font-weight:700;font-size:13px;letter-spacing:.04em;background:rgba(20,26,40,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:8px}
-.cam-top-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;animation:pulseDot 1.5s infinite}
-@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.cam .bar2 button.on{background:rgba(0,255,204,.2);border-color:#00ffcc;color:#00ffcc;box-shadow:0 0 16px rgba(0,255,204,.4)}
 
-/* Center Reticle / Viewfinder */
-.cam .rt{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:min(76vw,290px);height:min(76vw,290px);border-radius:26px;box-shadow:0 0 0 1000vmax rgba(5,8,16,.68);border:1.5px solid rgba(255,255,255,.25);z-index:5;pointer-events:none;transition:border-color .15s,box-shadow .15s}
-.cam .rt.ok{border-color:#10b981;box-shadow:0 0 0 1000vmax rgba(16,185,129,.25),0 0 30px rgba(16,185,129,.6)}
+/* Center Scanner Reticle: Matching Reference Design */
+.cam .rt{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:min(80vw,310px);height:min(80vw,310px);border-radius:24px;background:linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07)) center/1px 100% no-repeat,linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07)) center/100% 1px no-repeat,rgba(255,255,255,.02);box-shadow:0 0 0 1000vmax rgba(5,8,16,.72);z-index:5;pointer-events:none;transition:box-shadow .2s}
+.cam .rt.ok{box-shadow:0 0 0 1000vmax rgba(0,255,204,.2),0 0 40px rgba(0,255,204,.7)}
 
-/* Symmetrical 4 Emerald Corner Brackets */
-.cam .rt::before,.cam .rt::after{content:"";position:absolute;width:28px;height:28px;border-color:#10b981;border-style:solid;pointer-events:none}
-.cam .rt::before{top:-2px;left:-2px;border-width:4px 0 0 4px;border-top-left-radius:24px}
-.cam .rt::after{bottom:-2px;right:-2px;border-width:0 4px 4px 0;border-bottom-right-radius:24px}
-.cam .c-tr,.cam .c-bl{position:absolute;width:28px;height:28px;border-color:#10b981;border-style:solid;pointer-events:none}
-.cam .c-tr{top:-2px;right:-2px;border-width:4px 4px 0 0;border-top-right-radius:24px}
-.cam .c-bl{bottom:-2px;left:-2px;border-width:0 0 4px 4px;border-bottom-left-radius:24px}
+/* 4 Glowing Neon Cyan L-Corner Brackets */
+.cam .c-tl,.cam .c-tr,.cam .c-bl,.cam .c-br{position:absolute;width:34px;height:34px;border-color:#00ffcc;border-style:solid;pointer-events:none;filter:drop-shadow(0 0 8px #00ffcc) drop-shadow(0 0 18px rgba(0,255,204,.6))}
+.cam .c-tl{top:-2px;left:-2px;border-width:4.5px 0 0 4.5px;border-top-left-radius:24px}
+.cam .c-tr{top:-2px;right:-2px;border-width:4.5px 4.5px 0 0;border-top-right-radius:24px}
+.cam .c-bl{bottom:-2px;left:-2px;border-width:0 0 4.5px 4.5px;border-bottom-left-radius:24px}
+.cam .c-br{bottom:-2px;right:-2px;border-width:0 4.5px 4.5px 0;border-bottom-right-radius:24px}
 
-/* Full-width Sweeping Laser Line */
-.cam .hd{position:absolute;left:8px;right:8px;height:3px;background:linear-gradient(90deg,transparent,#10b981 18%,#34d399 50%,#10b981 82%,transparent);box-shadow:0 0 14px 2px #10b981;border-radius:99px;top:10%;animation:laserScan 2.2s ease-in-out infinite alternate}
-@keyframes laserScan{0%{top:6%;opacity:.85}50%{opacity:1}100%{top:92%;opacity:.85}}
+/* Brilliant Horizontal Cyan Laser Scan Line */
+.cam .hd{position:absolute;left:4px;right:4px;height:2.5px;background:linear-gradient(90deg,transparent,rgba(0,255,204,.3) 15%,#00ffcc 50%,rgba(0,255,204,.3) 85%,transparent);box-shadow:0 0 14px 2px #00ffcc,0 0 28px 4px rgba(0,255,204,.6);border-radius:99px;top:10%;animation:laserSweep 2.4s ease-in-out infinite alternate}
+.cam .hd::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:6px;background:#fff;border-radius:50%;box-shadow:0 0 20px 4px #00ffcc;opacity:.95}
+@keyframes laserSweep{0%{top:6%;opacity:.85}50%{opacity:1}100%{top:92%;opacity:.85}}
 
-/* Bottom Live Product Card */
-.cam .ls{position:absolute;bottom:0;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.45) 70%,rgba(0,0,0,0) 100%);gap:8px;max-width:580px;margin:0 auto}
-#cls{background:rgba(15,23,42,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#f1f5f9;border-radius:99px;padding:8px 18px;font-size:13.5px;font-weight:600;border:1px solid rgba(255,255,255,.15);letter-spacing:.02em;text-align:center;max-width:90%}
-#cpb{width:100%}
+/* Bottom Hint Pill & Dock: Matching Reference */
+.cam .cam-bottom{position:absolute;bottom:0;left:0;right:0;z-index:20;display:flex;flex-direction:column;align-items:center;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse 130% 100% at 50% 100%,rgba(8,14,26,.96) 0%,rgba(5,8,16,.88) 60%,transparent 100%)}
+.cam-hint-pill{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(15,23,42,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:10px 24px;color:#f8fafc;font-size:14px;font-weight:500;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.cam-hint-pill svg{width:18px;height:18px;stroke:#00ffcc}
+
+/* Glowing Circular Shutter Button */
+.cam-shutter-wrap{position:relative;width:82px;height:82px;display:grid;place-items:center}
+.cam-shutter-wrap::before{content:"";position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,255,204,.35);box-shadow:0 0 24px rgba(0,255,204,.2);animation:pulseRing 2.2s infinite ease-out}
+@keyframes pulseRing{0%{transform:scale(.95);opacity:1}100%{transform:scale(1.2);opacity:0}}
+#cam-shutter{position:relative;width:68px;height:68px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,204,.18) 0%,rgba(10,18,32,.95) 80%);border:2px solid #00ffcc;box-shadow:0 0 20px rgba(0,255,204,.5),inset 0 0 15px rgba(0,255,204,.3);display:grid;place-items:center;color:#00ffcc;cursor:pointer;transition:transform .12s,box-shadow .15s}
+#cam-shutter:active{transform:scale(.92);box-shadow:0 0 35px rgba(0,255,204,.8),inset 0 0 25px rgba(0,255,255,.5)}
+#cam-shutter svg{width:28px;height:28px}
+
+#cpb{width:min(92vw,540px);margin:0 auto 12px}
 .sc .camb,.sc .kb{height:38px;padding:0 11px;border-radius:16px}
 /* sekmeler */
 .seg{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:4px;gap:0;margin-bottom:10px;box-shadow:var(--sh);height:46px}
@@ -2078,24 +2086,39 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 <div id="fs" class="hide"><div id="fsq"></div><b id="fsi"></b><span>Parlaklığı artırın, Zebra'yı QR'a 15 cm yaklaştırın. Kapatmak için dokunun.</span></div>
 <div id="cam" class="cam hide">
   <video id="cv" playsinline muted></video>
+  
+  <!-- Top Navigation Bar: Matching Reference Design -->
   <div class="bar2">
-    <button id="cx" aria-label="Kamerayı kapat"></button>
-    <div class="cam-top-title"><span class="cam-top-dot"></span><span>BARKOD VE QR OKUTUCU</span></div>
-    <div style="display:flex;gap:8px">
+    <button id="cx" aria-label="Kamerayı kapat"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="cam-actions-right">
       <button id="czm" aria-label="Yakınlaştır"></button>
       <button id="ctf" aria-label="Fener"></button>
-      <button id="csn" aria-label="Ses"></button>
+      <button id="csn" aria-label="Ses / Flaş"></button>
       <button id="cfl" class="hide" style="display:none"></button>
     </div>
   </div>
+
+  <!-- Center Scanner Reticle: Matching Reference Design -->
   <div class="rt" id="rt">
+    <div class="c-tl"></div>
     <div class="c-tr"></div>
     <div class="c-bl"></div>
+    <div class="c-br"></div>
     <div class="hd" id="hd"></div>
   </div>
-  <div class="ls">
-    <div id="cls">Barkodu veya terazi etiketini kutuya hizalayın</div>
+
+  <!-- Bottom Section: Hint Pill, Shutter Trigger & Live Product Card -->
+  <div class="cam-bottom">
     <div id="cpb"></div>
+    <div class="cam-hint-pill" id="cls">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/></svg>
+      <span>QR kodu / Barkodu çerçeveye alın</span>
+    </div>
+    <div class="cam-shutter-wrap">
+      <button id="cam-shutter" aria-label="Tara">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 <div id="dlg" class="hide"><div class="box"><p id="dm"></p><div class="row"><button class="g" id="dn">Vazgeç</button><button id="dy">Evet</button></div></div></div>
@@ -2510,6 +2533,17 @@ async function torch(on){try{await track.applyConstraints({advanced:[{torch:!!on
 function pulse(){if(!O().fl||!track||torchOn||!hasT())return;torch(true).then(()=>setTimeout(()=>torch(false),90))}
 $('#ctf').onclick=async()=>{if(!hasT()){toast('Bu cihazda fener kullanılamıyor');return}await torch(!torchOn);syncOpt()};
 function camStop(){try{WL&&WL.release()}catch(e){}WL=null;zi=0;$('#cpb').innerHTML='';clearTimeout(loopT);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;track=null;torchOn=false;$('#cam').classList.add('hide');syncOpt()}
+
+$('#cam-shutter').addEventListener('click', async () => {
+  vib(25);
+  $('#rt').classList.add('ok');
+  setTimeout(() => $('#rt').classList.remove('ok'), 260);
+  if (typeof readF === 'function') {
+    const code = await readF();
+    if (code && camH) camH(code);
+  }
+});
+
 $('#cx').onclick=camStop;
 async function camStart(h){if(stream)camStop();camH=h;
  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false})}
@@ -2602,14 +2636,8 @@ $('#useed').onclick=async()=>toast((await seed())+' ürün eklendi');
 $('#uclr').onclick=async()=>{if(!M.products.size||!await ask('Tüm ürünler ve bağlı sayım/sevkiyat satırları silinsin mi?'))return;await snap('toplu silme öncesi');await wipe('products');await wipe('counts');for(const s of M.ships.values()){s.lines={};await save('ships',s)}render();renderP();renderShip();toast('Katalog temizlendi')};
 /* kamera: çerçeve boyutu, kırpma, ZXing yedeği, kamera içi panel */
 const cv2=document.createElement('canvas');let zx=null,cpId=null;
-let ROI={l:8,t:16,w:84,h:26};try{Object.assign(ROI,JSON.parse(localStorage.getItem('manav-roi2')||'{}'))}catch(e){}
-const cl=(v,a,b)=>Math.min(b,Math.max(a,v));
-function setRt(){const s=$('#rt').style;s.left=ROI.l+'%';s.top=ROI.t+'%';s.width=ROI.w+'%';s.height=ROI.h+'%';try{localStorage.setItem('manav-roi2',JSON.stringify(ROI))}catch(e){}}
-function drag(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();try{el.setPointerCapture(e.pointerId)}catch(x){}const c=$('#cam').getBoundingClientRect(),x0=e.clientX,y0=e.clientY,o=Object.assign({},ROI);
- const mv=ev=>{fn(o,(ev.clientX-x0)/c.width*100,(ev.clientY-y0)/c.height*100);setRt()},up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',up)};
- el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)})}
-drag($('#hd'),(o,dx,dy)=>{ROI.w=cl(o.w+dx,20,100-o.l);ROI.h=cl(o.h+dy,8,100-o.t)});
-drag($('#rt'),(o,dx,dy)=>{ROI.l=cl(o.l+dx,0,100-o.w);ROI.t=cl(o.t+dy,6,100-o.h)});setRt();
+// Clean centered scanner reticle
+try{localStorage.removeItem('manav-roi2')}catch(e){}
 function zxr(){if(zx||!window.ZXing)return zx;const Z=ZXing,h=new Map(),B=Z.BarcodeFormat;h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[B.EAN_13,B.EAN_8,B.UPC_A,B.UPC_E,B.CODE_128,B.CODE_39,B.ITF,B.QR_CODE]);h.set(Z.DecodeHintType.TRY_HARDER,true);zx=new Z.MultiFormatReader();zx.setHints(h);return zx}
 function crop(){const v=$('#cv'),W=v.videoWidth,H=v.videoHeight;if(!W)return null;const a=v.getBoundingClientRect(),r=$('#rt').getBoundingClientRect(),s=Math.max(a.width/W,a.height/H),ox=(W*s-a.width)/2,oy=(H*s-a.height)/2,sx=Math.max(0,(r.left-a.left+ox)/s),sy=Math.max(0,(r.top-a.top+oy)/s),sw=Math.min(W-sx,r.width/s),sh=Math.min(H-sy,r.height/s);if(sw<20||sh<20)return null;cv2.width=sw;cv2.height=sh;cv2.getContext('2d',{willReadFrequently:true}).drawImage(v,sx,sy,sw,sh,0,0,sw,sh);return cv2}
 async function readF(){const c=crop();if(!c)return null;
