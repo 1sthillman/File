@@ -1607,68 +1607,39 @@ nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff;
 .chk p{margin:2px 0 6px 18px;color:var(--mute);font-size:13px}
 .camb{flex:none;padding:10px 14px}
 
-.cam{background:#000;position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;justify-content:space-between;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
-.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
-.cam .rt{position:relative;width:min(75vw,280px);height:min(75vw,280px);margin:auto;border-radius:24px;box-shadow:0 0 0 4000px rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.3)}
-.cam .rt::before,.cam .rt::after{content:"";position:absolute;width:24px;height:24px;border-color:#10b981;border-style:solid;pointer-events:none}
-.cam .rt::before{top:-2px;left:-2px;border-width:4px 0 0 4px;border-top-left-radius:22px}
-.cam .rt::after{bottom:-2px;right:-2px;border-width:0 4px 4px 0;border-bottom-right-radius:22px}
-.cam .hd{position:absolute;left:8px;right:8px;height:2px;background:#10b981;box-shadow:0 0 12px #10b981;top:10%;animation:camLaser 2s ease-in-out infinite alternate}
-@keyframes camLaser{0%{top:8%}100%{top:92%}}
-.cam .bar2{position:relative;display:flex;justify-content:center;gap:12px;z-index:2}
-.cam .bar2 button{width:46px;height:46px;border-radius:23px;background:rgba(20,24,36,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);color:#fff}
-.cam .ls{position:relative;z-index:2;width:100%;max-width:540px;margin:0 auto}
-#cls{background:rgba(20,24,36,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border-radius:16px;padding:8px 16px;font-size:13.5px;font-weight:600;display:inline-block;border:1px solid rgba(255,255,255,.15);margin-bottom:6px}
-/* old cam */ .old_cam{position:fixed;inset:0;background:#000;z-index:25;display:flex;flex-direction:column}
-.cam video{flex:1;width:100%;object-fit:cover;min-height:0}
-.cam .bar2{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:10px;display:flex;gap:6px;z-index:2}
-.cam .bar2 button{flex:1;padding:12px 6px;background:rgba(20,24,36,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border:1px solid rgba(255,255,255,.25);font-size:13px}
-.cam .bar2 button.on{background:linear-gradient(135deg,var(--m1),var(--m2))}
-.cam .rt{position:absolute;left:10%;right:10%;top:32%;height:24%;border:3px solid rgba(255,255,255,.9);border-radius:24px;box-shadow:0 0 0 100vmax rgba(0,0,0,.5);transition:border-color .1s}
-.cam .rt.ok{border-color:#34e08a;box-shadow:0 0 0 100vmax rgba(20,120,70,.45)}
-.cam .ls{position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(20,24,36,.82);color:#fff;border-radius:20px;padding:12px 14px;text-align:center}
-details{margin-top:10px}summary{cursor:pointer;color:var(--m1);font-weight:600}
-details pre{background:var(--chip);border-radius:14px;padding:12px;font:12px/1.5 ui-monospace,Menlo,monospace;overflow:auto;max-height:220px;margin:8px 0 0;white-space:pre-wrap;word-break:break-all}
-#ban{background:var(--warn);color:#fff;padding:12px 14px;border-radius:16px;margin-bottom:12px;font-size:14px}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:14px;z-index:30;max-width:90%}
-.ls input[type=range]{padding:0;border:0;background:transparent;accent-color:#2bd4b0}.ls label{color:#cfd6e6;margin:4px 0 0;font-size:12px}.ls .pc .fs{display:flex;gap:8px}
-.pc,.chk{contain:style}
-details.acc{padding:0;overflow:hidden}details.acc>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:16px;cursor:pointer;color:var(--ink);font-weight:400}details.acc>summary::-webkit-details-marker{display:none}details.acc>summary h2{margin:0}details.acc>summary::after{content:"";width:9px;height:9px;border-right:2.5px solid var(--mute);border-bottom:2.5px solid var(--mute);transform:rotate(45deg);transition:transform .2s;margin:-4px 4px 0 0}details.acc[open]>summary::after{transform:rotate(-135deg);margin-top:4px}details.acc>.in{padding:0 16px 16px}
-.grp{font:800 12px var(--f);letter-spacing:.08em;text-transform:uppercase;color:var(--m1);margin:18px 0 8px}
-#dlg{position:fixed;inset:0;z-index:40;background:rgba(5,8,16,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
-#dlg .box{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:22px;width:min(100%,380px);box-shadow:0 24px 60px rgba(0,0,0,.4)}#dlg p{margin:0 0 18px;font-size:16px;line-height:1.45;white-space:pre-line}
-.cam .rt{touch-action:none;cursor:move}.cam .rt .hd{position:absolute;right:-18px;bottom:-18px;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--m1),var(--m2));border:3px solid #fff;display:grid;place-items:center;touch-action:none;box-shadow:0 4px 14px rgba(0,0,0,.45)}.cam .rt .hd::before{content:"";width:11px;height:11px;border-right:3px solid #fff;border-bottom:3px solid #fff;transform:translate(-1px,-1px)}
-.cam .ls{padding:10px 12px;border-radius:22px;max-height:40vh;overflow:auto}.cam .hint{font-size:12px;color:#aab3c8;margin-top:8px}
-.cam .bar2{justify-content:flex-end}.cam .bar2 button{flex:none;width:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center}.cam .bar2 #cx{margin-right:auto}
-.cam .rt{border:0;--c:#fff;border-radius:22px;background:linear-gradient(var(--c),var(--c)) 0 0/34px 4px,linear-gradient(var(--c),var(--c)) 0 0/4px 34px,linear-gradient(var(--c),var(--c)) 100% 0/34px 4px,linear-gradient(var(--c),var(--c)) 100% 0/4px 34px,linear-gradient(var(--c),var(--c)) 0 100%/34px 4px,linear-gradient(var(--c),var(--c)) 0 100%/4px 34px,linear-gradient(var(--c),var(--c)) 100% 100%/34px 4px,linear-gradient(var(--c),var(--c)) 100% 100%/4px 34px;background-repeat:no-repeat}
-.cam .rt.ok{--c:#34e08a;border:0}.cam .rt::after{content:"";position:absolute;left:5%;right:5%;top:10%;height:2px;border-radius:2px;background:var(--c);box-shadow:0 0 12px var(--c);animation:sl 1.8s ease-in-out infinite alternate}@keyframes sl{to{top:90%}}
-.kb{padding:10px 14px}.kk{background:var(--chip);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--mute)}#ztab .chk{max-height:340px;overflow:auto;margin-top:12px}.zr{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}.zr>span{color:var(--mute);width:22px;font-size:12px}.zr>div:nth-child(2){flex:1;min-width:0}.zr small{display:block;color:var(--mute);font-size:12px}.zk{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.zk code{font:700 14px ui-monospace,monospace}
-@media (prefers-reduced-motion:reduce){.cam .rt::after{animation:none}}
-@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.cam .ls{padding:6px 12px;max-height:16vh;border-radius:16px;background:rgba(20,24,36,.62)}.cam #cls{font-size:12px;opacity:.85;line-height:1.3}.cam .hint{display:none}.cam .rt{top:26%;height:34%}
-.wz{margin-left:auto;margin-right:10px;font-size:12px;background:var(--chip);color:var(--mute);border-radius:99px;padding:5px 11px}.wz.on{color:var(--m1);font-weight:700}#wzs{font:13px/1.5 ui-monospace,Menlo,monospace;background:var(--chip);border-radius:14px;padding:12px;margin:10px 0;white-space:pre-wrap}.zg li{margin:0 0 8px}.zg ol{padding-left:20px;margin:6px 0}
+/* ===== MODERN CAMERA SCANNER HUD ===== */
+.cam{position:fixed;inset:0;z-index:10000;background:#050810;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;user-select:none;-webkit-user-select:none}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 
-/* ===== v9 TASARIM: referans görsele birebir ===== */
-:root{color-scheme:light;--bg:#eef2f9;--card:#fff;--cardb:#f7f9fd;--ink:#0e1424;--mute:#64708a;--line:rgba(15,23,42,.12);--chip:rgba(15,23,42,.05);--glass:rgba(255,255,255,.85);--btn:#fff;--btnb:rgba(15,23,42,.1);--segon:#fff;--navbg:rgba(255,255,255,.82);--wo:.66;--gl:26%;--tsh:none;--ph:#9aa4b8;--sh:0 1px 2px rgba(16,24,40,.05),0 12px 28px -12px rgba(16,24,40,.16);--f:"Inter","SF Pro Display","Segoe UI",system-ui,sans-serif;
+/* Top Navigation Bar */
+.cam .bar2{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 14px;background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,0) 100%);gap:10px}
+.cam .bar2 button{width:44px;height:44px;border-radius:22px;background:rgba(20,26,40,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;transition:transform .1s,background .15s}
+.cam .bar2 button:active{transform:scale(.92)}
+.cam .bar2 button.on{background:#10b981;border-color:#34d399;color:#fff}
+.cam-top-title{color:#fff;font-weight:700;font-size:13px;letter-spacing:.04em;background:rgba(20,26,40,.65);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:8px}
+.cam-top-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;animation:pulseDot 1.5s infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
 
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#080d1a;--card:#131a2d;--cardb:#10172a;--ink:#fff;--mute:#8b94ab;--line:rgba(255,255,255,.1);--chip:rgba(255,255,255,.045);--glass:#131a2c;--btn:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05));--btnb:rgba(255,255,255,.2);--segon:#0c1222;--navbg:rgba(15,21,39,.88);--wo:.95;--gl:50%;--tsh:0 0 14px color-mix(in srgb,var(--tc) 85%,transparent),0 0 3px rgba(255,255,255,.35);--ph:#4b546a;--sh:0 10px 26px rgba(0,0,0,.3)}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#080d1a;--card:#131a2d;--cardb:#10172a;--ink:#fff;--mute:#8b94ab;--line:rgba(255,255,255,.1);--chip:rgba(255,255,255,.045);--glass:#131a2c;--btn:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05));--btnb:rgba(255,255,255,.2);--segon:#0c1222;--navbg:rgba(15,21,39,.88);--wo:.95;--gl:50%;--tsh:0 0 14px color-mix(in srgb,var(--tc) 85%,transparent),0 0 3px rgba(255,255,255,.35);--ph:#4b546a;--sh:0 10px 26px rgba(0,0,0,.3)}
-body{--m1:#169b83;--m2:#25b99b;font-family:var(--f);background:var(--bg);padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
-.wrap{padding:14px 16px}
-.top{margin:0 0 10px}h1{font-size:20px;font-weight:800}
-#thb{width:38px;height:38px;background:var(--glass);border:1px solid var(--line)}#thb svg{width:19px;height:19px}
-/* özet şeridi: ince */
-#t-say .hero{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;padding:10px 16px;border-radius:24px;margin-bottom:10px;box-shadow:0 14px 30px -16px var(--m1),inset 0 0 0 1px rgba(255,255,255,.18)}
-#t-say .hero .ht{display:none}#t-say .big{margin:0;font-size:30px}#t-say .big small{font-size:14px}
-#t-say .gl{justify-content:flex-end;flex-wrap:nowrap;gap:6px}#t-say .gl div{padding:4px 10px;font-size:11px;border-radius:12px}#t-say .gl b{font-size:15px}
-#t-say .bar{grid-column:1/-1;margin-top:8px;height:4px}
-/* tarih + ara */
-.tools{gap:8px;margin-bottom:10px}
-.tools input,.sc{min-height:48px;height:48px;border-radius:22px;background:var(--glass);border:1px solid var(--line);box-shadow:var(--sh)}
-.tools input{flex:1;padding:0 18px;font:400 16px var(--f);color:var(--ink)}.tools input::placeholder,.sc input::placeholder{color:var(--mute);opacity:.85}
-.tools input[type=date]::-webkit-calendar-picker-indicator{opacity:.9;cursor:pointer}
-.sc{padding:0 5px 0 15px;margin-bottom:10px;border-width:1px;gap:6px}.sc input{border:0;box-shadow:none;background:transparent;min-height:0;height:100%;font-size:16px;padding:0 4px}
+/* Center Reticle / Viewfinder */
+.cam .rt{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:min(76vw,290px);height:min(76vw,290px);border-radius:26px;box-shadow:0 0 0 1000vmax rgba(5,8,16,.68);border:1.5px solid rgba(255,255,255,.25);z-index:5;pointer-events:none;transition:border-color .15s,box-shadow .15s}
+.cam .rt.ok{border-color:#10b981;box-shadow:0 0 0 1000vmax rgba(16,185,129,.25),0 0 30px rgba(16,185,129,.6)}
+
+/* Symmetrical 4 Emerald Corner Brackets */
+.cam .rt::before,.cam .rt::after{content:"";position:absolute;width:28px;height:28px;border-color:#10b981;border-style:solid;pointer-events:none}
+.cam .rt::before{top:-2px;left:-2px;border-width:4px 0 0 4px;border-top-left-radius:24px}
+.cam .rt::after{bottom:-2px;right:-2px;border-width:0 4px 4px 0;border-bottom-right-radius:24px}
+.cam .c-tr,.cam .c-bl{position:absolute;width:28px;height:28px;border-color:#10b981;border-style:solid;pointer-events:none}
+.cam .c-tr{top:-2px;right:-2px;border-width:4px 4px 0 0;border-top-right-radius:24px}
+.cam .c-bl{bottom:-2px;left:-2px;border-width:0 0 4px 4px;border-bottom-left-radius:24px}
+
+/* Full-width Sweeping Laser Line */
+.cam .hd{position:absolute;left:8px;right:8px;height:3px;background:linear-gradient(90deg,transparent,#10b981 18%,#34d399 50%,#10b981 82%,transparent);box-shadow:0 0 14px 2px #10b981;border-radius:99px;top:10%;animation:laserScan 2.2s ease-in-out infinite alternate}
+@keyframes laserScan{0%{top:6%;opacity:.85}50%{opacity:1}100%{top:92%;opacity:.85}}
+
+/* Bottom Live Product Card */
+.cam .ls{position:absolute;bottom:0;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.45) 70%,rgba(0,0,0,0) 100%);gap:8px;max-width:580px;margin:0 auto}
+#cls{background:rgba(15,23,42,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#f1f5f9;border-radius:99px;padding:8px 18px;font-size:13.5px;font-weight:600;border:1px solid rgba(255,255,255,.15);letter-spacing:.02em;text-align:center;max-width:90%}
+#cpb{width:100%}
 .sc .camb,.sc .kb{height:38px;padding:0 11px;border-radius:16px}
 /* sekmeler */
 .seg{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:4px;gap:0;margin-bottom:10px;box-shadow:var(--sh);height:46px}
@@ -2105,7 +2076,28 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <button data-t="aktar"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-3"/></svg><span>Aktar</span></button>
 </nav>
 <div id="fs" class="hide"><div id="fsq"></div><b id="fsi"></b><span>Parlaklığı artırın, Zebra'yı QR'a 15 cm yaklaştırın. Kapatmak için dokunun.</span></div>
-<div id="cam" class="cam hide"><video id="cv" playsinline muted></video><div class="rt" id="rt"><div class="hd" id="hd"></div></div><div class="bar2"><button id="cx" aria-label="Kamerayı kapat"></button><button id="czm" aria-label="Yakınlaştır"></button><button id="ctf" aria-label="Fener"></button><button id="cfl" aria-label="Okutma flaşı"></button><button id="csn" aria-label="Ses"></button></div><div class="ls"><div id="cls">Barkodu çerçeveye alın</div><div id="cpb"></div></div></div>
+<div id="cam" class="cam hide">
+  <video id="cv" playsinline muted></video>
+  <div class="bar2">
+    <button id="cx" aria-label="Kamerayı kapat"></button>
+    <div class="cam-top-title"><span class="cam-top-dot"></span><span>BARKOD VE QR OKUTUCU</span></div>
+    <div style="display:flex;gap:8px">
+      <button id="czm" aria-label="Yakınlaştır"></button>
+      <button id="ctf" aria-label="Fener"></button>
+      <button id="csn" aria-label="Ses"></button>
+      <button id="cfl" class="hide" style="display:none"></button>
+    </div>
+  </div>
+  <div class="rt" id="rt">
+    <div class="c-tr"></div>
+    <div class="c-bl"></div>
+    <div class="hd" id="hd"></div>
+  </div>
+  <div class="ls">
+    <div id="cls">Barkodu veya terazi etiketini kutuya hizalayın</div>
+    <div id="cpb"></div>
+  </div>
+</div>
 <div id="dlg" class="hide"><div class="box"><p id="dm"></p><div class="row"><button class="g" id="dn">Vazgeç</button><button id="dy">Evet</button></div></div></div>
 <div id="toast" class="hide"></div>
 
@@ -3320,7 +3312,7 @@ const XV=k=>{const o=M.meta.get('x|'+k);return o?o.v:undefined},PR=id=>XV('p|'+i
 const cOf=window.__catOf||(()=>'Sebze'),sec=$('#t-pano'),hero=sec.querySelector('.hero');
 hero.insertAdjacentHTML('beforebegin','<div class="pbar"><input type="date" id="pdt" aria-label="Pano tarihi"></div><div class="seg" id="pnav"><button data-g="g" class="on">Genel</button><button data-g="s">Sipariş</button><button data-g="f">Fire</button><button data-g="p">Fiyatlar</button></div>');
 hero.insertAdjacentHTML('afterend','<div class="kp" id="pkpi"></div><div class="card" id="pdk"><h2>Dikkat gerektirenler</h2><div id="pdkl"></div></div><div class="card" id="pcat"><h2>Kategori dağılımı</h2><div id="pcatl"></div></div>');
-const fd=$('#fp').closest('details');fd.insertAdjacentHTML('beforebegin','<div class="card" id="pfr"><h2>Fire nedenleri · son 30 gün</h2><div id="pfrl"></div></div>');
+const fd=$('#fp')&&$('#fp').closest('details');if(fd){fd.insertAdjacentHTML('beforebegin','<div class="card" id="pfr"><h2>Fire nedenleri · son 30 gün</h2><div id="pfrl"></div></div>');}else{const psec=$('#t-pano');if(psec)psec.insertAdjacentHTML('beforeend','<div class="card" id="pfr"><h2>Fire nedenleri · son 30 gün</h2><div id="pfrl"></div></div>');}
 const G=[[hero,'g'],[$('#pkpi'),'g'],[$('#pdk'),'g'],[$('#pcat'),'g'],[$('#ptr').closest('.card'),'g'],[$('#wkc'),'g'],[$('#gos'),'g'],[$('#frs'),'g'],[$('#aoc'),'s'],[$('#pordc')||$('#pord').closest('.card'),'s'],[$('#pfr'),'f'],[$('#pfc')||$('#fp').closest('.card'),'f'],[$('#pec')||$('#pe').closest('.card'),'p']];
 G.forEach(([e,g])=>{if(e)e.dataset.g=g});
 let cur='g';
