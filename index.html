@@ -1593,9 +1593,11 @@ button:active{transform:scale(.95)}button.g{background:var(--chip);color:var(--i
 .flash{animation:fl .9s}@keyframes fl{0%{box-shadow:0 0 0 0 var(--m1)}100%{box-shadow:0 0 0 16px transparent}}
 @media (prefers-reduced-motion:reduce){.flash{animation:none}*{transition:none!important}}
 .empty{color:var(--mute);text-align:center;padding:30px 10px}
-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:2px;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:26px;padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.22);z-index:5;width:min(94vw,420px)}
-nav button{flex:1;background:transparent;color:var(--mute);border-radius:20px;padding:8px 4px;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:2px}
-nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff}
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:3px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--line);border-radius:26px;padding:6px 4px;box-shadow:0 12px 34px rgba(0,0,0,.18);z-index:50;width:min(96vw,460px)}
+nav button{flex:1;background:transparent;color:var(--mute);border:0;border-radius:18px;padding:7px 2px 5px;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;cursor:pointer;transition:all .15s ease}
+nav button svg{width:20px;height:20px;flex:none}
+nav button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff;box-shadow:0 4px 14px -3px var(--m1)}
 #qr{display:flex;justify-content:center;padding:16px;background:#fff;border-radius:20px;margin:12px 0}
 #fs{position:fixed;inset:0;background:#fff;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#111;text-align:center;padding:16px}
 .hide{display:none!important}
@@ -1735,6 +1737,108 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 #frw{overflow-x:auto;scrollbar-width:none;height:auto;gap:6px;background:transparent;border:0;box-shadow:none;padding:0}#frw::-webkit-scrollbar{display:none}
 #frw button{flex:none;padding:8px 13px;border-radius:99px;font-size:13px;background:var(--glass);border:1px solid var(--line)}#frw button.on{border-color:var(--m1);color:var(--ink);font-weight:700}
 #frp b{font-size:16px}
+
+/* Ferah, modern kartlar ve akıcı düzen */
+.card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--sh);
+  border: 1px solid var(--line);
+  transition: transform .12s, box-shadow .12s;
+}
+.sub {
+  color: var(--mute);
+  font-size: 13.5px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+.seg {
+  display: flex;
+  background: var(--chip);
+  border-radius: 16px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.seg button {
+  flex: 1;
+  background: transparent;
+  color: var(--mute);
+  border: 0;
+  padding: 10px 6px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s ease;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.seg button.on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--sh);
+}
+.qa {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.qa button {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--sh);
+  cursor: pointer;
+  transition: transform .08s;
+}
+.qa button:active {
+  transform: scale(0.97);
+}
+#cats {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 6px;
+  padding: 2px 2px 6px;
+  margin-bottom: 10px;
+}
+#cats::-webkit-scrollbar { display: none; }
+#cats button {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  color: var(--mute);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+#cats button.on {
+  border-color: var(--m1);
+  color: var(--m1);
+  background: color-mix(in srgb, var(--m1) 12%, var(--card));
+  font-weight: 700;
+}
+#chips {
+  margin-bottom: 10px;
+}
+
 </style>
 </head>
 <body data-tab="say">
@@ -1786,7 +1890,52 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 
 <section id="t-aktar" class="hide">
  <div class="hero"><div class="ht"><span>Veri kasası</span><span id="dbs">IndexedDB</span></div><div class="big"><span id="aN">0</span><small>kayıt</small></div><div class="gl"><div><b id="aP">0</b>ürün</div><div><b id="aC">0</b>sayım</div><div><b id="aS">0</b>sevkiyat</div></div></div>
- <details class="card acc"><summary><h2>Zebra için tek QR</h2></summary><div class="in">
+
+ <div class="seg" id="anv" style="margin-bottom:14px">
+  <button data-ag="yedek" class="on">Yedek &amp; Veri</button>
+  <button data-ag="rapor">Raporlar</button>
+  <button data-ag="qr">Zebra QR</button>
+  <button data-ag="ayar">Cihaz Ayarları</button>
+ </div>
+
+ <!-- 1. YEDEK & AKTARIM -->
+ <div class="card" data-ag="yedek">
+  <h2>Yedek ve veri aktarımı</h2>
+  <p class="sub">Ürün listesi yapıştırmak için her satıra ad;PLU;barkod;kasa kg yazın.</p>
+  <textarea id="bk" aria-label="Yedek metni" placeholder="Yedek veya ürün listesi"></textarea>
+  <div class="grp">Dışa aktar</div>
+  <div class="row"><button id="bmk">Yedek oluştur</button><button class="g" id="bdl">Dosya indir</button></div>
+  <div class="row mt"><button class="g" id="bcp">Kopyala</button><button class="g" id="bsh">Paylaş</button></div>
+  <div class="row mt"><button class="g" id="ccs">CSV sayım</button><button class="g" id="ccv">CSV sevkiyat</button></div>
+  <div class="grp">İçe aktar</div>
+  <div class="row"><button id="bfile">Dosyadan oku</button></div>
+  <div class="row mt"><button id="bmg">Birleştir</button><button class="g" id="brp">Yedekle değiştir</button></div>
+  <div class="grp">Kurtarma</div>
+  <div class="row"><button class="g" id="bun">Son anlık görüntüye dön</button><button class="g" id="bfix">Veritabanını onar</button></div>
+  <input type="file" id="ff" accept=".json,.txt,.csv" class="hide"><p class="sub mt" id="msg"></p>
+ </div>
+
+ <!-- 2. RAPORLAR -->
+ <div class="card hide" data-ag="rapor">
+  <h2>Rapor ve gönderim</h2>
+  <p class="sub">Raporu PDF veya Excel dosyası olarak indirin ya da WhatsApp düğmesiyle doğrudan sohbete dosya olarak gönderin. İnternet gerekmez.</p>
+  <select id="rk" aria-label="Rapor seç"></select>
+  <div class="row mt"><button id="rpdf">PDF</button><button class="g" id="rxl">Excel</button></div>
+  <div class="row mt"><button class="g" id="rwa">WhatsApp PDF</button><button class="g" id="rwx">WhatsApp Excel</button></div>
+  <div class="row mt"><button class="g" id="rcsv">CSV</button></div>
+ </div>
+
+ <div class="card hide" id="mvc" data-ag="rapor">
+  <h2>Hareket ve sipariş önerisi</h2>
+  <p class="sub">İki sayım arasında ne kadar çıktığını hesaplar: önceki sayım + gelen sevkiyat − son sayım. Sonuç satış ve fire toplamıdır. Sipariş önerisi, aynı hızla devam eden bir sonraki dönemi karşılamak için gereken kasa sayısıdır.</p>
+  <div class="row"><div><label for="mvb">Önceki sayım</label><select id="mvb"></select></div><div><label for="mve">Son sayım</label><select id="mve"></select></div></div>
+  <div id="mvs" class="mt"></div>
+  <div class="row mt"><button id="mvw">Siparişi gönder</button><button class="g" id="mvcsv">CSV indir</button></div>
+ </div>
+
+ <!-- 3. ZEBRA QR -->
+ <div class="card hide" data-ag="qr">
+  <h2>Zebra için tek QR</h2>
   <p class="sub">Zebra, QR'ı okutunca içindeki metni klavyeden yazılmış gibi imlecin olduğu kutuya yazar. Aşağıda QR oluşturunca Zebra'nın tam olarak ne yazacağı satır satır listelenir. Kod ürün kodudur, adet de kasa sayısıdır.</p>
   <div class="row"><div><label for="src">Hangi kod</label><select id="src"><option value="auto">PLU varsa PLU, yoksa barkod</option><option value="bar">Yalnızca barkod</option><option value="plu">Yalnızca PLU</option></select></div>
   <div><label for="scope">Hangi ürünler</label><select id="scope"><option value="all">Tüm ürünler</option><option value="done">Sadece sayılanlar</option></select></div></div>
@@ -1797,35 +1946,40 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div id="qr" class="hide"></div><p class="sub" id="qinfo" style="text-align:center"></p>
   <div class="row hide" id="qnav"><button class="g" id="qp">Önceki parça</button><button class="g" id="qn">Sonraki parça</button></div>
   <button class="g hide mt" style="width:100%" id="qfs">Tam ekran göster</button>
-  <div id="ztab"></div><details open><summary>Zebra'nın yazacağı tam metin</summary><pre id="prev"></pre></details>
-  <div class="chk mt"><b><i class="k"></i>Zebra ayarı, bir kez yapılır (DataWedge)</b><p>1) DataWedge uygulamasında bu sayfayı açan tarayıcı için profil oluşturun. Chrome ise paket com.android.chrome olmalı. 2) Scanner selection: Auto (2D imager) ve Keystroke output açık olsun. 3) Basic Data Formatting: Send data ve Send ENTER key açık olsun. Bu uygulama okutulan kodu Enter görünce sayar. Enter gelmese bile hızlı gelen 4 haneli ve uzun kodlar kısa süre sonra kendiliğinden sayılır. 4) Zebra'nın QR'ından birden çok satır yazdıracaksanız Action key character alanını Line feed yapın. Satır sonu Enter tuşuna dönüşür. Ayraç Tab ise Tab seçin. 5) Kodlar atlanır veya sırası karışırsa Key event delay değerini 100 ms artırın, en çok 1000 ms. 6) Web sayfasında Enter çalışmıyorsa Basic Data Formatting altında Send Enter as string seçeneğini açın. 7) Android 10 ve üstünde tarama sırasında klavyenin bir an kaybolması normaldir. Önce aşağıdaki denemeyle sınayın.</p>
-<label for="ztest">Zebra deneme alanı</label><input id="ztest" inputmode="none" autocomplete="off" placeholder="Buraya dokunun, sonra Zebra ile okutun"><div class="row mt"><button class="g" id="ztclr">Temizle</button></div><pre id="ztout" class="sub">Henüz okutma yok</pre></div></div></details>
- <details class="card acc" id="mvc"><summary><h2>Hareket ve sipariş önerisi</h2></summary><div class="in"><p class="sub">İki sayım arasında ne kadar çıktığını hesaplar: önceki sayım + gelen sevkiyat − son sayım. Sonuç satış ve fire toplamıdır. Sipariş önerisi, aynı hızla devam eden bir sonraki dönemi karşılamak için gereken kasa sayısıdır.</p><div class="row"><div><label for="mvb">Önceki sayım</label><select id="mvb"></select></div><div><label for="mve">Son sayım</label><select id="mve"></select></div></div><div id="mvs" class="mt"></div><div class="row mt"><button id="mvw">Siparişi gönder</button><button class="g" id="mvcsv">CSV indir</button></div></div></details>
-<details class="card acc" open><summary><h2>Rapor ve gönderim</h2></summary><div class="in"><p class="sub">Raporu PDF veya Excel dosyası olarak indirin ya da WhatsApp düğmesiyle doğrudan sohbete dosya olarak gönderin. İnternet gerekmez.</p><select id="rk" aria-label="Rapor seç"></select><div class="row mt"><button id="rpdf">PDF</button><button class="g" id="rxl">Excel</button></div><div class="row mt"><button class="g" id="rwa">WhatsApp PDF</button><button class="g" id="rwx">WhatsApp Excel</button></div><div class="row mt"><button class="g" id="rcsv">CSV</button></div></div></details>
- <details class="card acc"><summary><h2>Yedek ve aktarım</h2></summary><div class="in">
-  <p class="sub">Ürün listesi yapıştırmak için her satıra ad;PLU;barkod;kasa kg yazın.</p>
-  <textarea id="bk" aria-label="Yedek metni" placeholder="Yedek veya ürün listesi"></textarea>
-  <div class="grp">Dışa aktar</div><div class="row"><button id="bmk">Yedek oluştur</button><button class="g" id="bdl">Dosya indir</button></div>
-  <div class="row mt"><button class="g" id="bcp">Kopyala</button><button class="g" id="bsh">Paylaş</button></div>
-  <div class="row mt"><button class="g" id="ccs">CSV sayım</button><button class="g" id="ccv">CSV sevkiyat</button></div>
-  <div class="grp">İçe aktar</div><div class="row"><button id="bfile">Dosyadan oku</button></div>
-  <div class="row mt"><button id="bmg">Birleştir</button><button class="g" id="brp">Yedekle değiştir</button></div>
-  <div class="grp">Kurtarma</div><div class="row"><button class="g" id="bun">Son anlık görüntüye dön</button><button class="g" id="bfix">Veritabanını onar</button></div>
-  <input type="file" id="ff" accept=".json,.txt,.csv" class="hide"><p class="sub mt" id="msg"></p></div></details>
-<details class="card acc"><summary><h2>Zebra kurulum ve tanılama</h2></summary><div class="in zg">
-<p class="sub">Bu sayfa Zebra'nın klavye çıkışını tuş olayı olarak dinler. Kutuya dokunmadan, klavye açılmadan doğrudan okutabilirsiniz. Aşağıdaki ayarlar Zebra'nın resmi DataWedge belgelerine dayanır.</p>
-<ol>
-<li><b>Profil:</b> DataWedge'de bu sayfayı açan tarayıcı için profil oluşturun (Chrome için com.android.chrome). Barcode input ve Keystroke output açık, Intent output kapalı olsun. Intent çıkışı Chrome sayfasına ulaşmaz.</li>
-<li><b>Key event options:</b> "Send Characters as Events" açık. Sayfa böylece her karakteri tuş olayı olarak alır ve okutma kutuya odaklanmadan çalışır. "Send Enter as string" ve "Send Tab as string" kapalı kalsın.</li>
-<li><b>Basic data formatting:</b> Enable, Send data ve Send ENTER key açık. Sayfa Enter gelmese de kısa beklemeyle okutmayı kapatır, ama Enter en hızlısıdır.</li>
-<li><b>Inter-character delay:</b> 6 ms ile başlayın. Karakter kaçıyorsa 100 ms'er artırın, en fazla 1000 ms. Zebra bu değerin uygulama performansını düşürebileceğini belirtir, bu yüzden gereğinden yükseğe çıkmayın.</li>
-<li><b>Terazi etiketi:</b> 2 ile başlayan 13 haneli ağırlıklı etiketler okutulunca ürün PLU'dan bulunur, gram bilgisi serbest kg olarak eklenir.</li>
-<li><b>Toplu QR:</b> Zebra ile okutacağınız toplu QR'ı ana ekranda sayım açıkken değil, hedef uygulama açıkken okutun. Bu sayfa açıkken okutulursa toplu içerik algılanır ve sayıma işlenmez. Her parçanın altında yazan toplamı hedef uygulamadaki toplamla karşılaştırın. Önce "Deneme QR, 3 kod" ile deneyin, sonra tam listeye geçin.</li><li><b>Çift okutma:</b> Aynı kod 0,4 saniye içinde tekrar gelirse yok sayılır.</li></ol>
-<div class="grp">Canlı tanılama</div>
-<p class="sub">Sayfada hiçbir kutuya dokunmadan Zebra ile bir barkod okutun. Sayım veya Sevkiyat sekmesindeyken ürün işlenir. Burada son okutmanın hızı görünür.</p>
-<div id="wzs">Henüz okutma yok.</div>
-<button class="g" id="wzc" style="width:100%">Tanılamayı sıfırla</button></div></details>
-  <details class="card acc"><summary><h2>Okutma ayarları</h2></summary><div class="in"><p class="sub">Ses hem kamerada hem klavye gibi okutmada çalar. Okutma flaşı yalnızca kamera açıkken, kısa bir ışık patlaması verir.</p><div class="seg" id="optb"><button data-o="snd">Ses</button><button data-o="fl">Okutma flaşı</button></div><button class="g" style="width:100%" id="tsnd">Sesi dene</button></div></details>
+  <div id="ztab"></div>
+  <div class="grp mt">Zebra'nın yazacağı tam metin</div>
+  <pre id="prev" class="mt" style="max-height:160px;overflow:auto"></pre>
+ </div>
+
+ <div class="card hide" data-ag="qr">
+  <h2>Zebra deneme ve test alanı</h2>
+  <p class="sub">DataWedge ayarını test etmek için aşağıdaki kutuya dokunup Zebra ile okutun.</p>
+  <input id="ztest" inputmode="none" autocomplete="off" placeholder="Buraya dokunun, sonra Zebra ile okutun">
+  <div class="row mt"><button class="g" id="ztclr">Temizle</button></div>
+  <pre id="ztout" class="sub mt">Henüz okutma yok</pre>
+ </div>
+
+ <!-- 4. ZEBRA KURULUM & AYARLAR -->
+ <div class="card hide" data-ag="ayar">
+  <h2>Zebra DataWedge kurulum kılavuzu</h2>
+  <p class="sub">Bu sayfa Zebra'nın klavye çıkışını tuş olayı olarak dinler. Kutuya dokunmadan, klavye açılmadan doğrudan okutabilirsiniz. Aşağıdaki ayarlar Zebra'nın resmi DataWedge belgelerine dayanır.</p>
+  <div class="chk mt"><b><i class="k"></i>1. Profil &amp; Çıkış</b><p>DataWedge'de Chrome için profil oluşturun (paket: com.android.chrome). Barcode input ve Keystroke output açık, Intent output kapalı olsun.</p></div>
+  <div class="chk mt"><b><i class="k"></i>2. Key Event Ayarları</b><p>"Send Characters as Events" açık olsun. Sayfa her karakteri tuş olayı olarak alır ve kutuya odaklanmadan çalışır.</p></div>
+  <div class="chk mt"><b><i class="k"></i>3. Basic Data Formatting</b><p>Enable, Send data ve Send ENTER key açık olsun. Sayfa okutulan kodu Enter ile anında işler.</p></div>
+  <div class="chk mt"><b><i class="k"></i>4. Hız (Inter-character delay)</b><p>6 ms ile başlayın. Karakter kaçıyorsa 50-100 ms artırın (en fazla 1000 ms).</p></div>
+  <div class="chk mt"><b><i class="k"></i>5. Terazi Etiketi Desteği</b><p>2 ile başlayan 13 haneli etiketler okutulunca ürün PLU'dan bulunur, gram bilgisi serbest kg olarak eklenir.</p></div>
+  <div class="grp">Canlı hız tanılama</div>
+  <p class="sub">Sayfada hiçbir kutuya dokunmadan Zebra ile bir barkod okutun. Burada okutma hızı görünür.</p>
+  <div id="wzs">Henüz okutma yok.</div>
+  <button class="g mt" id="wzc" style="width:100%">Tanılamayı sıfırla</button>
+ </div>
+
+ <div class="card hide" data-ag="ayar">
+  <h2>Okutma ve bildirim ayarları</h2>
+  <p class="sub">Ses hem kamerada hem klavye gibi okutmada çalar. Okutma flaşı kamera açıkken kısa bir ışık patlaması verir.</p>
+  <div class="seg" id="optb"><button data-o="snd">Ses</button><button data-o="fl">Okutma flaşı</button></div>
+  <button class="g mt" style="width:100%" id="tsnd">Sesi dene</button>
+ </div>
 </section>
 <section id="t-pano" class="hide">
  <div class="hero"><div class="ht"><span>Pano · stok değeri</span><span id="pdx"></span></div>
@@ -1833,20 +1987,20 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div class="gl"><div><b id="pFire">0</b>kg fire</div><div><b id="pLow">0</b>min altı</div><div><b id="pProf">—</b>₺ olası kâr</div></div></div>
  <div class="card"><h2>Stok trendi</h2><p class="sub">Son sayımların toplam kg değeri. Kırmızı çubuk o günün fire miktarıdır.</p><div id="ptr"></div>
   <div class="grp">Stokta en değerli 5 ürün</div><div id="ptop"></div></div>
- <details class="card acc" id="aoc" open><summary><h2>Akıllı sipariş ve performans</h2></summary><div class="in"><p class="sub">Son sayımlardaki gerçek çıkış hızına göre, seçtiğiniz gün sayısını karşılayacak kasa sayısını hesaplar. Minimum stok tanımlıysa onun altına düşmez. Ürüne tedarikçi yazarsanız liste tedarikçiye göre gruplanır ve her birine ayrı gönderilir.</p>
+ <div class="card" id="aoc"><h2>Akıllı sipariş ve performans</h2><p class="sub">Son sayımlardaki gerçek çıkış hızına göre, seçtiğiniz gün sayısını karşılayacak kasa sayısını hesaplar. Minimum stok tanımlıysa onun altına düşmez. Ürüne tedarikçi yazarsanız liste tedarikçiye göre gruplanır ve her birine ayrı gönderilir.</p>
 <div class="row"><div><label for="aon">Hız hesabı</label><select id="aon"><option value="1">Son sayım aralığı</option><option value="2">Son 2 aralık</option><option value="3">Son 3 aralık</option></select></div><div><label for="aod">Kaç günlük stok</label><select id="aod"><option value="1">1 gün</option><option value="2">2 gün</option><option value="3">3 gün</option><option value="5">5 gün</option><option value="7">7 gün</option><option value="10">10 gün</option></select></div></div>
 <div id="aos" class="mt"></div><div id="aol"></div>
 <div class="row mt"><button class="g" id="aocp">Hepsini kopyala</button><button class="g" id="aocs">CSV indir</button></div>
-<div class="grp">En çok çıkan 5 ürün</div><div id="aotp"></div><div class="grp">Yavaş dönen, çürüme riski</div><div id="aosl"></div><datalist id="aodl"></datalist></div></details>
- <details class="card acc" open><summary><h2>Sipariş listesi</h2></summary><div class="in"><p class="sub">Minimum kasa belirlediğiniz ürünlerden, seçili günün sayımında eksik kalanlar.</p><div id="pord"></div>
-  <div class="row mt"><button class="g" id="pcopy">Kopyala</button><button id="pwa">WhatsApp</button></div></div></details>
- <details class="card acc"><summary><h2>Fire kaydı</h2></summary><div class="in"><p class="sub">Çürüyen veya atılan malı seçili sayım gününe kaydedin. Fire, tutar olarak da hesaplanır.</p>
+<div class="grp">En çok çıkan 5 ürün</div><div id="aotp"></div><div class="grp">Yavaş dönen, çürüme riski</div><div id="aosl"></div><datalist id="aodl"></datalist></div>
+ <div class="card" id="pordc"><h2>Sipariş listesi</h2><p class="sub">Minimum kasa belirlediğiniz ürünlerden, seçili günün sayımında eksik kalanlar.</p><div id="pord"></div>
+  <div class="row mt"><button class="g" id="pcopy">Kopyala</button><button id="pwa">WhatsApp</button></div></div>
+ <div class="card" id="pfc"><h2>Fire kaydı</h2><p class="sub">Çürüyen veya atılan malı seçili sayım gününe kaydedin. Fire, tutar olarak da hesaplanır.</p>
   <select id="fp" aria-label="Ürün"></select>
   <div class="row mt"><input id="fk" inputmode="decimal" placeholder="Fire kg" aria-label="Fire kg"><select id="fw" aria-label="Neden"><option>Çürük</option><option>Ezik / hasarlı</option><option>Bayat / solmuş</option><option>Diğer</option></select></div>
   <button class="mt" style="width:100%" id="fadd">Fire kaydet</button><div id="fl" class="mt"></div><p class="sub" id="f30"></p>
-  <button class="g" style="width:100%" id="fcsv">Tüm fireleri CSV indir</button></div></details>
- <details class="card acc"><summary><h2>Fiyat ve minimum stok</h2></summary><div class="in"><p class="sub">Alış ve satış fiyatını kg başına, minimum stoğu kasa olarak girin. Değerler otomatik kaydedilir ve yedeğe dahildir.</p>
-  <input id="pq" placeholder="Ürün ara"><div id="pe"></div></div></details>
+  <button class="g" style="width:100%" id="fcsv">Tüm fireleri CSV indir</button></div>
+ <div class="card" id="pec"><h2>Fiyat ve minimum stok</h2><p class="sub">Alış ve satış fiyatını kg başına, minimum stoğu kasa olarak girin. Değerler otomatik kaydedilir ve yedeğe dahildir.</p>
+  <input id="pq" placeholder="Ürün ara"><div id="pe" class="mt"></div></div>
 </section>
 <section id="t-fire" class="hide">
  <div class="hero"><div class="ht"><span>Fire ve atık</span><span id="ffd"></span></div>
@@ -1862,11 +2016,18 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div id="fqpb" class="hide mt"><div id="fqpq" style="display:flex;justify-content:center"></div><p class="sub" id="fqpi" style="text-align:center"></p><div class="row hide" id="fqpn"><button class="g" id="fqpp">Önceki parça</button><button class="g" id="fqpx">Sonraki parça</button></div><button class="g mt" id="fqpf" style="width:100%">Tam ekran</button></div></div>
  <p class="sub" style="margin:0 0 6px 4px">Karta dokunarak düzeltebilir, göz düğmesiyle QR'ını açıp kapatabilirsiniz.</p>
  <div id="ffl"></div>
- <details class="card acc"><summary><h2>Elle ekle</h2></summary><div class="in"><select id="fp2" aria-label="Ürün"></select><div class="row mt"><input id="fk2" inputmode="decimal" placeholder="Fire kg" aria-label="Fire miktarı"><select id="fu2" aria-label="Birim" style="flex:none;width:90px"><option value="kg">kg</option><option value="adet">adet</option></select><button id="fadd2" style="flex:none">Ekle</button></div></div></details>
+ <div class="card"><h2>Elle fire ekle</h2><p class="sub">Etiketsiz veya tartılmayan ürünler için fire miktarını girin.</p><select id="fp2" aria-label="Ürün"></select><div class="row mt"><input id="fk2" inputmode="decimal" placeholder="Fire kg" aria-label="Fire miktarı"><select id="fu2" aria-label="Birim" style="flex:none;width:90px"><option value="kg">kg</option><option value="adet">adet</option></select><button id="fadd2" style="flex:none">Ekle</button></div></div>
  <div class="row"><button class="g" id="frcp">Kopyala</button><button id="frwa">WhatsApp</button></div>
 </section>
 </div>
-<nav id="nav"><button data-t="say" class="on"></button><button data-t="ship"></button><button data-t="urun"></button><button data-t="aktar"></button></nav>
+<nav id="nav">
+  <button data-t="say" class="on"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span>Sayım</span></button>
+  <button data-t="ship"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>Sevkiyat</span></button>
+  <button data-t="fire"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg><span>Fire</span></button>
+  <button data-t="pano"><svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg><span>Pano</span></button>
+  <button data-t="urun"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg><span>Ürünler</span></button>
+  <button data-t="aktar"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-3"/></svg><span>Aktar</span></button>
+</nav>
 <div id="fs" class="hide"><div id="fsq"></div><b id="fsi"></b><span>Parlaklığı artırın, Zebra'yı QR'a 15 cm yaklaştırın. Kapatmak için dokunun.</span></div>
 <div id="cam" class="cam hide"><video id="cv" playsinline muted></video><div class="rt" id="rt"><div class="hd" id="hd"></div></div><div class="bar2"><button id="cx" aria-label="Kamerayı kapat"></button><button id="czm" aria-label="Yakınlaştır"></button><button id="ctf" aria-label="Fener"></button><button id="cfl" aria-label="Okutma flaşı"></button><button id="csn" aria-label="Ses"></button></div><div class="ls"><div id="cls">Barkodu çerçeveye alın</div><div id="cpb"></div></div></div>
 <div id="dlg" class="hide"><div class="box"><p id="dm"></p><div class="row"><button class="g" id="dn">Vazgeç</button><button id="dy">Evet</button></div></div></div>
@@ -1879,7 +2040,7 @@ const dg=v=>String(v||'').replace(/\D/g,''),fmt=n=>(Math.round(n*100)/100).toLoc
 const IC={say:'<path d="M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',ship:'<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',urun:'<path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>',aktar:'<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-3"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>'};
 const ico=n=>`<svg viewBox="0 0 24 24">${IC[n]}</svg>`;
 const TL={say:'Sayım',ship:'Sevkiyat',urun:'Ürünler',aktar:'Aktar'};
-document.querySelectorAll('nav button').forEach(b=>b.innerHTML=ico(b.dataset.t)+'<span>'+TL[b.dataset.t]+'</span>');
+/* Nav butonlari SVG ve etiketleriyle statik tanimli */
 $('#i1').innerHTML=IC.scan;$('#i2').innerHTML=IC.scan;
 
 const KEY={products:'id',counts:'k',ships:'id',meta:'k'},M={};for(const n in KEY)M[n]=new Map();
@@ -1894,6 +2055,22 @@ const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 /* tema */
 const TH=['auto','light','dark'],TN={auto:'Otomatik',light:'Açık',dark:'Koyu'};let th='auto';try{th=localStorage.getItem('manav-theme')||'auto'}catch(e){}
 function applyTh(){const r=document.documentElement;th==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',th);$('#thb').innerHTML=ico(th==='dark'?'moon':th==='light'?'sun':'auto');$('#thb').setAttribute('aria-label','Tema: '+TN[th])}
+
+/* Aktar alt sekme gecis mantigi */
+function showAktarGroup(g) {
+  document.querySelectorAll('#anv button').forEach(b => b.classList.toggle('on', b.dataset.ag === g));
+  document.querySelectorAll('#t-aktar [data-ag]').forEach(e => {
+    if(e.id !== 'anv') e.classList.toggle('hide', e.dataset.ag !== g);
+  });
+}
+const anvEl = $('#anv');
+if(anvEl) {
+  anvEl.onclick = e => {
+    const b = e.target.closest('button');
+    if(b && b.dataset.ag) showAktarGroup(b.dataset.ag);
+  };
+}
+
 $('#thb').onclick=()=>{th=TH[(TH.indexOf(th)+1)%3];try{localStorage.setItem('manav-theme',th)}catch(e){}applyTh();toast('Tema: '+TN[th])};applyTh();
 
 /* depolama: bellek asıl kaynak, IndexedDB yazma kopyası, localStorage ikinci güvenlik */
@@ -2131,9 +2308,32 @@ async function imp(rep){const t=$('#bk').value.trim();try{const j=t[0]==='{';con
  catch(e){msg('Metin okunamadı. Yedek metni veya satır başına ad;PLU;barkod;kg listesi yapıştırın.')}}
 $('#bmg').onclick=()=>imp(false);$('#brp').onclick=()=>imp(true);
 
-function setTab(t){tab=t;document.body.dataset.tab=t;['say','ship','urun','aktar'].forEach(x=>$('#t-'+x).classList.toggle('hide',x!==t));
- document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));scrollTo(0,0);
- if(t==='say')render();if(t==='ship')renderShip();focusScan()}
+const ALL_TABS = ['say','ship','fire','pano','urun','aktar'];
+function setTab(t){
+  tab = t;
+  document.body.dataset.tab = t;
+  ALL_TABS.forEach(x => {
+    const el = $('#t-' + x);
+    if(el) el.classList.toggle('hide', x !== t);
+  });
+  document.querySelectorAll('nav button').forEach(x => {
+    x.classList.toggle('on', x.dataset.t === t);
+  });
+  scrollTo(0, 0);
+  if(t === 'say') render();
+  if(t === 'ship') { renderShip(); try{ if(typeof irs === 'function') irs(); }catch(e){} }
+  if(t === 'fire') { try{ if(typeof fireR === 'function') fireR(); }catch(e){} }
+  if(t === 'pano') { 
+    try{ if(typeof pano === 'function') pano(); }catch(e){}
+    try{ if(typeof editor === 'function') editor(); }catch(e){}
+    try{ if(typeof p14 === 'function') p14(); }catch(e){}
+    try{ if(typeof wk === 'function') wk(); }catch(e){}
+    try{ if(typeof enh === 'function') enh(); }catch(e){}
+  }
+  if(t === 'urun') { renderP(); }
+  if(t === 'aktar') { stats(); }
+  focusScan();
+}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 
 /* v4: kamera, ses, flaş, kontrol, onarım */
@@ -2564,7 +2764,7 @@ function sayX(){const dv=dayVal(day()),gl=document.querySelector('#t-say .gl');l
  document.querySelectorAll('#list .pc').forEach(c=>{const id=c.dataset.id,m=MN(id);if(!m)return;const k=cnt(id);if(!(k.crates||k.loose||k.z)||k.crates>=m)return;const n=c.querySelector('.nm');if(n)n.insertAdjacentHTML('beforeend','<small class="dl" style="color:var(--warn)">Min altı: '+k.crates+' / '+m+' kasa</small>')})}
 const _r=render;render=function(){_r();try{sayX()}catch(e){}};$('#q').oninput=render;
 /* sekme: nav düğmesi ve geçiş */
-const nb=document.createElement('button');nb.dataset.t='pano';nb.innerHTML='<svg viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg><span>Pano</span>';nb.onclick=()=>setTab('pano');$('#nav').insertBefore(nb,$('#nav').children[3]);
+/* Pano sekmesi nav icinde statik olarak tanimlandi */
 const _t=setTab;setTab=function(t){_t(t);$('#t-pano').classList.toggle('hide',t!=='pano');if(t==='pano'){pano();editor()}};
 /* yedek: fiyat, fire ve minimum stok yedeğe dahil */
 const _l=load;load=async function(d,rep){const n=await _l(d,rep);if(d&&Array.isArray(d.extra)){if(rep)for(const o of [...M.meta.values()])if(isX(o))await remove('meta',o.k);for(const o of d.extra)if(isX(o)&&o.k.length<120)await save('meta',{k:o.k,v:o.v})}return n};
@@ -2710,7 +2910,7 @@ setC=async function(id,patch){
 /* 4) taze kalma uyarısı + 5) günlük özet */
 const pan=$('#t-pano');
 pan.querySelector('.hero').insertAdjacentHTML('afterend','<div class="card" id="gos"><h2>Günlük özet</h2><p class="sub">Seçili günün tek mesajlık özeti. Patrona veya ekibe göndermek için hazır.</p><div id="gop"></div><div class="row mt"><button class="g" id="gocp">Kopyala</button><button id="gowa">WhatsApp</button></div></div>');
-const fh='<details class="card acc" id="frs" open><summary><h2>Taze kalma uyarısı</h2></summary><div class="in"><p class="sub">Stokta duran ama uzun süredir yeni sevkiyat almamış ürünler. Bayatlama ve fire riskini erken gösterir.</p><label for="frd">Uyarı eşiği</label><select id="frd"><option value="2">2 gün</option><option value="3">3 gün</option><option value="5">5 gün</option><option value="7">7 gün</option><option value="10">10 gün</option></select><div id="frl" class="mt"></div></div></details>';
+const fh='<div class="card" id="frs"><h2>Taze kalma uyarısı</h2><p class="sub">Stokta duran ama uzun süredir yeni sevkiyat almamış ürünler. Bayatlama ve fire riskini erken gösterir.</p><label for="frd">Uyarı eşiği</label><select id="frd"><option value="2">2 gün</option><option value="3">3 gün</option><option value="5">5 gün</option><option value="7">7 gün</option><option value="10">10 gün</option></select><div id="frl" class="mt"></div></div>';
 const ao=$('#aoc');ao?ao.insertAdjacentHTML('afterend',fh):pan.insertAdjacentHTML('beforeend',fh);
 function frR(){const n=+(XV('fr')||5),el=$('#frl');$('#frd').value=String(n);
  if(!M.ships.size){el.innerHTML='<div class="empty">Sevkiyat kaydı olmadığı için hesaplanamadı. Sevkiyat sekmesinden gelen malı kaydedin.</div>';return}
@@ -2819,7 +3019,7 @@ const cOf=window.__catOf||(()=>'Sebze'),sec=$('#t-pano'),hero=sec.querySelector(
 hero.insertAdjacentHTML('beforebegin','<div class="pbar"><input type="date" id="pdt" aria-label="Pano tarihi"></div><div class="seg" id="pnav"><button data-g="g" class="on">Genel</button><button data-g="s">Sipariş</button><button data-g="f">Fire</button><button data-g="p">Fiyatlar</button></div>');
 hero.insertAdjacentHTML('afterend','<div class="kp" id="pkpi"></div><div class="card" id="pdk"><h2>Dikkat gerektirenler</h2><div id="pdkl"></div></div><div class="card" id="pcat"><h2>Kategori dağılımı</h2><div id="pcatl"></div></div>');
 const fd=$('#fp').closest('details');fd.insertAdjacentHTML('beforebegin','<div class="card" id="pfr"><h2>Fire nedenleri · son 30 gün</h2><div id="pfrl"></div></div>');
-const G=[[hero,'g'],[$('#pkpi'),'g'],[$('#pdk'),'g'],[$('#pcat'),'g'],[$('#ptr').closest('.card'),'g'],[$('#wkc'),'g'],[$('#gos'),'g'],[$('#frs'),'g'],[$('#aoc'),'s'],[$('#pord').closest('details'),'s'],[$('#pfr'),'f'],[fd,'f'],[$('#pe').closest('details'),'p']];
+const G=[[hero,'g'],[$('#pkpi'),'g'],[$('#pdk'),'g'],[$('#pcat'),'g'],[$('#ptr').closest('.card'),'g'],[$('#wkc'),'g'],[$('#gos'),'g'],[$('#frs'),'g'],[$('#aoc'),'s'],[$('#pordc')||$('#pord').closest('.card'),'s'],[$('#pfr'),'f'],[$('#pfc')||$('#fp').closest('.card'),'f'],[$('#pec')||$('#pe').closest('.card'),'p']];
 G.forEach(([e,g])=>{if(e)e.dataset.g=g});
 let cur='g';
 function show(g){cur=g;[...$('#pnav').children].forEach(b=>b.classList.toggle('on',b.dataset.g===g));sec.querySelectorAll(':scope>[data-g]').forEach(e=>e.classList.toggle('hide',e.dataset.g!==g));if(g==='s'&&$('#aoc'))$('#aoc').open=true}
@@ -2945,7 +3145,7 @@ $('#t-fire .camb').onclick=()=>camStart(c=>scan(c,'fire'));
  if(e.key==='Enter'||e.key==='Tab'){if(b.length>=6){e.preventDefault();const v=b;b='';scan(v,'fire')}else b='';return}
  if(e.key.length!==1)return;const n=performance.now();if(n-T>150)b='';T=n;b+=e.key;e.preventDefault()},true)})();
 /* nav + sekme */
-const fb=document.createElement('button');fb.dataset.t='fire';fb.innerHTML='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg><span>Fire</span>';fb.onclick=()=>setTab('fire');$('#nav').insertBefore(fb,$('#nav').children[2]);
+/* Fire sekmesi nav icinde statik olarak tanimlandi */
 const _t=setTab;setTab=function(t){_t.apply(this,arguments);$('#t-fire').classList.toggle('hide',t!=='fire');if(t==='fire')fireR()};
 const gb=document.createElement('button');gb.className='g';gb.style.cssText='width:100%;margin-bottom:8px';gb.textContent='Etiket okutarak fire gir';gb.onclick=()=>setTab('fire');$('#fp').insertAdjacentHTML('beforebegin','<div id="pfgo"></div>');$('#pfgo').appendChild(gb);
 /* sade Sayım */
@@ -3001,38 +3201,23 @@ if(fu2)fu2.addEventListener('change',()=>{q('#fk2').placeholder='Fire '+fu2.valu
 #t-pano details.acc>summary small.sm{display:block;font:500 12px var(--f);color:var(--mute);margin-top:2px}
 </style>
 <script>
-/* v16: sadeleştirme. Sayım: uyarılar ve ek filtreler tek dokunuşla açılır. Pano: sade özet, raporlar kapalı başlıklar. Ayrı blok. */
+/* Güvenli giriş kontrolü ve ferah arayüz desteği */
 (()=>{try{
-const q=s=>document.querySelector(s);
-/* ---- SAYIM ---- */
-const bw=q('#chk-say');let wo=false;
-function warn(){if(!bw)return;const n=bw.querySelectorAll('.chk b').length;let t=q('#wtgl');
- if(!t){t=document.createElement('button');t.id='wtgl';t.className='g';t.style.cssText='width:100%;margin:0 0 8px;padding:9px 14px;font-size:13px;border-radius:16px;text-align:left';bw.before(t);t.onclick=()=>{wo=!wo;warn()}}
- t.style.display=n?'':'none';t.textContent=(wo?'▾ ':'▸ ')+n+' uyarı'+(wo?' (gizle)':' var, görmek için dokunun');bw.style.display=(n&&wo)?'':'none'}
-if(bw){new MutationObserver(warn).observe(bw,{childList:true,subtree:true});warn()}
-const ch=q('#chips'),ct=q('#cats');
-if(ch){const m=document.createElement('button');m.className='g';m.id='moreb';m.style.cssText='width:100%;margin:0 0 8px;padding:9px 14px;font-size:13px;border-radius:16px;text-align:left';ch.after(m);let o=false;
- const ap=()=>{const qa=document.querySelector('.qa');if(ct)ct.style.display=o?'':'none';if(qa)qa.style.display=o?'':'none';m.textContent=o?'▾ Daha az seçenek':'▸ Kategori ve hızlı işlemler'};
- m.onclick=()=>{o=!o;ap()};ap();setTimeout(ap,1800)}
-/* yanlış alana yazılan barkod: aşırı kasa/adet kaydedilmez */
+/* Yanlış alana yazılan barkod: aşırı kasa/adet kaydedilmez */
 try{const _c=setC;setC=async function(id,patch){if(patch&&patch.crates>1000){toast('Kasa sayısı '+patch.crates+' olamaz. Barkod yanlış alana yazılmış, kaydedilmedi.');render();return}return _c.apply(this,arguments)}}catch(e){}
 try{const _l=setL;setL=async function(id,patch){if(patch&&(patch.c>1000||patch.p>1000)){toast('Miktar çok yüksek, barkod yanlış alana yazılmış. Kaydedilmedi.');renderShip();return}return _l.apply(this,arguments)}}catch(e){}
 setTimeout(()=>{try{for(const c of M.counts.values())if(c.crates>1000){const p=M.products.get(c.id);toast((p?p.name:'Bir ürün')+' için '+c.crates+' kasa kayıtlı. Sayım ekranından düzeltin.');break}}catch(e){}},2500);
-/* ---- PANO ---- */
-const HINT={'Stok trendi':'Son sayımlarda toplam stokun nasıl değiştiğini gösterir.','Akıllı sipariş':'Stok kaç gün yeter ve ne kadar sipariş verilmeli.','Sipariş listesi':'Minimum kasanın altına düşen ve sipariş edilmesi gereken ürünler.','Fiyat ve minimum':'Alış, satış fiyatı ve minimum kasa sayısını buradan girin.'};
-function simp(){const sec=q('#t-pano');if(!sec)return;const hero=sec.querySelector('.hero');if(!hero)return;
- const ht=hero.querySelector('.ht span');if(ht&&!ht.dataset.s){ht.dataset.s='1';ht.textContent='Stoktaki malın değeri'}
- [['#pLow',' azalan ürün'],['#pProf','₺ tahmini kâr']].forEach(([id,tx])=>{const b=q(id);if(b&&b.parentNode&&!b.parentNode.dataset.s){b.parentNode.dataset.s='1';b.parentNode.lastChild.textContent=(id==='#pProf'?'':'')+tx}});
- if(!sec.querySelector('#pintro')){hero.insertAdjacentHTML('afterend','<p class="sub" id="pintro" style="margin:0 4px 10px">Sayımlarınızdan stokun değerini, azalan ürünleri ve sipariş önerilerini gösterir. Ayrıntılar için başlıklara dokunun.</p>')}
- [...sec.children].forEach(c=>{if(c===hero||c.dataset.sm||c.tagName==='P')return;c.dataset.sm='1';let d=c;
-  if(c.tagName!=='DETAILS'){const h=c.querySelector(':scope>h2');if(!h||!c.classList.contains('card'))return;
-   d=document.createElement('details');d.className='card acc';d.dataset.sm='1';const sm=document.createElement('summary');sm.appendChild(h);const inn=document.createElement('div');inn.className='in';while(c.firstChild)inn.appendChild(c.firstChild);d.append(sm,inn);c.replaceWith(d)}
-  d.open=false;const t=(d.querySelector('summary h2')||{}).textContent||'';
-  for(const k in HINT)if(t.indexOf(k)===0){const inn=d.querySelector('.in');if(inn&&!inn.querySelector('.sm-h'))inn.insertAdjacentHTML('afterbegin','<p class="sub sm-h">'+HINT[k]+'</p>')}
-  if(t.indexOf('Sipariş listesi')===0){d.open=true;const pi=sec.querySelector('#pintro');(pi||hero).after(d)}})}
-const tp=q('#t-pano');
-if(tp){new MutationObserver(()=>{if(!tp.classList.contains('hide'))simp()}).observe(tp,{attributes:true,attributeFilter:['class']});setTimeout(simp,2500)}
-}catch(err){console.error('v16',err)}})();
+
+/* Pano başlık metni */
+const sec=document.querySelector('#t-pano');
+if(sec){
+  const hero=sec.querySelector('.hero');
+  if(hero){
+    const ht=hero.querySelector('.ht span');if(ht)ht.textContent='Stoktaki malın değeri';
+    [['#pLow',' azalan ürün'],['#pProf','₺ tahmini kâr']].forEach(([id,tx])=>{const b=document.querySelector(id);if(b&&b.parentNode){b.parentNode.lastChild.textContent=tx}});
+  }
+}
+}catch(err){console.error('safe-entry',err)}})();
 </script>
 
 <!-- PWA & Çevrimdışı (Offline) Desteği -->
@@ -3101,9 +3286,9 @@ if ('serviceWorker' in navigator) {
   if (isIos && !sessionStorage.getItem('ios-pwa-dismissed')) {
     banner.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        <img src="./icons/icon-192.png" style="width:38px;height:38px;border-radius:10px;flex:none;" alt="İkon">
-        <div style="color:var(--ink,#111);font-size:12px;line-height:1.3;">
-          <b>Telefona Yüklemek İçin:</b> Safari'de alttaki <b>Paylaş (⎙/⎋)</b> butonuna basıp <b>"Ana Ekrana Ekle"</b>yi seçin.
+        <img src="./icons/icon-192.png" style="width:38px;height:38px;border-radius:10px;flex:none;" alt="Manav Sayım">
+        <div style="color:var(--ink,#111);font-size:12.5px;line-height:1.35;">
+          <b>Telefona Yüklemek İçin:</b> Safari'de alttaki <b>Paylaş</b> simgesine dokunup <b>"Ana Ekrana Ekle"</b>yi seçin.
         </div>
       </div>
       <button id="pwa-ios-close" style="background:transparent;color:var(--mute,#888);border:0;font-size:18px;cursor:pointer;padding:0 6px;flex:none;">×</button>
