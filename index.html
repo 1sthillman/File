@@ -2332,10 +2332,49 @@ function render(){
  ps.forEach(p=>{const c=cnt(p.id);kg+=c.crates*p.kg+c.loose;cr+=c.crates;if(c.crates||c.loose||c.z)dn++});
  $('#sKg').textContent=fmt(kg);$('#sCr').textContent=fmt(cr);$('#sCn').textContent=dn+' / '+ps.length;$('#pg').style.width=(ps.length?dn/ps.length*100:0)+'%';$('#dtx').textContent=long(day());chkSay(ps);
  const rows=ps.filter(p=>{const c=cnt(p.id),d=c.crates||c.loose||c.z;return(!q||p.name.toLocaleLowerCase('tr').includes(q)||p.plu.includes(q)||p.barcode.includes(q))&&(filt==='all'||(filt==='done')===!!d)});
- $('#list').innerHTML=rows.length?rows.map(p=>{const c=cnt(p.id);return card(p,c.crates*p.kg+c.loose,c.crates||c.loose||c.z,fld('c','Kasa',c.crates)+ek(c.loose,p.u))}).join(''):'<div class="empty">'+(ps.length?'Bu filtrede ürün yok.':'Henüz ürün yok. Ürünler sekmesinden ilk ürünü ekleyin.')+'</div>'}
+ $('#list').innerHTML=rows.length?rows.map(p=>{
+  const c=cnt(p.id);
+  const isCounted=c.crates||c.loose||c.z;
+  const clrBtn=isCounted?'<button class="g clr-btn" data-f="clr" title="Sayimdan Cikar" style="margin-top:auto;height:42px;padding:0 12px;border-radius:14px;font-size:12px;color:var(--r1);border-color:color-mix(in srgb,var(--r1) 25%,transparent);white-space:nowrap;font-weight:700">Sifirla</button>':'';
+  return card(p,c.crates*p.kg+c.loose,isCounted,fld('c','Kasa',c.crates)+ek(c.loose,p.u)+clrBtn);
+}).join(''):'<div class="empty">'+(ps.length?'Bu filtrede ürün yok.':'Henüz ürün yok. Ürünler sekmesinden ilk ürünü ekleyin.')+'</div>'}
 async function setC(id,patch){const o=Object.assign({k:ck(id),date:day(),id,crates:0,loose:0},M.counts.get(ck(id)),patch);o.crates=Math.max(0,Math.floor(o.crates)||0);o.loose=num(o.loose);
  if(o.crates||o.loose)o.z=0;if(!o.crates&&!o.loose&&!o.z)await remove('counts',o.k);else await save('counts',o);render()}
-wire($('#list'),(id,f,v,d)=>{const k=f==='c'?'crates':'loose',c=cnt(id);setC(id,{[k]:Math.max(0,v===null?c[k]+d:f==='l'?num(v):Math.floor(num(v)))})});
+wire($('#list'),(id,f,v,d)=>{
+  const c=cnt(id), p=M.products.get(id);
+  if(f==='clr'){
+    setC(id,{crates:0,loose:0});
+    if(p)toast(p.name+' sayimdan cikarildi');
+    return;
+  }
+  if(f==='c'){
+    if(d!==0 && d!==null){
+      const newC=Math.max(0,c.crates+d);
+      if(newC===0 && d<0){
+        setC(id,{crates:0,loose:0});
+        if(p)toast(p.name+' sayimdan cikarildi');
+      } else {
+        setC(id,{crates:newC});
+      }
+    } else {
+      const val=Math.max(0,Math.floor(num(v)));
+      if(val===0){
+        setC(id,{crates:0,loose:0});
+        if(p)toast(p.name+' sayimdan cikarildi');
+      } else {
+        setC(id,{crates:val});
+      }
+    }
+  } else if(f==='l'){
+    const val=Math.max(0,num(v));
+    if(val===0 && c.crates===0){
+      setC(id,{crates:0,loose:0});
+      if(p)toast(p.name+' sayimdan cikarildi');
+    } else {
+      setC(id,{loose:val});
+    }
+  }
+});
 $('#q').oninput=render;$('#date').onchange=()=>{if(!$('#date').value)$('#date').value=today();render()};
 $('#chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;filt=b.dataset.f;[...$('#chips').children].forEach(x=>x.classList.toggle('on',x===b));render()};
 $('#reset').onclick=async()=>{if(!await ask('Bu günün tüm sayımı silinsin mi?'))return;await snap('sıfırlama öncesi');for(const k of [...M.counts.keys()])if(k.startsWith(day()+'|'))await remove('counts',k);render();toast('Sayım sıfırlandı')};
@@ -3006,7 +3045,8 @@ function showCP(id){
      +'</div>'
      +'<div class="row mt" style="gap:8px">'
      +'<button class="g cam-unit-btn" style="flex:1;height:42px;border-radius:14px;font-size:13px">Birim: '+(p.u==='adet'?'ADET':'KG')+'</button>'
-     +'<button class="cam-ok-btn" style="flex:2;height:42px;border-radius:14px;font-weight:700">Onayla & Devam Et</button>'
+     +'<button class="g cam-del-btn" style="height:42px;padding:0 14px;border-radius:14px;font-size:13px;color:var(--r1);border-color:color-mix(in srgb,var(--r1) 25%,transparent);font-weight:700">Sifirla</button>'
+     +'<button class="cam-ok-btn" style="flex:2;height:42px;border-radius:14px;font-weight:700">Onayla</button>'
      +'</div>';
   } else {
     const s=curShip(),l=(s&&s.lines[p.id])||{c:0,p:0,l:0};
@@ -3041,22 +3081,57 @@ $('#cpb').addEventListener('click', async e => {
     const d = +btn.dataset.d;
     if (tab === 'say') {
       const cur = cnt(id);
-      const newC = Math.max(0, cur.crates + d);
-      await setC(id, { crates: newC });
-      showCP(id);
-      render();
-      vib(14);
+      if (f === 'c') {
+        const newC = Math.max(0, cur.crates + d);
+        if (newC === 0 && d < 0) {
+          await setC(id, { crates: 0, loose: 0 });
+          toast(p.name + ' sayimdan cikarildi');
+          $('#cpb').innerHTML = '';
+          render();
+          vib(16);
+          return;
+        }
+        await setC(id, { crates: newC });
+        showCP(id);
+        render();
+        vib(14);
+      }
+      return;
     } else if (tab === 'sev') {
       const s = curShip();
       if (s) {
         const l = s.lines[id] || { c: 0, p: 0, l: 0 };
         const newC = Math.max(0, l.c + d);
+        if (newC === 0 && d < 0) {
+          await setL(id, { c: 0, l: 0, p: 0 });
+          toast(p.name + ' sevkiyattan cikarildi');
+          $('#cpb').innerHTML = '';
+          renderShip();
+          vib(16);
+          return;
+        }
         await setL(id, { c: newC });
         showCP(id);
         renderShip();
         vib(14);
       }
+      return;
     }
+  }
+
+  const del = e.target.closest('.cam-del-btn');
+  if (del) {
+    if (tab === 'say') {
+      await setC(id, { crates: 0, loose: 0 });
+      toast(p.name + ' sayimdan cikarildi');
+    } else if (tab === 'sev') {
+      await setL(id, { c: 0, l: 0, p: 0 });
+      toast(p.name + ' sevkiyattan cikarildi');
+    }
+    $('#cpb').innerHTML = '';
+    render();
+    renderShip();
+    vib(16);
     return;
   }
 
@@ -3855,10 +3930,219 @@ async function fireScan(code){
   fireR();
   toast(p.name + ' fire onay bekliyor');
 }
+/* Toplu QR & Coklu Okuma Motoru (Sayim, Fire, Sevkiyat) */
+function parseBatchLines(raw) {
+  if (!raw || typeof raw !== 'string') return [];
+  const str = raw.trim();
+  const items = [];
+
+  // Format 1: MANAV_SYNC veya JSON
+  if (str.startsWith('MANAV_SYNC:') || (str.startsWith('{') && str.includes('items')) || (str.startsWith('[') && str.endsWith(']'))) {
+    try {
+      const payload = str.startsWith('MANAV_SYNC:') ? str.slice(11) : str;
+      const data = JSON.parse(payload);
+      const arr = Array.isArray(data) ? data : (data.items || []);
+      for (const it of arr) {
+        const code = it.plu || it.bar || it.barcode || it.code || it.id;
+        const p = findP(code);
+        if (p) {
+          items.push({
+            p,
+            code: String(code),
+            crates: it.cr != null ? it.cr : (it.crates != null ? it.crates : null),
+            loose: it.loose != null ? it.loose : null,
+            kg: it.kg != null ? it.kg : (it.kilo != null ? it.kilo : null),
+            u: it.u || p.u || 'kg'
+          });
+        }
+      }
+      if (items.length) return items;
+    } catch(e) {}
+  }
+
+  // Format 2: Cok satirli metin (Satirlar: Enter, Tab veya Noktali virgul)
+  const rawLines = str.split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+  if (rawLines.length > 1) {
+    // 2A: Kod ve Miktar ardil ciftler halinde mi? (Kod \n Miktar \n Kod \n Miktar)
+    let isPairs = false;
+    if (rawLines.length % 2 === 0 && rawLines.length >= 2) {
+      const l0_p = findP(rawLines[0]);
+      const l1_num = /^[\d.,]+$/.test(rawLines[1]);
+      if (l0_p && l1_num) isPairs = true;
+    }
+
+    if (isPairs) {
+      for (let i = 0; i < rawLines.length; i += 2) {
+        const c = rawLines[i];
+        const val = parseFloat(rawLines[i + 1].replace(',', '.')) || 0;
+        const p = findP(c);
+        if (p) {
+          items.push({
+            p,
+            code: c,
+            kg: p.u === 'adet' ? null : val,
+            crates: p.u === 'adet' ? Math.round(val) : Math.floor(val / (p.kg || 1)),
+            loose: p.u === 'adet' ? 0 : +(val % (p.kg || 1)).toFixed(3),
+            val
+          });
+        }
+      }
+      if (items.length) return items;
+    }
+
+    // 2B: Her satirda bir urun kaydi
+    for (const line of rawLines) {
+      const digits = dg(line);
+      if (/^2\d{11,12}$/.test(digits)) {
+        const p = findP(digits);
+        const grams = parseInt(digits.slice(7, 12), 10);
+        const kg = grams > 0 ? +(grams / 1000).toFixed(3) : 0;
+        if (p) {
+          items.push({ p, code: digits, kg, crates: null, loose: kg, isScale: true });
+          continue;
+        }
+      }
+
+      const parts = line.split(/[;,\t|]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        const c = parts[0];
+        const p = findP(c);
+        if (p) {
+          let cr = null, ls = null, kg = null;
+          if (parts.length >= 5) {
+            cr = parseInt(parts[3], 10) || 0;
+            kg = parseFloat(parts[4].replace(',', '.')) || 0;
+            ls = +(kg - (cr * (p.kg || 0))).toFixed(3);
+            if (ls < 0) ls = 0;
+          } else if (parts.length >= 3) {
+            cr = parseInt(parts[1], 10) || 0;
+            kg = parseFloat(parts[2].replace(',', '.')) || 0;
+            ls = +(kg - (cr * (p.kg || 0))).toFixed(3);
+            if (ls < 0) ls = 0;
+          } else {
+            const val = parseFloat(parts[1].replace(',', '.')) || 0;
+            if (p.u === 'adet') { cr = Math.round(val); }
+            else { kg = val; ls = val; }
+          }
+          items.push({ p, code: c, crates: cr, loose: ls, kg });
+          continue;
+        }
+      }
+
+      const p = findP(line);
+      if (p) {
+        items.push({ p, code: line, crates: 1, loose: 0, kg: p.kg || 0 });
+      }
+    }
+    if (items.length) return items;
+  }
+
+  // Format 3: Tek satirda noktali virgulle ardil urunler (Ornek: 220;2.5;140;1.8)
+  if (str.includes(';') && (str.match(/;/g) || []).length >= 2) {
+    const tokens = str.split(';').map(s => s.trim()).filter(Boolean);
+    if (tokens.length % 2 === 0) {
+      for (let i = 0; i < tokens.length; i += 2) {
+        const c = tokens[i];
+        const val = parseFloat(tokens[i + 1].replace(',', '.')) || 0;
+        const p = findP(c);
+        if (p) {
+          items.push({
+            p,
+            code: c,
+            kg: p.u === 'adet' ? null : val,
+            crates: p.u === 'adet' ? Math.round(val) : null,
+            loose: p.u === 'adet' ? 0 : val
+          });
+        }
+      }
+    }
+  }
+
+  return items;
+}
+
+async function handleBatchScan(raw, t) {
+  const items = parseBatchLines(raw);
+  if (!items || !items.length) return false;
+
+  let addedCount = 0;
+
+  if (t === 'fire') {
+    const why = (typeof FW !== 'undefined' && FW) ? FW : 'Curuk';
+    for (const it of items) {
+      const p = it.p;
+      const qty = it.kg != null && it.kg > 0 ? it.kg : (it.crates != null && it.crates > 0 ? it.crates : 1);
+      await addFire(p.id, qty, why, 'toplu_qr', it.code || '', p.u === 'adet' ? 'adet' : 'kg');
+      addedCount++;
+    }
+    beep(2);
+    vib([80, 40, 80]);
+    toast(addedCount + ' urun fire listesine toplu eklendi');
+    if (typeof fireR === 'function') fireR();
+    return true;
+  }
+
+  if (t === 'say') {
+    for (const it of items) {
+      const p = it.p;
+      const cur = cnt(p.id);
+      if (it.crates != null || it.loose != null) {
+        const newCrates = (it.crates != null ? it.crates : cur.crates);
+        const newLoose = (it.loose != null ? it.loose : cur.loose);
+        await setC(p.id, { crates: newCrates, loose: newLoose });
+      } else if (it.kg != null) {
+        if (p.u === 'adet') {
+          await setC(p.id, { crates: cur.crates + Math.round(it.kg) });
+        } else {
+          await setC(p.id, { loose: +(cur.loose + it.kg).toFixed(3) });
+        }
+      } else {
+        await setC(p.id, { crates: cur.crates + 1 });
+      }
+      addedCount++;
+    }
+    beep(2);
+    vib([80, 40, 80]);
+    toast(addedCount + ' urun sayima toplu eklendi');
+    render();
+    return true;
+  }
+
+  if (t === 'ship') {
+    const s = curShip();
+    if (!s) {
+      toast('Once sevkiyati baslatin');
+      return false;
+    }
+    for (const it of items) {
+      const p = it.p;
+      const l = s.lines[p.id] || { c: 0, p: 0, l: 0 };
+      const newC = l.c + (it.crates || 0);
+      const newL = +(l.l + (it.loose || it.kg || 0)).toFixed(3);
+      await setL(p.id, { c: newC, l: newL });
+      addedCount++;
+    }
+    beep(2);
+    vib([80, 40, 80]);
+    toast(addedCount + ' urun sevkiyata toplu eklendi');
+    renderShip();
+    return true;
+  }
+
+  return false;
+}
+
 /* scan: Fire sekmesi + etiketler kamerada da çözülür */
 const _scan = scan;
-scan = function(raw, t) {
+scan = async function(raw, t) {
   if (!raw) return;
+
+  // 0. Toplu QR (Cok satirli, JSON, MANAV_SYNC, veya liste) algilama
+  if (typeof raw === 'string') {
+    const isBatch = await handleBatchScan(raw, t);
+    if (isBatch) return;
+  }
+
   const parsed = parseScanInput(raw);
   if (!parsed || !parsed.code) return;
 
