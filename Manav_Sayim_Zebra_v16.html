@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b9468">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Manav Sayım">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <title>Manav Sayım</title>
 <script>var QRC=(function(){var M={},require=function(n){return M[n.replace(/^.*\//,"").replace(/\.js$/,"")]};(function(){var module={exports:{}};module.exports = {
     MODE_NUMBER :       1 << 0,
@@ -3024,6 +3033,93 @@ function simp(){const sec=q('#t-pano');if(!sec)return;const hero=sec.querySelect
 const tp=q('#t-pano');
 if(tp){new MutationObserver(()=>{if(!tp.classList.contains('hide'))simp()}).observe(tp,{attributes:true,attributeFilter:['class']});setTimeout(simp,2500)}
 }catch(err){console.error('v16',err)}})();
+</script>
+
+<!-- PWA & Çevrimdışı (Offline) Desteği -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      console.log('SW kayıt başarılı:', reg.scope);
+    }).catch((err) => {
+      console.warn('SW kayıt hatası:', err);
+    });
+  });
+}
+
+// PWA Yükleme / İndirme Yardımcısı (Android Chrome, iOS Safari & Masaüstü)
+(function() {
+  let deferredPrompt = null;
+  const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  if (isStandalone) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = 'position:fixed;bottom:78px;left:14px;right:14px;max-width:612px;margin:0 auto;background:var(--card,#ffffff);border:1.5px solid var(--line,#e4e8f1);border-radius:18px;padding:12px 16px;box-shadow:0 12px 32px rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:9999;font-family:system-ui,-apple-system,sans-serif;font-size:13px;';
+
+  // Android Chrome / Edge
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <img src="./icons/icon-192.png" style="width:38px;height:38px;border-radius:10px;flex:none;" alt="İkon">
+        <div>
+          <b style="display:block;font-size:14px;color:var(--ink,#111);">Telefona Yükle</b>
+          <span style="color:var(--mute,#666);font-size:12px;">Çevrimdışı ve tam ekran kullanın</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex:none;">
+        <button id="pwa-install-btn" style="background:#0b9468;color:#fff;border:0;border-radius:12px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;">Yükle</button>
+        <button id="pwa-close-btn" style="background:transparent;color:var(--mute,#888);border:0;font-size:18px;cursor:pointer;padding:0 6px;">×</button>
+      </div>
+    `;
+    if (!document.getElementById('pwa-install-banner')) {
+      document.body.appendChild(banner);
+    }
+
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+      installBtn.onclick = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            banner.remove();
+          }
+          deferredPrompt = null;
+        }
+      };
+    }
+    const closeBtn = document.getElementById('pwa-close-btn');
+    if (closeBtn) closeBtn.onclick = () => banner.remove();
+  });
+
+  // iOS Safari
+  if (isIos && !sessionStorage.getItem('ios-pwa-dismissed')) {
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <img src="./icons/icon-192.png" style="width:38px;height:38px;border-radius:10px;flex:none;" alt="İkon">
+        <div style="color:var(--ink,#111);font-size:12px;line-height:1.3;">
+          <b>Telefona Yüklemek İçin:</b> Safari'de alttaki <b>Paylaş (⎙/⎋)</b> butonuna basıp <b>"Ana Ekrana Ekle"</b>yi seçin.
+        </div>
+      </div>
+      <button id="pwa-ios-close" style="background:transparent;color:var(--mute,#888);border:0;font-size:18px;cursor:pointer;padding:0 6px;flex:none;">×</button>
+    `;
+    setTimeout(() => {
+      if (!isStandalone && !document.getElementById('pwa-install-banner')) {
+        document.body.appendChild(banner);
+        const closeBtn = document.getElementById('pwa-ios-close');
+        if (closeBtn) closeBtn.onclick = () => {
+          banner.remove();
+          sessionStorage.setItem('ios-pwa-dismissed', '1');
+        };
+      }
+    }, 1500);
+  }
+})();
 </script>
 </body>
 </html>
