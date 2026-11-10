@@ -1599,7 +1599,15 @@ nav button svg{width:20px;height:20px;flex:none}
 nav button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff;box-shadow:0 4px 14px -3px var(--m1)}
 #qr{display:flex;justify-content:center;padding:16px;background:#fff;border-radius:20px;margin:12px 0}
-#fs{position:fixed;inset:0;background:#fff;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#111;text-align:center;padding:16px}
+#fs{position:fixed;inset:0;background:rgba(5,8,16,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain}
+.fs-card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:22px;max-width:440px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;text-align:center}
+.fs-hdr{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:14px;text-align:left}
+.fs-hdr b{font-size:16px;color:var(--ink)}
+.fs-x{width:36px;height:36px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center}
+.fs-qr-wrap{background:#fff;border-radius:18px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;max-width:320px;width:100%;aspect-ratio:1;margin:6px 0 12px}
+.fs-qr-wrap canvas{width:100%!important;height:auto!important;display:block}
+.fs-nav{width:100%;gap:8px;margin-top:6px}
+.fs-tip{display:block;font-size:11.5px;color:var(--mute);margin-top:12px;line-height:1.4}
 .hide{display:none!important}
 .chk{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--sh)}
 .chk b{display:flex;align-items:center;gap:8px;font:800 15px var(--f);margin-top:4px}
@@ -1629,10 +1637,10 @@ nav button.on{background:linear-gradient(135deg,var(--m1),var(--m2));color:#fff;
 .cam .c-bl{bottom:-2px;left:-2px;border-width:0 0 4.5px 4.5px;border-bottom-left-radius:24px}
 .cam .c-br{bottom:-2px;right:-2px;border-width:0 4.5px 4.5px 0;border-bottom-right-radius:24px}
 
-/* Brilliant Horizontal Cyan Laser Scan Line */
-.cam .hd{position:absolute;left:4px;right:4px;height:2.5px;background:linear-gradient(90deg,transparent,rgba(0,255,204,.3) 15%,#00ffcc 50%,rgba(0,255,204,.3) 85%,transparent);box-shadow:0 0 14px 2px #00ffcc,0 0 28px 4px rgba(0,255,204,.6);border-radius:99px;top:10%;animation:laserSweep 2.4s ease-in-out infinite alternate}
-.cam .hd::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:6px;background:#fff;border-radius:50%;box-shadow:0 0 20px 4px #00ffcc;opacity:.95}
-@keyframes laserSweep{0%{top:6%;opacity:.85}50%{opacity:1}100%{top:92%;opacity:.85}}
+/* Static Cyber-Neon Crosshair (No Moving Sweep) */
+.cam .hd{display:none}
+.cam .reticle-ch-h{position:absolute;left:10%;right:10%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,204,.2) 15%,rgba(0,255,204,.5) 50%,rgba(0,255,204,.2) 85%,transparent);box-shadow:0 0 6px rgba(0,255,204,.4);pointer-events:none}
+.cam .reticle-ch-v{position:absolute;top:10%;bottom:10%;left:50%;width:1px;background:linear-gradient(180deg,transparent,rgba(0,255,204,.2) 15%,rgba(0,255,204,.5) 50%,rgba(0,255,204,.2) 85%,transparent);box-shadow:0 0 6px rgba(0,255,204,.4);pointer-events:none}
 
 /* Bottom Hint Pill & Dock: Matching Reference */
 .cam .cam-bottom{position:absolute;bottom:0;left:0;right:0;z-index:20;display:flex;flex-direction:column;align-items:center;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse 130% 100% at 50% 100%,rgba(8,14,26,.96) 0%,rgba(5,8,16,.88) 60%,transparent 100%)}
@@ -1842,6 +1850,7 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div class="gl"><div><b id="sCr">0</b>kasa</div><div><b id="sCn">0 / 0</b>ürün sayıldı</div></div><div class="bar"><i id="pg"></i></div></div>
  <div id="bkb" class="unk hide"></div><div id="chk-say"></div><div class="sc"><svg viewBox="0 0 24 24" id="i1"></svg><input id="sc-say" data-tab="say" inputmode="none" placeholder="Barkod veya PLU okutun" autocomplete="off"><button class="g camb" aria-label="Kamerayla okut"></button><button class="g kb" aria-label="Klavyeyi aç veya kapat"></button></div>
  <div class="unk hide" id="unk-say"></div>
+ <button class="g" id="btn-quick-zebra" style="width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;margin:6px 0 10px;border-radius:18px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Toplu Zebra QR Oluştur</button>
  <div class="tools"><input type="date" id="date" aria-label="Sayım tarihi"><input id="q" placeholder="Ürün ara"></div>
  <div class="seg" id="chips"><button data-f="all" class="on">Tümü</button><button data-f="done">Sayılan</button><button data-f="todo">Sayılmayan</button></div>
  <div class="seg" id="cats"></div>
@@ -1948,9 +1957,9 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <h2>Zebra için tek QR</h2>
   <p class="sub">Zebra, QR'ı okutunca içindeki metni klavyeden yazılmış gibi imlecin olduğu kutuya yazar. Aşağıda QR oluşturunca Zebra'nın tam olarak ne yazacağı satır satır listelenir. Kod ürün kodudur, adet de kasa sayısıdır.</p>
   <div class="row"><div><label for="src">Hangi kod</label><select id="src"><option value="auto">PLU varsa PLU, yoksa barkod</option><option value="bar">Yalnızca barkod</option><option value="plu">Yalnızca PLU</option></select></div>
-  <div><label for="scope">Hangi ürünler</label><select id="scope"><option value="all">Tüm ürünler</option><option value="done">Sadece sayılanlar</option></select></div></div>
-  <div class="row"><div><label for="mode">İçerik</label><select id="mode"><option value="q" selected>Kod + kasa adedi (önerilen)</option><option value="r">Kodu kasa adedi kadar tekrarla</option><option value="k">Kod + toplam kg</option><option value="c">Yalnızca kodlar</option></select></div>
-  <div><label for="sep">Kodlar arası tuş</label><select id="sep"><option value="n">Enter (LF, önerilen)</option><option value="r">Enter (CR)</option><option value="t">Tab</option><option value=",">Virgül</option><option value=";">Noktalı virgül</option></select></div></div>
+  <div><label for="scope">Veri kaynağı</label><select id="scope"><option value="done" selected>Sayılan ürünler (Bugünün sayımı)</option><option value="ship">Sevkiyat verileri (Açık/Son)</option><option value="all">Tüm ürün kataloğu</option><option value="fire">Fire kayıtları (Son 30 gün)</option></select></div></div>
+  <div class="row"><div><label for="mode">Zebra formatı</label><select id="mode"><option value="ean13" selected>Terazi Barkodları (EAN-13, Kilo/Gram dahil)</option><option value="csv">Sütunlu Liste (PLU;Barkod;Ad;Kasa;Kg;Birim)</option><option value="key">DataWedge Tuşlama (Kod [ENTER] Miktar [ENTER])</option><option value="sync">Manav PWA Senkronizasyon (Cihazdan Cihaza)</option><option value="q">Kod + Kasa adedi</option><option value="k">Kod + Toplam Kg</option><option value="r">Kodu kasa sayısı kadar tekrarla</option><option value="c">Yalnızca kodlar</option></select></div>
+  <div><label for="sep">Kodlar arası tuş</label><select id="sep"><option value="n">Enter (LF, önerilen)</option><option value="r">Enter (CR)</option><option value="crlf">Enter (CRLF)</option><option value="t">Tab</option><option value=";">Noktalı virgül (;)</option><option value=",">Virgül (,)</option></select></div></div>
   <label for="dens">QR yoğunluğu</label><select id="dens"><option value="450" selected>Önerilen: rahat okuma, parça başına 450 karakter</option><option value="900">Dengeli, parça başına 900 karakter</option><option value="2400">Tek QR'a sığdır, 2400 karakter</option></select>
   <div class="row mt"><button id="mk">QR oluştur</button><button class="g" id="mkt">Deneme QR, 3 kod</button></div>
   <div id="qr" class="hide"></div><p class="sub" id="qinfo" style="text-align:center"></p>
@@ -2083,7 +2092,18 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <button data-t="urun"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg><span>Ürünler</span></button>
   <button data-t="aktar"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-3"/></svg><span>Aktar</span></button>
 </nav>
-<div id="fs" class="hide"><div id="fsq"></div><b id="fsi"></b><span>Parlaklığı artırın, Zebra'yı QR'a 15 cm yaklaştırın. Kapatmak için dokunun.</span></div>
+<div id="fs" class="hide">
+  <div class="fs-card">
+    <div class="fs-hdr">
+      <div><b>Toplu Zebra Senkronizasyon QR</b><p id="fsi" class="sub" style="margin:2px 0 0"></p></div>
+      <button class="g fs-x" id="fsx" aria-label="Kapat"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="fsq" class="fs-qr-wrap"></div>
+    <div class="row fs-nav hide" id="fs-nav-row"><button class="g" id="fsp">Önceki parça</button><button class="g" id="fsn">Sonraki parça</button></div>
+    <div class="row mt" style="gap:8px;width:100%"><button class="g" id="fscopy" style="flex:1">Metni Kopyala</button><button class="g" id="fsclose" style="flex:1">Kapat</button></div>
+    <span class="fs-tip">Zebra terminali telefon ekranına 15-20 cm mesafeden tutarak sarı tetiğe basın. İnternet bağlantısı gerektirmez.</span>
+  </div>
+</div>
 <div id="cam" class="cam hide">
   <video id="cv" playsinline muted></video>
   
@@ -2150,8 +2170,8 @@ function applyTh(){const r=document.documentElement;th==='auto'?r.removeAttribut
 /* Aktar alt sekme gecis mantigi */
 function showAktarGroup(g) {
   document.querySelectorAll('#anv button').forEach(b => b.classList.toggle('on', b.dataset.ag === g));
-  document.querySelectorAll('#t-aktar [data-ag]').forEach(e => {
-    if(e.id !== 'anv') e.classList.toggle('hide', e.dataset.ag !== g);
+  document.querySelectorAll('#t-aktar .card[data-ag]').forEach(e => {
+    e.classList.toggle('hide', e.dataset.ag !== g);
   });
 }
 const anvEl = $('#anv');
@@ -2303,8 +2323,8 @@ function icon(name){const k=IK(name);if(ICA[k])return ICA[k];let r=IR.find(x=>x[
 
 const tcOf=n=>(icon(n).match(/--tc:([^"]+)"/)||[])[1]||'#5fae3c';
 const card=(p,tot,on,body,sub)=>`<div class="pc ${on?'on':''}" data-id="${p.id}" style="--tc:${tcOf(p.name)}"><div class="h">${icon(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(codes(p))}</small><small>${sub||'Kasa '+fmt(p.kg)+(p.u==='adet'?' adet':' kg')}</small></div><div class="tot">${fmt(tot)}<small>${p.u==='adet'?'adet':'kg'}</small></div></div>${body?'<div class="fs">'+body+'</div>':''}</div>`;
-function wire(el,apply){el.addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;apply(b.closest('.pc').dataset.id,b.dataset.f,null,+b.dataset.d);vib(8)});
- el.addEventListener('change',e=>{const i=e.target;if(i.tagName==='INPUT'&&i.dataset.f)apply(i.closest('.pc').dataset.id,i.dataset.f,i.value,0)})}
+function wire(el,apply){el.addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;const card=b.closest('.pc')||b.closest('[data-id]');if(!card)return;apply(card.dataset.id,b.dataset.f,null,+b.dataset.d);vib(8)});
+ el.addEventListener('change',e=>{const i=e.target;if(i.tagName==='INPUT'&&i.dataset.f){const card=i.closest('.pc')||i.closest('[data-id]');if(card)apply(card.dataset.id,i.dataset.f,i.value,0)}})}
 
 /* sayım */
 function render(){
@@ -2409,12 +2429,110 @@ function parseScanInput(raw) {
   };
 }
 
-function scan(raw,t){const code=dg(raw);if(!code)return;const p=findP(code),u=$('#unk-'+t);
- if(!p){const lb=/^2\d{12}$/.test(code)&&(()=>{let t=0;for(let i=0;i<12;i++)t+=+code[i]*(i%2?3:1);return (10-t%10)%10===+code[12]})(),pl=lb?String(+code.slice(2,7)):code;
-  u.innerHTML=lb?`<span>Terazi etiketi geçerli: PLU <b>${pl}</b>, ${fmt(+code.slice(7,12)/1000)} kg. Bu PLU'da kayıtlı ürün yok.</span><button class="g" data-code="${pl}">PLU ile ürün ekle</button>`:`<span>Kayıtsız kod <b>${code}</b></span><button class="g" data-code="${code}">Ürün olarak ekle</button>`;u.classList.remove('hide');vib([60,40,60]);beep(0);toast(lb?'PLU '+pl+' kayıtlı değil':'Kayıtsız kod '+code);return}
- u.classList.add('hide');vib(18);beep(1);pulse();
- if(t==='say'){filt='all';$('#q').value='';setC(p.id,{crates:cnt(p.id).crates+1}).then(()=>flash(p.id,'#list'));toast(p.name+', kasa '+(cnt(p.id).crates))}
- else{const s=curShip();if(!s){toast('Önce sevkiyatı başlatın');return}const f=smode(),l=s.lines[p.id]||{c:0,p:0,l:0};setL(p.id,{[f]:l[f]+1}).then(()=>flash(p.id,'#slist'));toast(p.name+' +1 '+(f==='c'?'kasa':'adet'))}}
+async function scan(raw, t) {
+  if (!raw) return;
+  if (typeof raw === 'string') {
+    const rawTrim = raw.trim();
+    if (rawTrim.startsWith('MANAV_SYNC:') || (rawTrim.startsWith('{') && rawTrim.includes('manav-sayim'))) {
+      try {
+        const payload = rawTrim.startsWith('MANAV_SYNC:') ? rawTrim.slice(11) : rawTrim;
+        const data = JSON.parse(payload);
+        if (data && data.items && Array.isArray(data.items)) {
+          let count = 0;
+          for (const it of data.items) {
+            const p = findP(it.plu || it.bar || it.id);
+            if (p) {
+              if (data.type === 'ship' || t === 'ship') {
+                const s = curShip();
+                if (s) {
+                  await setL(p.id, { c: it.cr || 0, l: it.loose || 0, p: 0 });
+                  count++;
+                }
+              } else {
+                await setC(p.id, { crates: it.cr || 0, loose: it.loose || 0 });
+                count++;
+              }
+            }
+          }
+          beep(2);
+          vib([100, 50, 100]);
+          toast(count + ' adet urun Zebra cihazina basariyla aktarildi');
+          render();
+          renderShip();
+          return;
+        }
+      } catch(e) {
+        console.warn('Batch sync parse error', e);
+      }
+    }
+
+    if (rawTrim.includes('\n') || rawTrim.includes('\r')) {
+      const lines = rawTrim.split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+      if (lines.length > 1) {
+        let count = 0;
+        for (const line of lines) {
+          const parts = line.split(/[;,\t]/).map(s => s.trim()).filter(Boolean);
+          const codeCandidate = parts[0];
+          const p = findP(codeCandidate);
+          if (p) {
+            const cr = parts[1] ? parseInt(parts[1], 10) : 1;
+            const ls = parts[2] ? parseFloat(parts[2].replace(',', '.')) : 0;
+            if (t === 'say') {
+              await setC(p.id, { crates: cr, loose: ls });
+            } else {
+              const s = curShip();
+              if (s) await setL(p.id, { c: cr, l: ls });
+            }
+            count++;
+          } else {
+            scan(codeCandidate, t);
+          }
+        }
+        beep(2);
+        vib([80, 40, 80]);
+        toast(count + ' urun toplu olarak eklendi');
+        render();
+        renderShip();
+        return;
+      }
+    }
+  }
+
+  const code = dg(raw);
+  if (!code) return;
+  const p = findP(code), u = $('#unk-' + t);
+  if (!p) {
+    const lb = /^2\d{12}$/.test(code) && (() => {
+      let tot = 0;
+      for (let i = 0; i < 12; i++) tot += +code[i] * (i % 2 ? 3 : 1);
+      return (10 - tot % 10) % 10 === +code[12];
+    })(), pl = lb ? String(+code.slice(2, 7)) : code;
+    u.innerHTML = lb
+      ? `<span>Terazi etiketi gecerli: PLU <b>${pl}</b>, ${fmt(+code.slice(7, 12) / 1000)} kg. Bu PLU'da kayitli urun yok.</span><button class="g" data-code="${pl}">PLU ile urun ekle</button>`
+      : `<span>Kayitsiz kod <b>${code}</b></span><button class="g" data-code="${code}">Urun olarak ekle</button>`;
+    u.classList.remove('hide');
+    vib([60, 40, 60]);
+    beep(0);
+    toast(lb ? 'PLU ' + pl + ' kayitli degil' : 'Kayitsiz kod ' + code);
+    return;
+  }
+  u.classList.add('hide');
+  vib(18);
+  beep(1);
+  pulse();
+  if (t === 'say') {
+    filt = 'all';
+    $('#q').value = '';
+    setC(p.id, { crates: cnt(p.id).crates + 1 }).then(() => flash(p.id, '#list'));
+    toast(p.name + ', kasa ' + (cnt(p.id).crates));
+  } else {
+    const s = curShip();
+    if (!s) { toast('Once sevkiyati baslatin'); return; }
+    const f = smode(), l = s.lines[p.id] || { c: 0, p: 0, l: 0 };
+    setL(p.id, { [f]: l[f] + 1 }).then(() => flash(p.id, '#slist'));
+    toast(p.name + ' +1 ' + (f === 'c' ? 'kasa' : 'adet'));
+  }
+}
 document.querySelectorAll('.sc input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();const v=i.value;i.value='';scan(v,i.dataset.tab)}}));
 document.querySelectorAll('.kb').forEach(b=>b.onclick=()=>{const i=b.parentNode.querySelector('input');i.inputMode=i.inputMode==='none'?'numeric':'none';i.blur();i.focus()});
 document.querySelectorAll('.unk').forEach(u=>u.onclick=e=>{const b=e.target.closest('button');if(b){setTab('urun');$('#pp').value=b.dataset.code.length<=6?b.dataset.code:'';$('#pb').value=b.dataset.code.length>6?b.dataset.code:'';$('#pn').focus()}});
@@ -2455,10 +2573,118 @@ $('#psave').onclick=async()=>{const p=cleanP({id:editId||uid('p'),name:$('#pn').
  const o=clash(p,p.id);if(o){er.textContent='Bu kod zaten "'+o.name+'" ürününde kayıtlı.';return}
  await save('products',p);clearF();renderP();render();renderShip();toast('Ürün kaydedildi')};
 
-/* Zebra QR */
-const SEP={n:'\n',r:'\r',t:'\t'};
-function items(){ZR.length=0;const src=$('#src').value,sp=SEP[$('#sep').value]||$('#sep').value,md=$('#mode').value,dn=$('#scope').value==='done';
- return plist().filter(p=>!dn||cnt(p.id).crates||cnt(p.id).loose).map(p=>({c:src==='bar'?p.barcode:src==='plu'?p.plu:(p.plu||p.barcode),p})).filter(x=>x.c).map(x=>{const c=cnt(x.p.id),kg=Math.round((c.crates*x.p.kg+c.loose)*100)/100;let t;if(md==='r')t=(x.c+sp).repeat(c.crates);else if(md==='k')t=x.c+sp+kg+sp;else if(md==='q')t=x.c+sp+c.crates+sp;else t=x.c+sp;if(t)ZR.push({c:x.c,n:x.p.name,q:md==='k'?kg+' kg':md==='r'||md==='q'?String(c.crates):''});return t}).filter(Boolean)}
+/* Zebra QR & Toplu Senkronizasyon */
+function makeEan13(prefix, code, grams) {
+  const pfx = String(prefix || '27').slice(0, 2);
+  const plu = String(code || '').replace(/\D/g, '').slice(-5).padStart(5, '0');
+  const gr = String(Math.min(99999, Math.max(0, Math.round(grams || 0)))).padStart(5, '0');
+  const d12 = pfx + plu + gr;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(d12[i], 10) * (i % 2 === 1 ? 3 : 1);
+  }
+  const check = (10 - (sum % 10)) % 10;
+  return d12 + check;
+}
+
+const SEP = { n: '\n', r: '\r', crlf: '\r\n', t: '\t', ';': ';', ',': ',' };
+function items() {
+  ZR.length = 0;
+  const src = $('#src') ? $('#src').value : 'auto';
+  const sepKey = $('#sep') ? $('#sep').value : 'n';
+  const sp = SEP[sepKey] || sepKey || '\n';
+  const md = $('#mode') ? $('#mode').value : 'ean13';
+  const scope = $('#scope') ? $('#scope').value : 'done';
+
+  let list = [];
+  if (scope === 'ship') {
+    const s = curShip() || [...M.ships.values()].sort((a,b)=>b.t-a.t)[0];
+    if (s && s.lines) {
+      list = Object.keys(s.lines).map(id => {
+        const p = M.products.get(id);
+        if (!p) return null;
+        const l = s.lines[id] || { c: 0, p: 0, l: 0 };
+        const kg = Math.round((l.c * (p.kg || 0) + (l.l || 0)) * 100) / 100;
+        return { p, crates: l.c || 0, loose: l.l || 0, kg };
+      }).filter(Boolean);
+    }
+  } else if (scope === 'fire') {
+    list = plist().map(p => {
+      const fr = fire30(p.id) || 0;
+      return { p, crates: 0, loose: fr, kg: fr };
+    }).filter(x => x.kg > 0);
+  } else if (scope === 'all') {
+    list = plist().map(p => {
+      const c = cnt(p.id);
+      const kg = Math.round((c.crates * (p.kg || 0) + c.loose) * 100) / 100;
+      return { p, crates: c.crates, loose: c.loose, kg };
+    });
+  } else {
+    list = plist().map(p => {
+      const c = cnt(p.id);
+      const kg = Math.round((c.crates * (p.kg || 0) + c.loose) * 100) / 100;
+      return { p, crates: c.crates, loose: c.loose, kg };
+    }).filter(x => x.crates > 0 || x.loose > 0 || (x.p && x.p.z));
+  }
+
+  if (md === 'sync') {
+    const syncData = {
+      app: 'manav-sayim',
+      v: 2,
+      type: scope === 'ship' ? 'ship' : 'say',
+      date: today(),
+      items: list.map(x => ({
+        id: x.p.id,
+        plu: x.p.plu,
+        bar: x.p.barcode,
+        name: x.p.name,
+        cr: x.crates,
+        loose: x.loose,
+        u: x.p.u || 'kg',
+        kg: x.kg
+      }))
+    };
+    const payload = 'MANAV_SYNC:' + JSON.stringify(syncData);
+    ZR.push({ c: 'SYNC', n: 'Toplu Senkronizasyon (' + list.length + ' urun)', q: list.length + ' kayit', d: 'Manav PWA Senkronizasyon' });
+    return [payload];
+  }
+
+  return list.map(x => {
+    const p = x.p;
+    const cCode = src === 'bar' ? p.barcode : src === 'plu' ? p.plu : (p.plu || p.barcode || p.id);
+    if (!cCode && md !== 'csv') return null;
+
+    let t = '';
+    const miktar = p.u === 'adet' ? String(x.crates || x.loose || 1) : fmt(x.kg || 0);
+
+    if (md === 'ean13') {
+      const grams = Math.round((x.kg || 0) * 1000);
+      const ean = makeEan13('27', p.plu || p.barcode, grams);
+      t = ean + sp;
+      ZR.push({ c: ean, n: p.name, q: fmt(x.kg) + ' kg (' + x.crates + ' kasa)', d: 'EAN-13 Terazi Barkodu' });
+    } else if (md === 'csv') {
+      const lineSep = sp === '\n' || sp === '\r' || sp === '\r\n' ? ';' : sp;
+      t = [p.plu || '', p.barcode || '', p.name, x.crates, fmt(x.kg), p.u || 'kg'].join(lineSep) + (sp === '\n' || sp === '\r' || sp === '\r\n' ? sp : '\n');
+      ZR.push({ c: p.plu || p.barcode || '-', n: p.name, q: x.crates + ' kasa / ' + fmt(x.kg) + ' ' + (p.u || 'kg'), d: 'Sutunlu CSV' });
+    } else if (md === 'key') {
+      t = cCode + sp + miktar + sp;
+      ZR.push({ c: cCode, n: p.name, q: miktar + ' (' + (p.u || 'kg') + ')', d: 'DataWedge Klavye' });
+    } else if (md === 'q') {
+      t = cCode + sp + x.crates + sp;
+      ZR.push({ c: cCode, n: p.name, q: x.crates + ' kasa', d: 'Kod + Kasa' });
+    } else if (md === 'k') {
+      t = cCode + sp + fmt(x.kg) + sp;
+      ZR.push({ c: cCode, n: p.name, q: fmt(x.kg) + ' kg', d: 'Kod + Kg' });
+    } else if (md === 'r') {
+      t = (cCode + sp).repeat(Math.max(1, x.crates));
+      ZR.push({ c: cCode, n: p.name, q: x.crates + ' kez okutma', d: 'Tekrarli' });
+    } else {
+      t = cCode + sp;
+      ZR.push({ c: cCode, n: p.name, q: 'Yalnizca kod', d: 'Barkod' });
+    }
+    return t;
+  }).filter(Boolean);
+}
 function chunk(a){const r=[];let cur='',n=0;a.forEach(s=>{if(cur&&cur.length+s.length>lim){r.push({t:cur,n});cur='';n=0}cur+=s;n++});if(cur)r.push({t:cur,n});return r}
 const draw=(box,text,size)=>{const q=new QRC(-1,1);q.addData(text);q.make();const n=q.getModuleCount(),cs=document.createElement('canvas'),px=Math.max(2,Math.floor(size/(n+8))),S=px*(n+8);cs.width=cs.height=S;const x=cs.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,S,S);x.fillStyle='#000';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.modules[r][c])x.fillRect((c+4)*px,(r+4)*px,px,px);cs.style.cssText='width:100%;max-width:'+Math.max(size,S)+'px;image-rendering:pixelated;height:auto';box.innerHTML='';box.appendChild(cs)};
 function showQ(tr){const box=$('#qr');if(typeof QRC==='undefined'){$('#qinfo').textContent='QR kütüphanesi yüklenmedi. Sayfayı internet varken yeniden açın.';return}
@@ -2466,11 +2692,102 @@ function showQ(tr){const box=$('#qr');if(typeof QRC==='undefined'){$('#qinfo').t
  box.classList.remove('hide');$('#qfs').classList.remove('hide');const p=parts[qi];
  try{draw(box,p.t,264)}catch(e){if((tr||0)<4&&lim>120){lim=Math.floor(lim*.6);parts=chunk(items());qi=0;return showQ((tr||0)+1)}$('#qinfo').textContent='QR üretilemedi.';return}
  $('#qinfo').textContent=parts.length===1?'Tek QR, '+p.n+' ürün, '+p.t.length+' karakter':'Parça '+(qi+1)+' / '+parts.length+', '+p.n+' ürün';$('#qnav').classList.toggle('hide',parts.length<2)}
-$('#mk').onclick=()=>{lim=+$('#dens').value||900;parts=chunk(items());qi=0;showQ(0);if(parts.length>1)toast(parts.length+' parçaya bölündü')};
-$('#mkt').onclick=()=>{lim=900;parts=chunk(items().slice(0,3));qi=0;showQ(0)};
-$('#qp').onclick=()=>{qi=(qi-1+parts.length)%parts.length;showQ(0)};$('#qn').onclick=()=>{qi=(qi+1)%parts.length;showQ(0)};
-$('#qfs').onclick=()=>{const s=Math.min(innerWidth-32,innerHeight-160,560);try{draw($('#fsq'),parts[qi].t,s)}catch(e){return}$('#fsi').textContent=$('#qinfo').textContent;$('#fs').classList.remove('hide')};
-$('#fs').onclick=()=>$('#fs').classList.add('hide');
+function openFsQR() {
+  if (!parts.length) {
+    lim = +$('#dens').value || 900;
+    parts = chunk(items());
+    qi = 0;
+  }
+  if (!parts.length) {
+    toast('Aktarilacak urun bulunamadi');
+    return;
+  }
+  const s = Math.min(innerWidth - 64, innerHeight - 240, 320);
+  try {
+    draw($('#fsq'), parts[qi].t, s);
+  } catch(e) {
+    toast('QR cizilemedi');
+    return;
+  }
+  $('#fsi').textContent = parts.length === 1
+    ? 'Tek QR · ' + parts[qi].n + ' urun'
+    : 'Parca ' + (qi + 1) + ' / ' + parts.length + ' · ' + parts[qi].n + ' urun';
+  const navRow = $('#fs-nav-row');
+  if (navRow) navRow.classList.toggle('hide', parts.length < 2);
+  $('#fs').classList.remove('hide');
+}
+
+$('#mk').onclick = () => {
+  lim = +$('#dens').value || 900;
+  parts = chunk(items());
+  qi = 0;
+  showQ(0);
+  if (parts.length > 1) toast(parts.length + ' parcaya bolundu');
+};
+$('#mkt').onclick = () => {
+  lim = 900;
+  parts = chunk(items().slice(0, 3));
+  qi = 0;
+  showQ(0);
+};
+$('#qp').onclick = () => { qi = (qi - 1 + parts.length) % parts.length; showQ(0); };
+$('#qn').onclick = () => { qi = (qi + 1) % parts.length; showQ(0); };
+$('#qfs').onclick = openFsQR;
+
+const quickSayBtn = $('#btn-quick-zebra');
+if (quickSayBtn) {
+  quickSayBtn.onclick = () => {
+    $('#scope').value = 'done';
+    lim = +$('#dens').value || 900;
+    parts = chunk(items());
+    qi = 0;
+    showQ(0);
+    openFsQR();
+  };
+}
+const quickShipBtn = $('#btn-quick-zebra-ship');
+if (quickShipBtn) {
+  quickShipBtn.onclick = () => {
+    $('#scope').value = 'ship';
+    lim = +$('#dens').value || 900;
+    parts = chunk(items());
+    qi = 0;
+    showQ(0);
+    openFsQR();
+  };
+}
+
+const fsxBtn = $('#fsx');
+if (fsxBtn) fsxBtn.onclick = () => $('#fs').classList.add('hide');
+const fscloseBtn = $('#fsclose');
+if (fscloseBtn) fscloseBtn.onclick = () => $('#fs').classList.add('hide');
+const fspBtn = $('#fsp');
+if (fspBtn) fspBtn.onclick = () => {
+  if (parts.length > 1) {
+    qi = (qi - 1 + parts.length) % parts.length;
+    showQ(0);
+    openFsQR();
+  }
+};
+const fsnBtn = $('#fsn');
+if (fsnBtn) fsnBtn.onclick = () => {
+  if (parts.length > 1) {
+    qi = (qi + 1) % parts.length;
+    showQ(0);
+    openFsQR();
+  }
+};
+const fscopyBtn = $('#fscopy');
+if (fscopyBtn) fscopyBtn.onclick = async () => {
+  if (parts[qi]) {
+    try {
+      await navigator.clipboard.writeText(parts[qi].t);
+      toast('QR icerigi panoya kopyalandi');
+    } catch(e) {
+      toast('Kopyalama basarisiz');
+    }
+  }
+};
 
 /* yedek */
 const msg=t=>$('#msg').textContent=t;
@@ -2551,7 +2868,33 @@ async function camStart(h){if(stream)camStop();camH=h;
  track=stream.getVideoTracks()[0];try{navigator.wakeLock.request('screen').then(w=>WL=w)}catch(e){}const v=$('#cv');v.srcObject=stream;try{await v.play()}catch(e){}
  let f=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code'];try{const s=await BarcodeDetector.getSupportedFormats();f=f.filter(x=>s.includes(x))}catch(e){}
  det=("BarcodeDetector" in window)?new BarcodeDetector({formats:f}):null;$('#cls').textContent='Barkodu çerçeveye alın';$('#cam').classList.remove('hide');syncOpt();tick()}
-function tick(){if(!stream)return;loopT=setTimeout(async()=>{const c=await readF();if(c){const n=Date.now();if(c!==last||n-lastT>1400){last=c;lastT=n;$('#rt').classList.add('ok');setTimeout(()=>$('#rt').classList.remove('ok'),260);$('#cls').textContent=c;if(camH)camH(c)}}tick()},90)}
+let scanBusy = false;
+function tick() {
+  if (!stream) return;
+  loopT = setTimeout(async () => {
+    if (scanBusy || !stream) { tick(); return; }
+    scanBusy = true;
+    try {
+      const c = await readF();
+      if (c) {
+        const n = Date.now();
+        if (c !== last || n - lastT > 1300) {
+          last = c;
+          lastT = n;
+          $('#rt').classList.add('ok');
+          setTimeout(() => $('#rt').classList.remove('ok'), 260);
+          $('#cls').textContent = c;
+          if (camH) camH(c);
+        }
+      }
+    } catch(e) {
+      console.warn('Frame scan err', e);
+    } finally {
+      scanBusy = false;
+    }
+    tick();
+  }, 80);
+}
 document.querySelectorAll('.camb').forEach(b=>b.onclick=()=>b.dataset.fill?camStart(c=>{const d=dg(c);if(!d)return;(d.length>6?$('#pb'):$('#pp')).value=d;beep(1);pulse();setTimeout(camStop,120)}):camStart(c=>{const p=findP(dg(c));scan(c,tab);if(p)setTimeout(()=>showCP(p.id),80)}));
 document.querySelectorAll('.sc input').forEach(i=>i.addEventListener('input',()=>{const v=i.value;if(!/\D/.test(v))return;const t=v.split(/\D+/),lastTok=/\D$/.test(v)?'':t.pop();t.filter(Boolean).forEach(x=>scan(x,i.dataset.tab));i.value=lastTok}));
 $('#uq').oninput=renderP;
@@ -2658,7 +3001,7 @@ function showCP(id){
     const tot=c.crates*p.kg+c.loose;
     totTxt=c.crates+' Kasa'+(c.loose?' + '+c.loose+(p.u==='adet'?' Adet':' Kg'):'')+' = '+fmt(tot)+(p.u==='adet'?' Adet':' Kg');
     h='<div class="row" style="align-items:center;gap:10px;margin-top:10px">'
-     +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">Kasa Sayısı</span><div class="stp" style="height:44px"><button data-f="c" data-d="-1" style="height:36px;width:36px">-</button><input data-f="c" inputmode="numeric" value="'+c.crates+'" style="font-size:20px"><button class="pl" data-f="c" data-d="1" style="height:36px;width:36px">+</button></div></div>'
+     +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">Kasa Sayisi</span><div class="stp" style="height:44px"><button data-f="c" data-d="-1" style="height:36px;width:36px">-</button><input data-f="c" inputmode="numeric" value="'+c.crates+'" style="font-size:20px"><button class="pl" data-f="c" data-d="1" style="height:36px;width:36px">+</button></div></div>'
      +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">'+(p.u==='adet'?'Ek Adet':'Ek Kg')+'</span><input class="ek" data-f="l" inputmode="decimal" placeholder="0" value="'+(c.loose||'')+'" style="height:44px"></div>'
      +'</div>'
      +'<div class="row mt" style="gap:8px">'
@@ -2675,25 +3018,49 @@ function showCP(id){
      +'</div>'
      +'<button class="mt cam-ok-btn" style="width:100%;height:42px;border-radius:14px;font-weight:700">Onayla & Devam Et</button>';
   }
-  el.innerHTML='<div class="cam-card" data-id="'+p.id+'" style="border-left:5px solid '+tc+';background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35);margin:10px 0 0;text-align:left">'
+  el.innerHTML='<div class="cam-card pc" data-id="'+p.id+'" style="border-left:5px solid '+tc+';background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35);margin:10px 0 0;text-align:left">'
    +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
    +'<div><b style="font-size:17px;color:var(--ink)">'+esc(p.name)+'</b><div style="font-size:12px;color:var(--mute);margin-top:2px">'+esc(codes(p))+'</div></div>'
-   +'<span style="font-weight:800;font-size:14px;color:var(--m1);background:color-mix(in srgb,var(--m1) 12%,var(--card));padding:4px 10px;border-radius:12px">'+totTxt+'</span>'
+   +'<span class="cam-badge" style="font-weight:800;font-size:14px;color:var(--m1);background:color-mix(in srgb,var(--m1) 12%,var(--card));padding:4px 10px;border-radius:12px">'+totTxt+'</span>'
    +'</div>'
    +h
    +'</div>';
 }
 
-// In-camera quick actions
+// In-camera interactive controls: -, +, Ok, Unit, and live inputs
 $('#cpb').addEventListener('click', async e => {
-  const ok = e.target.closest('.cam-ok-btn');
-  const unit = e.target.closest('.cam-unit-btn');
   const card = e.target.closest('.cam-card');
   if (!card) return;
   const id = card.dataset.id;
   const p = M.products.get(id);
   if (!p) return;
 
+  const btn = e.target.closest('button[data-f]');
+  if (btn) {
+    const f = btn.dataset.f;
+    const d = +btn.dataset.d;
+    if (tab === 'say') {
+      const cur = cnt(id);
+      const newC = Math.max(0, cur.crates + d);
+      await setC(id, { crates: newC });
+      showCP(id);
+      render();
+      vib(14);
+    } else if (tab === 'sev') {
+      const s = curShip();
+      if (s) {
+        const l = s.lines[id] || { c: 0, p: 0, l: 0 };
+        const newC = Math.max(0, l.c + d);
+        await setL(id, { c: newC });
+        showCP(id);
+        renderShip();
+        vib(14);
+      }
+    }
+    return;
+  }
+
+  const ok = e.target.closest('.cam-ok-btn');
   if (ok) {
     beep(1);
     vib(20);
@@ -2701,16 +3068,56 @@ $('#cpb').addEventListener('click', async e => {
     $('#cpb').innerHTML = '';
     return;
   }
+
+  const unit = e.target.closest('.cam-unit-btn');
   if (unit) {
     const to = p.u === 'adet' ? 'kg' : 'adet';
     p.u = to;
     await save('products', p);
     showCP(id);
-    toast(p.name + ' birimi ' + to + ' yapıldı');
+    render();
+    toast(p.name + ' birimi ' + to.toUpperCase() + ' yapildi');
   }
 });
-wire($('#cpb'),async(id,f,v,d)=>{const n=x=>Math.max(0,v===null?x+d:f==='l'?num(v):Math.floor(num(v)));
- if(tab==='say'){const k=f==='c'?'crates':'loose';await setC(id,{[k]:n(cnt(id)[k])})}else{const s=curShip();if(!s)return;await setL(id,{[f]:n((s.lines[id]||{c:0,p:0,l:0})[f])})}showCP()});
+
+$('#cpb').addEventListener('input', async e => {
+  const input = e.target;
+  const card = input.closest('.cam-card');
+  if (!card) return;
+  const id = card.dataset.id;
+  const p = M.products.get(id);
+  if (!p) return;
+  const f = input.dataset.f;
+  if (!f) return;
+
+  if (tab === 'say') {
+    const cur = cnt(id);
+    if (f === 'c') {
+      cur.crates = Math.max(0, parseInt(input.value, 10) || 0);
+    } else if (f === 'l') {
+      cur.loose = Math.max(0, parseFloat(input.value.replace(',', '.')) || 0);
+    }
+    await setC(id, { crates: cur.crates, loose: cur.loose });
+    const tot = cur.crates * p.kg + cur.loose;
+    const badge = card.querySelector('.cam-badge');
+    if (badge) badge.textContent = cur.crates + ' Kasa' + (cur.loose ? ' + ' + cur.loose + (p.u === 'adet' ? ' Adet' : ' Kg') : '') + ' = ' + fmt(tot) + (p.u === 'adet' ? ' Adet' : ' Kg');
+    render();
+  } else if (tab === 'sev') {
+    const s = curShip();
+    if (!s) return;
+    const l = s.lines[id] || { c: 0, p: 0, l: 0 };
+    if (f === 'c') {
+      l.c = Math.max(0, parseInt(input.value, 10) || 0);
+    } else if (f === 'l') {
+      l.l = Math.max(0, parseFloat(input.value.replace(',', '.')) || 0);
+    }
+    await setL(id, l);
+    const tot = l.c * p.kg + l.l;
+    const badge = card.querySelector('.cam-badge');
+    if (badge) badge.textContent = l.c + ' Kasa · ' + fmt(tot) + (p.u === 'adet' ? ' Adet' : ' Kg');
+    renderShip();
+  }
+});
 /* rapor */
 const COL='0B9468';
 function rep(){const v=$('#rk').value;if(!v)return null;const[t,k]=v.split('~');let title,date,rows=[];
@@ -2768,9 +3175,27 @@ Object.assign(IC,{x:'<path d="M6 6l12 12M18 6L6 18"/>',torch:'<path d="M8 3h8v4l
 const ZR=[];let WL=null,zi=0;
 document.querySelectorAll('.kb').forEach(b=>b.innerHTML=ico('kbd'));
 $('#czm').onclick=async()=>{try{const z=track.getCapabilities().zoom;if(!z)return toast('Bu kamerada yakınlaştırma yok');const st=[z.min,Math.min(z.max,z.min*2),Math.min(z.max,z.min*3)];zi=(zi+1)%3;await track.applyConstraints({advanced:[{zoom:st[zi]}]});toast('Yakınlaştırma '+(zi+1)+'x')}catch(e){toast('Yakınlaştırma açılamadı')}};
-function zTab(){const p=parts[qi],el=$('#ztab');if(!p){el.innerHTML='';return}let off=0;for(let i=0;i<qi;i++)off+=parts[i].n;
- const sv=$('#sep').value,sn=esc(sv==='n'||sv==='r'?'Enter':sv==='t'?'Tab':sv),md=$('#mode').value,k=t=>'<span class="kk">'+t+'</span>';
- el.innerHTML='<div class="chk"><b><i class="k"></i>Zebra bu QR\'ı okutunca şunu yazar</b><p>İmleç hangi kutudaysa, aşağıdaki sırayla klavyeden yazılmış gibi girer. Parça '+(qi+1)+' / '+parts.length+'</p>'+ZR.slice(off,off+p.n).map((r,i)=>'<div class="zr"><span>'+(i+1)+'</span><div><b>'+esc(r.n)+'</b><small>'+(md==='c'?'Yalnızca kod':md==='r'?'Kod '+r.c+', '+r.q+' kez okutulmuş gibi':'Kod '+r.c+(md==='k'?', toplam ':', kasa ')+r.q)+'</small></div><div class="zk"><code>'+r.c+'</code>'+k(sn)+(md==='q'||md==='k'?'<code>'+r.q.replace(' kg','')+'</code>'+k(sn):'')+(md==='r'?'<small>× '+r.q+'</small>':'')+'</div></div>').join('')+'</div>'}
+function zTab() {
+  const p = parts[qi], el = $('#ztab');
+  if (!p) { el.innerHTML = ''; return; }
+  let off = 0;
+  for (let i = 0; i < qi; i++) off += parts[i].n;
+  const sv = $('#sep') ? $('#sep').value : 'n';
+  const sn = esc(sv === 'n' || sv === 'r' || sv === 'crlf' ? 'Enter' : sv === 't' ? 'Tab' : sv);
+  const md = $('#mode') ? $('#mode').value : 'ean13';
+  const k = t => '<span class="kk">' + t + '</span>';
+
+  el.innerHTML = '<div class="chk"><b><i class="k"></i>Zebra DataWedge Cikis Onizlemesi</b>'
+    + '<p>Imlec hangi kutudaysa sirayla tuslanir. Parca ' + (qi + 1) + ' / ' + parts.length + ' (' + p.n + ' urun)</p>'
+    + ZR.slice(off, off + p.n).map((r, i) =>
+        '<div class="zr"><span>' + (off + i + 1) + '</span>'
+        + '<div><b>' + esc(r.n) + '</b><small>' + (r.d || ('Kod ' + r.c + ' · ' + r.q)) + '</small></div>'
+        + '<div class="zk"><code>' + r.c + '</code>' + k(sn)
+        + (md === 'key' || md === 'q' || md === 'k' ? '<code>' + r.q.replace(/[^0-9.,]/g, '') + '</code>' + k(sn) : '')
+        + '</div></div>'
+      ).join('')
+    + '</div>';
+}
 
 (()=>{const i=$('#ztest'),o=$('#ztout');if(!i)return;let L=[];const nm={Enter:'[ENTER]',Tab:'[TAB]'};
 i.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Tab')e.preventDefault();if(e.key==='Shift'||e.key==='Unidentified')return;L.push(nm[e.key]||(e.key.length===1?e.key:'['+e.key+']'));if(L.length>150)L.shift();o.textContent='Zebra şunu gönderdi:\n'+L.join(' ')+'\nToplam '+L.length+' tuş'});
@@ -3187,7 +3612,7 @@ function rate(id){const ds=D().filter(d=>kgOf(d,id)!==null).slice(-3);let out=0,
 function fire30(id){let k=0;const t=new Date(day()+'T00:00');for(const o of M.meta.values()){if(o.k.slice(0,4)!=='x|w|')continue;const g=(t-new Date(o.k.slice(4)+'T00:00'))/864e5;if(g<0||g>29)continue;(o.v||[]).forEach(w=>{if(w.id===id)k+=+w.kg||0})}return k}
 
 /* stiller */
-const st=document.createElement('style');st.textContent='#pdv{position:fixed;inset:0;z-index:9999;background:rgba(5,8,16,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}#pdv .bx{background:var(--card);border:1px solid var(--line);border-radius:32px 32px 0 0;width:min(100%,640px);max-height:88vh;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding:22px 18px calc(48px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 48px rgba(0,0,0,.35)}#pdv .handle{width:42px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 16px}#pdv .hh{display:flex;align-items:center;gap:6px}#pdv .hh .nm b{font:800 18px var(--f);text-transform:uppercase}.pd4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.pd4>div{background:var(--chip);border:1px solid var(--line);border-radius:16px;padding:10px 12px}.pd4 small{display:block;color:var(--mute);font-size:12px}.pd4 b{font:800 19px var(--f)}.pd4 em{display:block;font-style:normal;color:var(--mute);font-size:11.5px}#list .nm,#slist .nm{cursor:pointer}#list .nm b,#slist .nm b{border-bottom:1px dashed color-mix(in srgb,var(--ink) 35%,transparent)}body.lk #list .pc button,body.lk #list .pc input{pointer-events:none;opacity:.55}#gop{background:var(--chip);border-radius:14px;padding:12px;font:12.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;margin:8px 0 0}';document.head.appendChild(st);
+const st=document.createElement('style');st.textContent='#pdv{position:fixed;inset:0;z-index:99999;background:rgba(5,8,16,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}#pdv .bx{background:var(--card);border:1px solid var(--line);border-radius:32px 32px 0 0;width:min(100%,640px);max-height:88vh;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding:22px 18px calc(96px + env(safe-area-inset-bottom,24px));box-shadow:0 -12px 48px rgba(0,0,0,.5)}#pdv .handle{width:42px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 16px}#pdv .hh{display:flex;align-items:center;gap:6px}#pdv .hh .nm b{font:800 18px var(--f);text-transform:uppercase}.pd4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.pd4>div{background:var(--chip);border:1px solid var(--line);border-radius:16px;padding:10px 12px}.pd4 small{display:block;color:var(--mute);font-size:12px}.pd4 b{font:800 19px var(--f)}.pd4 em{display:block;font-style:normal;color:var(--mute);font-size:11.5px}#list .nm,#slist .nm{cursor:pointer}#list .nm b,#slist .nm b{border-bottom:1px dashed color-mix(in srgb,var(--ink) 35%,transparent)}body.lk #list .pc button,body.lk #list .pc input{pointer-events:none;opacity:.55}#gop{background:var(--chip);border-radius:14px;padding:12px;font:12.5px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;margin:8px 0 0}';document.head.appendChild(st);
 
 /* 1) ürün detay kartı */
 const sh=document.createElement('div');sh.id='pdv';sh.className='hide';document.body.appendChild(sh);

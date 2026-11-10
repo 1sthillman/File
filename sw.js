@@ -1,4 +1,4 @@
-const CACHE_NAME = 'manav-sayim-zebra-v8';
+const CACHE_NAME = 'manav-sayim-zebra-v9';
 const ASSETS = [
   './',
   './index.html',
