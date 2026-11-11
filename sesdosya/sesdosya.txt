@@ -1,0 +1,50 @@
+================================================================================
+MANAV SAYIM ZEBRA — ELEVENLABS SESLENDİRME VE KASASI (VOICE AUDIO VAULT)
+================================================================================
+
+[DURUM: TÜM 35 SES BAŞARIYLA BASE64 OLARAK PROJEYE GÖMÜLDÜ — %100 ÇEVRİMDIŞI]
+Robotik TTS tamamen devre dışı bırakılmış, stüdyo kalitesindeki 35 adet ElevenLabs
+Türkçe kadın sesi doğrudan "Manav_Sayim_Zebra_v17.html" ve "index.html" dosyalarına
+VOICE_AUDIO_VAULT içine gömülmüştür. Hiçbir harici internet bağlantısına veya API'ye
+ihtiyaç duymadan anında ve kesintisiz çalışmaktadır.
+
+Sıra | Ses Anahtarı (ID)    | Durum     | Ses Dosyası & Okunan Türkçe Metin
+-----+----------------------+-----------+----------------------------------------------
+01   | DEV_INFO             | [EKLENDİ] | "Yazılımcısı Sedat Dağlı'dır."
+02   | SAYIM_SAVED          | [EKLENDİ] | "Sayım kaydedildi."
+03   | SAYIM_CLEARED        | [EKLENDİ] | "Ürün sayımdan çıkarıldı."
+04   | SAYIM_DELTA          | [EKLENDİ] | "Sayım miktarı güncellendi."
+05   | SHIP_STARTED         | [EKLENDİ] | "Yeni sevkiyat başlatıldı."
+06   | SHIP_CLOSED          | [EKLENDİ] | "Sevkiyat kapatıldı."
+07   | SHIP_LINE_ADDED      | [EKLENDİ] | "Ürün sevkiyata eklendi."
+08   | SHIP_LINE_REMOVED    | [EKLENDİ] | "Ürün sevkiyattan çıkarıldı."
+09   | SHIP_NO_ACTIVE       | [EKLENDİ] | "Açık sevkiyat yok. Önce sevkiyat başlatın."
+10   | FIRE_SAVED           | [EKLENDİ] | "Fire kaydı başarıyla oluşturuldu."
+11   | PROD_EDIT_OPENED     | [EKLENDİ] | "Ürün düzenleme ekranı açıldı."
+12   | MODAL_CRATE_SET      | [EKLENDİ] | "Kasa ağırlığı ayarlandı."
+13   | MODAL_UNIT_SET       | [EKLENDİ] | "Ürün birimi güncellendi."
+14   | PROD_SAVED           | [EKLENDİ] | "Ürün başarıyla kaydedildi."
+15   | PROD_CANCELLED       | [EKLENDİ] | "Düzenleme iptal edildi."
+16   | TAB_OPENED           | [EKLENDİ] | "İlgili sayfa açıldı."
+17   | FILTER_APPLIED       | [EKLENDİ] | "Filtre uygulandı."
+18   | CAM_OPENED           | [EKLENDİ] | "Kamera açıldı."
+19   | CAM_CLOSED           | [EKLENDİ] | "Kamera kapatıldı."
+20   | WHATSAPP_OPENED      | [EKLENDİ] | "WhatsApp raporu hazırlanıyor."
+21   | UNDO_SUCCESS         | [EKLENDİ] | "Son işlem geri alındı."
+22   | UNDO_EMPTY           | [EKLENDİ] | "Geri alınacak işlem bulunmuyor."
+23   | NOT_UNDERSTOOD       | [EKLENDİ] | "Anlaşılamadı. Lütfen tekrar edin."
+24   | SHUTDOWN             | [EKLENDİ] | "Sesli asistan kapatıldı."
+25   | WAKEUP               | [EKLENDİ] | "Sesli asistan hazır, sizi dinliyorum."
+26   | PROD_NEW_OPENED      | [EKLENDİ] | "Yeni ürün ekleme formu açıldı."
+27   | MODAL_PLU_SET        | [EKLENDİ] | "P L U kodu güncellendi."
+28   | MODAL_BARCODE_SET    | [EKLENDİ] | "Barkod güncellendi."
+29   | MODAL_NAME_SET       | [EKLENDİ] | "Ürün adı güncellendi."
+30   | STATUS_SUMMARY       | [EKLENDİ] | "Sayım durumu özetlendi."
+31   | FIRE_SUMMARY         | [EKLENDİ] | "Günlük fire raporu hazırlandı."
+32   | SHIP_SUMMARY         | [EKLENDİ] | "Sevkiyat durumu özetlendi."
+33   | PROD_NOT_FOUND       | [EKLENDİ] | "Belirtilen ürün veya kod bulunamadı."
+34   | PROD_FOUND           | [EKLENDİ] | "Ürün bulundu ve seçildi."
+35   | MIC_PAUSED           | [EKLENDİ] | "Mikrofon duraklatıldı."
+================================================================================
+TOPLAM: 35 / 35 SES EKSİKSİZ TAMAMLANDI VE SİSTEME ENTEGRE EDİLDİ.
+================================================================================
