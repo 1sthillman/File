@@ -6058,6 +6058,8 @@ if (shipWaBtn) {
       this._speakingSafetyTimer = null;
       this._lastFabClick  = 0;
       this._lastNotUnderstoodTime = 0;
+      this._pendingCandidate = null;
+      this._pendingAlts = null;
 
       // DOM Refs
       this.hud = null; this.btnFab = null; this.centerMic = null;
@@ -6142,6 +6144,7 @@ if (shipWaBtn) {
         this.updateUIStatus('Dinleniyor', 'listening');
         this.setListeningVisuals(true);
         this.resetWatchdog();
+        console.log('[VC v12] Recognition started — lang:', this.recognition.lang);
       };
 
       this.recognition.onresult = (event) => {
@@ -6172,6 +6175,7 @@ if (shipWaBtn) {
               }
               const final = (bestCandidate || '').trim();
               if (final) {
+                console.log('[VC isFinal]', final, '| conf:', bestConf.toFixed(2), '| isSpeaking:', this.isSpeaking);
                 if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
                 this.handleSpeechResult(final, alts);
               }
@@ -6182,35 +6186,50 @@ if (shipWaBtn) {
             }
           }
 
-          // SMART AUTO-COMMIT (Silence Debounce / Instant Endpointing)
-          if (interimText && !this.isSpeaking) {
+          // SMART AUTO-COMMIT — Her zaman transcript göster, sadece işlemeyi isSpeaking'e bağla
+          if (interimText) {
             const candidate = interimText.trim();
+            // Transcript kutusunu her zaman güncelle (isSpeaking olsa bile)
             this.showTranscript(candidate, true);
+            console.log('[VC interim]', candidate, '| isSpeaking:', this.isSpeaking);
 
             if (this._interimTimer) {
               clearTimeout(this._interimTimer);
               this._interimTimer = null;
             }
 
-            const products = this.getProducts();
-            const currentTab = this.getCurrentTab();
-            const pmodal = document.getElementById('pmodal');
-            const isModalOpen = pmodal && !pmodal.classList.contains('hide');
+            // Ses çalıyorsa komutu kuyruğa al ama atmа
+            if (this.isSpeaking) {
+              this._pendingCandidate = candidate;
+              this._pendingAlts = [candidate];
+            } else {
+              this._pendingCandidate = null;
+              this._pendingAlts = null;
 
-            const fastTest = this.understand(candidate, [candidate], products, currentTab, isModalOpen);
-            // Complete recognized command -> 400ms silence commit
-            // General speech -> 700ms silence commit
-            const delay = fastTest ? 400 : 700;
+              const products = this.getProducts();
+              const currentTab = this.getCurrentTab();
+              const pmodal = document.getElementById('pmodal');
+              const isModalOpen = pmodal && !pmodal.classList.contains('hide');
 
-            this._interimTimer = setTimeout(() => {
-              this._interimTimer = null;
-              if (this.isSpeaking) return;
-              if (candidate && candidate !== this._lastCommittedText) {
-                console.log('[VC Smart Auto-Commit]', candidate);
-                try { if (this.recognition) this.recognition.abort(); } catch(e) {}
-                this.handleSpeechResult(candidate, [candidate]);
-              }
-            }, delay);
+              const fastTest = this.understand(candidate, [candidate], products, currentTab, isModalOpen);
+              // Tanınan komut -> 350ms, genel -> 600ms
+              const delay = fastTest ? 350 : 600;
+
+              this._interimTimer = setTimeout(() => {
+                this._interimTimer = null;
+                if (this.isSpeaking) {
+                  // Ses hâlâ çalıyorsa pending olarak tut
+                  this._pendingCandidate = candidate;
+                  this._pendingAlts = [candidate];
+                  return;
+                }
+                if (candidate && candidate !== this._lastCommittedText) {
+                  console.log('[VC Auto-Commit]', candidate);
+                  try { if (this.recognition) this.recognition.abort(); } catch(e) {}
+                  this.handleSpeechResult(candidate, [candidate]);
+                }
+              }, delay);
+            }
           }
         } catch(err) {
           console.warn('[VC onresult error]', err);
@@ -6243,15 +6262,15 @@ if (shipWaBtn) {
     }
 
     handleSpeechResult(rawText, alts) {
-      if (this.isSpeaking) return;
+      // isSpeaking kontrolünü kaldırdık — artık pending mekanizması kullanıyoruz
       if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
 
       const finalClean = String(rawText || '').trim();
       if (!finalClean) return;
 
       const now = Date.now();
-      // Deduplicate: If same text was committed in the last 1800ms, ignore
-      if (finalClean === this._lastCommittedText && (now - (this._lastCommittedTime || 0) < 1800)) {
+      // Deduplicate: If same text was committed in the last 1200ms, ignore
+      if (finalClean === this._lastCommittedText && (now - (this._lastCommittedTime || 0) < 1200)) {
         return;
       }
       this._lastCommittedText = finalClean;
@@ -6351,7 +6370,8 @@ if (shipWaBtn) {
         this.showIntent('?');
         this.showFeedback('Anlaşılamadı — lütfen tekrar edin', true, false);
         const now = Date.now();
-        if (rawText.length >= 4 && (now - this._lastNotUnderstoodTime > 3000)) {
+        // Anlaşılamadı sesini sadece 5 saniyede bir çal, sadece uzun konuşmalar için
+        if (rawText.length >= 5 && (now - this._lastNotUnderstoodTime > 5000)) {
           this._lastNotUnderstoodTime = now;
           this.playVoiceResponse('NOT_UNDERSTOOD');
         }
@@ -6898,10 +6918,19 @@ if (shipWaBtn) {
 
       this.isSpeaking = true;
       if (this._speakingSafetyTimer) clearTimeout(this._speakingSafetyTimer);
-      // Unconditional safety unlock: Never stay muted longer than 4.5 seconds
+      // Unconditional safety unlock: Never stay muted longer than 2 seconds
       this._speakingSafetyTimer = setTimeout(() => {
         this.isSpeaking = false;
-      }, 4500);
+        // Safety timeout sonrası da pending komutu işle
+        if (this._pendingCandidate) {
+          const pc = this._pendingCandidate;
+          const pa = this._pendingAlts || [pc];
+          this._pendingCandidate = null;
+          this._pendingAlts = null;
+          console.log('[VC Safety-Flush]', pc);
+          this.handleSpeechResult(pc, pa);
+        }
+      }, 2000);
 
       try {
         const audio = new Audio(dataUri);
@@ -6914,7 +6943,16 @@ if (shipWaBtn) {
             if (this.shouldKeepListening() && !this.isRecognizing) {
               this.startListening();
             }
-          }, 250);
+            // Ses biterken kuyruktaki bekleyen komutu işle
+            if (this._pendingCandidate) {
+              const pc = this._pendingCandidate;
+              const pa = this._pendingAlts || [pc];
+              this._pendingCandidate = null;
+              this._pendingAlts = null;
+              console.log('[VC Pending Flush]', pc);
+              this.handleSpeechResult(pc, pa);
+            }
+          }, 200);
         };
         audio.onended = finishAudio;
         audio.onerror = finishAudio;
@@ -7155,7 +7193,7 @@ if (shipWaBtn) {
       this.initSpeechRecognition();
       this.initEvents();
       this.initAudioAnalyser();
-      console.info('[VC v12] VoiceCommander v12 Aktif — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
+      console.info('[VC v13] VoiceCommander v13 Aktif — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
     }
   }
 
