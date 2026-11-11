@@ -1850,7 +1850,10 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div class="gl"><div><b id="sCr">0</b>kasa</div><div><b id="sCn">0 / 0</b>ürün sayıldı</div></div><div class="bar"><i id="pg"></i></div></div>
  <div id="bkb" class="unk hide"></div><div id="chk-say"></div><div class="sc"><svg viewBox="0 0 24 24" id="i1"></svg><input id="sc-say" data-tab="say" inputmode="none" placeholder="Barkod veya PLU okutun" autocomplete="off"><button class="g camb" aria-label="Kamerayla okut"></button><button class="g kb" aria-label="Klavyeyi aç veya kapat"></button></div>
  <div class="unk hide" id="unk-say"></div>
- <button class="g" id="btn-quick-zebra" style="width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;margin:6px 0 10px;border-radius:18px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Toplu Zebra QR Oluştur</button>
+ <div class="row" style="margin:6px 0 10px;gap:8px">
+  <button class="g" id="btn-quick-zebra" style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;border-radius:16px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Toplu Zebra QR</button>
+  <button class="g" id="btn-say-wa" style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;border-radius:16px;color:#25d366;border-color:color-mix(in srgb,#25d366 35%,transparent)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>WhatsApp Raporu</button>
+ </div>
  <div class="tools"><input type="date" id="date" aria-label="Sayım tarihi"><input id="q" placeholder="Ürün ara"></div>
  <div class="seg" id="chips"><button data-f="all" class="on">Tümü</button><button data-f="done">Sayılan</button><button data-f="todo">Sayılmayan</button></div>
  <div class="seg" id="cats"></div>
@@ -2092,6 +2095,66 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <button data-t="urun"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg><span>Ürünler</span></button>
   <button data-t="aktar"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-3"/></svg><span>Aktar</span></button>
 </nav>
+<!-- HIZLI URUN TANIMLAMA MODALI (INLINE & KAMERA) -->
+<div id="qamodal" class="hide" style="position:fixed;inset:0;background:rgba(5,8,16,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100005;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain">
+  <div class="card" style="max-width:440px;width:100%;border-radius:26px;box-shadow:0 24px 60px rgba(0,0,0,.6);margin:0;padding:22px;text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b style="font-size:18px;color:var(--ink)">Hızlı Ürün Tanımla</b>
+      <span id="qa-badge" style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px;background:var(--chip);color:var(--m1)"></span>
+    </div>
+    <p class="sub" style="margin-bottom:14px">Okutulan kod sistemde bulunamadı. Sayfadan ayrılmadan hemen kaydedin.</p>
+    <div style="margin-bottom:12px">
+      <label for="qa-name" style="font-size:12px;color:var(--mute);display:block;margin-bottom:4px">Ürün Adı *</label>
+      <input id="qa-name" placeholder="Örn: Salkım Domates, Amasya Elma" style="height:46px;font-size:16px;font-weight:600" autocomplete="off">
+    </div>
+    <div style="margin-bottom:12px">
+      <span style="font-size:12px;color:var(--mute);display:block;margin-bottom:6px">Kategori</span>
+      <div class="seg" id="qa-cats" style="margin:0">
+        <button type="button" data-c="Sebze" class="on">Sebze</button>
+        <button type="button" data-c="Meyve">Meyve</button>
+        <button type="button" data-c="Yeşillik">Yeşillik</button>
+        <button type="button" data-c="Narenciye">Narenciye</button>
+      </div>
+    </div>
+    <div class="row" style="gap:8px;margin-bottom:18px">
+      <div style="flex:1">
+        <label for="qa-kg" style="font-size:12px;color:var(--mute);display:block;margin-bottom:4px">Kasa Kg</label>
+        <input id="qa-kg" inputmode="decimal" value="15" style="height:44px">
+      </div>
+      <div style="flex:1">
+        <label for="qa-unit" style="font-size:12px;color:var(--mute);display:block;margin-bottom:4px">Birim</label>
+        <select id="qa-unit" style="height:44px">
+          <option value="kg" selected>Kg</option>
+          <option value="adet">Adet</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="g" id="qa-cancel" style="flex:1;height:44px;border-radius:14px">Vazgeç</button>
+      <button id="qa-save" style="flex:2;height:44px;border-radius:14px;font-weight:700">Kaydet &amp; Sayıma Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- COKLU CIHAZ AKILLI SAYIM BIRLESTIRME MODALI -->
+<div id="mergemodal" class="hide" style="position:fixed;inset:0;background:rgba(5,8,16,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100005;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain">
+  <div class="card" style="max-width:440px;width:100%;border-radius:26px;box-shadow:0 24px 60px rgba(0,0,0,.6);margin:0;padding:22px;text-align:left">
+    <b style="font-size:18px;color:var(--ink);display:block;margin-bottom:6px">Toplu Sayım Verisi Algılandı</b>
+    <p id="mm-info" class="sub" style="margin-bottom:18px;line-height:1.45"></p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button id="mm-merge" style="height:48px;border-radius:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px">
+        Mevcut Sayıma Ekle (Akıllı Birleştir)
+      </button>
+      <button class="g" id="mm-replace" style="height:44px;border-radius:14px;font-weight:600">
+        Üzerine Yaz (Tümünü Değiştir)
+      </button>
+      <button class="g" id="mm-cancel" style="height:40px;border-radius:14px;color:var(--mute)">
+        Vazgeç
+      </button>
+    </div>
+  </div>
+</div>
+
 <div id="fs" class="hide">
   <div class="fs-card">
     <div class="fs-hdr">
@@ -2229,7 +2292,7 @@ const plist=()=>[...M.products.values()].sort((a,b)=>a.name.localeCompare(b.name
 const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
 const cnt=id=>M.counts.get(ck(id))||{crates:0,loose:0};
 const codes=p=>(p.plu?'PLU '+p.plu:'')+(p.plu&&p.barcode?'   ':'')+(p.barcode?'Barkod '+p.barcode:'');
-const fld=(f,l,v,pl)=>`<div class="fld"><span>${l}</span><div class="stp"><button data-f="${f}" data-d="-1" aria-label="${l} azalt">-</button><input data-f="${f}" inputmode="numeric" value="${v}" aria-label="${l}"><button class="pl" data-f="${f}" data-d="1" aria-label="${l} artır">+</button></div></div>`;
+const fld=(f,l,v,pl)=>`<div class="fld"><span>${l}</span><div class="stp"><button data-f="${f}" data-d="-1" aria-label="${l} azalt">-</button><input data-f="${f}" inputmode="numeric" value="${v}" aria-label="${l}"><button class="pl" data-f="${f}" data-d="1" aria-label="${l} artır">+</button>${f==='c'?'<button class="pl" data-f="'+f+'" data-d="5" aria-label="5 artır" style="font-size:12px;padding:0 6px;font-weight:800;margin-left:2px">+5</button>':''}</div></div>`;
 const ek=(v,u)=>`<div class="fld ekf"><span>${u==='adet'?'Ek adet':'Ek kg'}</span><input class="ek" data-f="l" inputmode="decimal" placeholder="0" value="${v||''}" aria-label="Kasa dışı ek kilo"></div>`;
 /* ürün ikonları: elle çizilmiş düz SVG illüstrasyonlar, emoji yok */
 const IE=(x,y,a,b,f,r,o)=>`<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" fill="${f}"${r?` transform="rotate(${r} ${x} ${y})"`:''}${o?` opacity="${o}"`:''}/>`,
@@ -2546,13 +2609,18 @@ async function scan(raw, t) {
       for (let i = 0; i < 12; i++) tot += +code[i] * (i % 2 ? 3 : 1);
       return (10 - tot % 10) % 10 === +code[12];
     })(), pl = lb ? String(+code.slice(2, 7)) : code;
+    const detectedKg = lb ? +(+code.slice(7, 12) / 1000).toFixed(3) : null;
     u.innerHTML = lb
-      ? `<span>Terazi etiketi gecerli: PLU <b>${pl}</b>, ${fmt(+code.slice(7, 12) / 1000)} kg. Bu PLU'da kayitli urun yok.</span><button class="g" data-code="${pl}">PLU ile urun ekle</button>`
-      : `<span>Kayitsiz kod <b>${code}</b></span><button class="g" data-code="${code}">Urun olarak ekle</button>`;
+      ? `<span>Terazi etiketi: PLU <b>${pl}</b> (${fmt(detectedKg)} kg). Bu urun tanimli degil.</span><button class="g btn-quick-add" data-code="${pl}" data-kg="${detectedKg}">Hizli Urun Tanimla</button>`
+      : `<span>Kayitsiz kod <b>${code}</b></span><button class="g btn-quick-add" data-code="${code}">Hizli Urun Tanimla</button>`;
     u.classList.remove('hide');
     vib([60, 40, 60]);
     beep(0);
-    toast(lb ? 'PLU ' + pl + ' kayitli degil' : 'Kayitsiz kod ' + code);
+    if (stream) {
+      openQuickAddProduct(pl || code, detectedKg);
+    } else {
+      toast(lb ? 'PLU ' + pl + ' kayitli degil' : 'Kayitsiz kod ' + code);
+    }
     return;
   }
   u.classList.add('hide');
@@ -3040,7 +3108,7 @@ function showCP(id){
     const tot=c.crates*p.kg+c.loose;
     totTxt=c.crates+' Kasa'+(c.loose?' + '+c.loose+(p.u==='adet'?' Adet':' Kg'):'')+' = '+fmt(tot)+(p.u==='adet'?' Adet':' Kg');
     h='<div class="row" style="align-items:center;gap:10px;margin-top:10px">'
-     +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">Kasa Sayisi</span><div class="stp" style="height:44px"><button data-f="c" data-d="-1" style="height:36px;width:36px">-</button><input data-f="c" inputmode="numeric" value="'+c.crates+'" style="font-size:20px"><button class="pl" data-f="c" data-d="1" style="height:36px;width:36px">+</button></div></div>'
+     +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">Kasa Sayisi</span><div class="stp" style="height:44px"><button data-f="c" data-d="-1" style="height:36px;width:36px">-</button><input data-f="c" inputmode="numeric" value="'+c.crates+'" style="font-size:20px"><button class="pl" data-f="c" data-d="1" style="height:36px;width:36px">+</button><button class="pl" data-f="c" data-d="5" style="height:36px;padding:0 8px;font-size:13px;font-weight:800;border-radius:10px;margin-left:4px">+5</button></div></div>'
      +'<div style="flex:1"><span style="font-size:12px;color:var(--mute)">'+(p.u==='adet'?'Ek Adet':'Ek Kg')+'</span><input class="ek" data-f="l" inputmode="decimal" placeholder="0" value="'+(c.loose||'')+'" style="height:44px"></div>'
      +'</div>'
      +'<div class="row mt" style="gap:8px">'
@@ -4083,28 +4151,17 @@ async function handleBatchScan(raw, t) {
   }
 
   if (t === 'say') {
-    for (const it of items) {
-      const p = it.p;
-      const cur = cnt(p.id);
-      if (it.crates != null || it.loose != null) {
-        const newCrates = (it.crates != null ? it.crates : cur.crates);
-        const newLoose = (it.loose != null ? it.loose : cur.loose);
-        await setC(p.id, { crates: newCrates, loose: newLoose });
-      } else if (it.kg != null) {
-        if (p.u === 'adet') {
-          await setC(p.id, { crates: cur.crates + Math.round(it.kg) });
-        } else {
-          await setC(p.id, { loose: +(cur.loose + it.kg).toFixed(3) });
-        }
-      } else {
-        await setC(p.id, { crates: cur.crates + 1 });
-      }
-      addedCount++;
+    const existingCounted = plist().filter(p => {
+      const c = cnt(p.id);
+      return c.crates > 0 || c.loose > 0;
+    }).length;
+
+    if (existingCounted > 0) {
+      showMergeDialog(items);
+      return true;
     }
-    beep(2);
-    vib([80, 40, 80]);
-    toast(addedCount + ' urun sayima toplu eklendi');
-    render();
+
+    await applyBatchToSayim(items, 'merge');
     return true;
   }
 
@@ -4516,6 +4573,258 @@ if ('serviceWorker' in navigator) {
     }, 1500);
   }
 })();
+
+/* =========================================================================
+   YENI EKLEMELER: HIZLI URUN TANIMLAMA, AKILLI BIRLESTIRME, WHATSAPP RAPORU
+   ========================================================================= */
+
+// 1. Hizli Urun Tanimlama (Inline & Kamera İçi)
+let pendingQuickCode = '';
+let pendingQuickKg = 15;
+
+function openQuickAddProduct(code, kg) {
+  pendingQuickCode = String(code || '').trim();
+  pendingQuickKg = parseFloat(kg) || 15;
+  const m = $('#qamodal');
+  if (!m) return;
+  $('#qa-badge').textContent = (pendingQuickCode.length <= 6 ? 'PLU ' : 'Barkod ') + pendingQuickCode;
+  $('#qa-name').value = '';
+  $('#qa-kg').value = pendingQuickKg;
+  $('#qa-unit').value = 'kg';
+  m.classList.remove('hide');
+  setTimeout(() => {
+    const ni = $('#qa-name');
+    if (ni) ni.focus();
+  }, 120);
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('.btn-quick-add');
+  if (b) {
+    openQuickAddProduct(b.dataset.code, b.dataset.kg);
+  }
+});
+
+const qaCats = $('#qa-cats');
+if (qaCats) {
+  qaCats.onclick = e => {
+    const b = e.target.closest('button');
+    if (b) {
+      [...qaCats.children].forEach(x => x.classList.toggle('on', x === b));
+      const c = b.dataset.c;
+      if (c === 'Yeşillik') {
+        $('#qa-kg').value = '5';
+        $('#qa-unit').value = 'adet';
+      } else if (c === 'Meyve') {
+        $('#qa-kg').value = '10';
+        $('#qa-unit').value = 'kg';
+      } else {
+        $('#qa-kg').value = '15';
+        $('#qa-unit').value = 'kg';
+      }
+    }
+  };
+}
+
+const qaSaveBtn = $('#qa-save');
+if (qaSaveBtn) {
+  qaSaveBtn.onclick = async () => {
+    const name = ($('#qa-name').value || '').trim();
+    if (!name) {
+      toast('Lutfen urun adini yazin');
+      return;
+    }
+    const kg = Math.max(0.1, parseFloat($('#qa-kg').value.replace(',', '.')) || 15);
+    const u = $('#qa-unit').value || 'kg';
+    const catBtn = $('#qa-cats .on');
+    const cat = catBtn ? catBtn.dataset.c : 'Sebze';
+
+    const isPlu = pendingQuickCode.length <= 6;
+    const newProduct = cleanP({
+      id: uid('p'),
+      name: name,
+      plu: isPlu ? pendingQuickCode : '',
+      barcode: isPlu ? '' : pendingQuickCode,
+      kg: kg,
+      u: u,
+      cat: cat
+    });
+
+    await save('products', newProduct);
+    $('#qamodal').classList.add('hide');
+    toast(name + ' kaydedildi ve sayima eklendi');
+    beep(1);
+    pulse();
+
+    // Sayima aninda isle
+    await scan(pendingQuickCode, tab);
+    if (typeof showCP === 'function' && (stream || $('#cam').offsetParent)) {
+      showCP(newProduct.id);
+    }
+    render();
+    renderP();
+  };
+}
+
+const qaCancelBtn = $('#qa-cancel');
+if (qaCancelBtn) {
+  qaCancelBtn.onclick = () => {
+    $('#qamodal').classList.add('hide');
+  };
+}
+
+// 2. Coklu Cihaz Akilli Birlestirme (Smart Merge)
+let pendingMergeItems = [];
+function showMergeDialog(items) {
+  pendingMergeItems = items;
+  const m = $('#mergemodal');
+  if (!m) return;
+  $('#mm-info').textContent = items.length + ' adet urunluk toplu sayim verisi tespit edildi. Mevcut sayiminiza akillica ekleyebilir (birlestirebilir) veya mevcut sayimi bu veriyle degistirebilirsiniz.';
+  m.classList.remove('hide');
+}
+
+async function applyBatchToSayim(items, mode) {
+  let count = 0;
+  for (const it of items) {
+    const p = it.p;
+    const cur = cnt(p.id);
+    if (mode === 'replace') {
+      const newCrates = (it.crates != null ? it.crates : 0);
+      const newLoose = (it.loose != null ? it.loose : (it.kg || 0));
+      await setC(p.id, { crates: newCrates, loose: newLoose });
+    } else {
+      // 'merge' modunda kasa ve ek kilolar mevcut sayima eklenir
+      const addCrates = (it.crates != null ? it.crates : (it.kg && p.u === 'adet' ? Math.round(it.kg) : 0));
+      const addLoose = (it.loose != null ? it.loose : (p.u !== 'adet' && it.kg ? it.kg : 0));
+      const newCrates = cur.crates + addCrates;
+      const newLoose = +(cur.loose + addLoose).toFixed(3);
+      await setC(p.id, { crates: newCrates, loose: newLoose });
+    }
+    count++;
+  }
+  beep(2);
+  vib([80, 40, 80]);
+  toast(count + ' urun sayima ' + (mode === 'replace' ? 'degistirilerek' : 'akilli birlestirilerek') + ' aktarildi');
+  render();
+}
+
+const mmMergeBtn = $('#mm-merge');
+if (mmMergeBtn) {
+  mmMergeBtn.onclick = async () => {
+    $('#mergemodal').classList.add('hide');
+    await applyBatchToSayim(pendingMergeItems, 'merge');
+  };
+}
+
+const mmReplaceBtn = $('#mm-replace');
+if (mmReplaceBtn) {
+  mmReplaceBtn.onclick = async () => {
+    $('#mergemodal').classList.add('hide');
+    await applyBatchToSayim(pendingMergeItems, 'replace');
+  };
+}
+
+const mmCancelBtn = $('#mm-cancel');
+if (mmCancelBtn) {
+  mmCancelBtn.onclick = () => {
+    $('#mergemodal').classList.add('hide');
+  };
+}
+
+// 3. WhatsApp & Yonetici Ozet Raporu Motoru
+function makeSayimWhatsAppReport() {
+  const ps = plist();
+  const counted = ps.map(p => {
+    const c = cnt(p.id);
+    const tot = Math.round((c.crates * (p.kg || 0) + c.loose) * 100) / 100;
+    return { p, crates: c.crates, loose: c.loose, tot };
+  }).filter(x => x.crates > 0 || x.loose > 0 || (x.p && x.p.z));
+
+  let totalCrates = 0;
+  let totalKg = 0;
+  counted.forEach(x => {
+    totalCrates += x.crates;
+    totalKg += x.tot;
+  });
+
+  const d = day();
+  const lines = [
+    'MANAV SAYIM RAPORU',
+    'Tarih: ' + long(d),
+    'Toplam Sayilan: ' + counted.length + ' Cesit Urun',
+    'Toplam Kasa: ' + fmt(totalCrates) + ' Kasa',
+    'Toplam Agirlik: ' + fmt(totalKg) + ' Kg',
+    '----------------------------------------'
+  ];
+
+  counted.sort((a,b) => a.p.name.localeCompare(b.p.name, 'tr')).forEach((x, i) => {
+    const detail = x.crates > 0 
+      ? (x.crates + ' Kasa' + (x.loose ? ' + ' + fmt(x.loose) + (x.p.u === 'adet' ? ' Adet' : ' Kg') : '')) 
+      : (fmt(x.loose) + (x.p.u === 'adet' ? ' Adet' : ' Kg'));
+    lines.push((i + 1) + '. ' + x.p.name + ': ' + detail + ' (' + fmt(x.tot) + (x.p.u === 'adet' ? ' Adet' : ' Kg') + ')');
+  });
+
+  lines.push('----------------------------------------');
+  lines.push('Sistem: Manav Sayim Cevrimdisi PWA');
+  return lines.join('\n');
+}
+
+function makeShipmentWhatsAppReport() {
+  const s = curShip() || [...M.ships.values()].sort((a,b)=>b.t-a.t)[0];
+  if (!s || !s.lines) return 'Henuz acik veya kayitli sevkiyat bulunamadi.';
+  const t = shipTot(s);
+  const lines = [
+    'SEVKIYAT KABUL RAPORU',
+    'Tarih: ' + long(s.date),
+    'Parti / Irsaliye: ' + (s.party || 'Sevkiyat'),
+    'Toplam Cesit: ' + t.n,
+    'Toplam Kasa: ' + t.cr + ' Kasa',
+    'Toplam Miktar: ' + fmt(t.kg) + ' Kg (' + t.pc + ' Adet)',
+    '----------------------------------------'
+  ];
+  Object.keys(s.lines).map(id => ({ p: M.products.get(id), l: s.lines[id] })).filter(x => x.p).forEach((x, i) => {
+    const tot = fmt(x.l.c * (x.p.kg || 0) + x.l.l);
+    lines.push((i + 1) + '. ' + x.p.name + ': ' + x.l.c + ' Kasa · ' + tot + ' ' + (x.p.u || 'kg'));
+  });
+  lines.push('----------------------------------------');
+  lines.push('Sistem: Manav Sayim Cevrimdisi PWA');
+  return lines.join('\n');
+}
+
+async function sendWhatsAppReport(text) {
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Manav Raporu', text });
+      toast('Rapor paylasildi');
+      return;
+    }
+  } catch(e) {}
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch(e) {}
+
+  const url = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+  toast('Rapor hazirlandi ve panoya kopyalandi');
+}
+
+const sayWaBtn = $('#btn-say-wa');
+if (sayWaBtn) {
+  sayWaBtn.onclick = () => {
+    const txt = makeSayimWhatsAppReport();
+    sendWhatsAppReport(txt);
+  };
+}
+
+const shipWaBtn = $('#btn-ship-wa');
+if (shipWaBtn) {
+  shipWaBtn.onclick = () => {
+    const txt = makeShipmentWhatsAppReport();
+    sendWhatsAppReport(txt);
+  };
+}
+
 </script>
 </body>
 </html>
