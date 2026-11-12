@@ -4180,7 +4180,16 @@ window.__vc = {
   camStart: h=>camStart(h),
   camStop:  ()=>camStop(),
   M:        ()=>M,
-  day:      ()=>day()
+  day:      ()=>day(),
+  setTheme: t => {
+    if (typeof applyTh === 'function' && ['auto','light','dark'].includes(t)) {
+      th = t;
+      try { localStorage.setItem('manav-theme', th); } catch(e) {}
+      applyTh();
+      if (typeof toast === 'function') toast('Tema: ' + TN[th]);
+    }
+  },
+  getTheme: () => (typeof th !== 'undefined' ? th : 'auto')
 };
 /* addFire from v18, PX from v13 - set lazily */
 render();
@@ -5024,7 +5033,17 @@ function say2(){const ps=plist();let dn=0;ps.forEach(p=>{const c=cnt(p.id);if(c.
  document.querySelectorAll('#list .pc').forEach(c=>{const k=f[c.dataset.id];if(k)c.querySelector('.nm').insertAdjacentHTML('beforeend','<small class="dl" style="color:var(--warn)">Fire bugün: '+fmt(k)+(M.products.get(c.dataset.id).u==='adet'?' adet':' kg')+'</small>')})}
 const _r=render;render=function(){_r.apply(this,arguments);requestAnimationFrame(()=>{try{say2()}catch(e){}})};$('#q').oninput=render;
 setTimeout(()=>{try{say2()}catch(e){}},1500);
-if(typeof addFire==='function'&&window.__vc)window.__vc.addFire=(id,kg,why,src,lb,unit)=>addFire(id,kg,why,src,lb,unit);
+if(typeof addFire==='function'&&window.__vc) {
+  window.__vc.addFire=(id,kg,why,src,lb,unit)=>addFire(id,kg,why,src,lb,unit);
+  window.__vc.undoFire=async(id)=>{
+    try {
+      const d=day(), a=WL(d).slice();
+      const idx=a.map((x,i)=>[x,i]).filter(([x])=>!id||x.id===id).pop();
+      if(idx){ a.splice(idx[1],1); await XS('w|'+d,a); fireR(); return true; }
+    } catch(e){}
+    return false;
+  };
+}
 }catch(err){console.error('v18',err)}})();
 </script>
 
@@ -5752,16 +5771,32 @@ if (shipWaBtn) {
      ========================================================================= */
   const INTENT_PATTERNS = {
     DEV_INFO:      [/yazilimci/i, /gelistirici/i, /bunu kim yapti/i, /kim kodladi/i, /programci/i, /sedat/i],
-    STATUS_SUMMARY:[/sayim durumu/i, /durum nedir/i, /kac urun/i, /sayim nasil/i, /kaci kaldi/i, /kalanlar/i],
+    STATUS_SUMMARY:[/sayim durumu/i, /durum nedir/i, /kac urun/i, /sayim nasil/i, /kaci kaldi/i, /kalanlar/i, /sayim ozeti/i, /genel durum/i],
     FIRE_SUMMARY:  [/bugunku fire/i, /fire durumu/i, /toplam fire/i, /fire ne kadar/i, /fire ozeti/i],
-    SHIP_SUMMARY:  [/sevkiyat durumu/i, /sevkiyatta ne var/i, /sevkiyat nasil/i, /sevkiyatta kac/i],
+    SHIP_SUMMARY:  [/sevkiyat durumu/i, /sevkiyatta ne var/i, /sevkiyat nasil/i, /sevkiyatta kac/i, /sevkiyat ozeti/i],
+    TIME_QUERY:    [/saat kac/i, /su an saat/i, /hangi saat/i, /saati soyle/i, /zamani soyle/i],
+    DATE_QUERY:    [/bugun ayin kaci/i, /tarih ne/i, /tarih nedir/i, /hangi gun/i, /bugun gunlerden/i, /tarihi soyle/i],
+    THEME_DARK:    [/karanlik mod/i, /koyu tema/i, /gece modu/i, /karanlik tema/i, /siyah mod/i, /siyah tema/i],
+    THEME_LIGHT:   [/aydinlik mod/i, /acik tema/i, /gunduz modu/i, /aydinlik tema/i, /beyaz mod/i, /beyaz tema/i],
+    THEME_AUTO:    [/otomatik tema/i, /sistem temasi/i],
+    SOUND_ON:      [/sesi ac/i, /sesli yaniti ac/i, /ses ac/i],
+    SOUND_OFF:     [/sesi kapat/i, /sesli yaniti kapat/i, /sessiz mod/i, /sustur/i, /ses kapat/i],
+    HANDSFREE_ON:  [/surekli dinleme(yi)? ac/i, /eller serbest(i)? ac/i, /otomatik dinleme ac/i],
+    HANDSFREE_OFF: [/surekli dinleme(yi)? kapat/i, /eller serbest(i)? kapat/i, /otomatik dinleme kapat/i],
+    APP_CLOSE:     [/asistani kapat/i, /sesli komutu kapat/i, /dinlemeyi bitir/i, /kapat asistan/i, /uykuya gec/i, /^kapat$/i],
+    SEARCH_CLEAR:  [/aramayi temizle/i, /aramayi sil/i, /aramayi kapat/i, /aramadan cik/i, /filtreyi temizle/i, /filtreyi kaldir/i],
+    BACKUP_JSON:   [/yedek al/i, /yedek indir/i, /verileri yedekle/i, /json indir/i],
+    EXPORT_EXCEL:  [/excel indir/i, /excel raporu/i, /csv indir/i, /tablo indir/i],
+    PANO_SIPARIS:  [/pano siparis/i, /siparis listesi/i, /onerilen siparis/i, /siparisler/i],
+    PANO_ANALIZ:   [/pano analiz/i, /satis analizi/i, /grafikler/i, /istatistikler/i, /trend analizi/i],
+    SAYIM_SAVE:    [/sayimi kaydet/i, /sayimi bitir/i, /sayim bitti/i, /sayimi tamamla/i],
     NAV_SAY:       [/sayim(i|a)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^sayim$/i],
     NAV_SHIP:      [/sevkiyat(i|a)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^sevkiyat$/i, /teslimat/i],
     NAV_FIRE:      [/fire(ye|yi|ya)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^fire$/i, /curukler/i, /zayiat/i],
     NAV_PANO:      [/pano(yu|ya)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^pano$/i, /panel/i, /grafik/i, /istatistik/i, /analiz/i],
     NAV_URUN:      [/urun(ler|leri|lere)?\s*(ac|gec|ekrani|yonet|sayfasi)?$/i, /^urunler$/i],
     NAV_AKTAR:     [/aktar(im|imi|ima)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^aktar$/i, /yedek/i, /disa aktar/i, /ice aktar/i],
-    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/i, /hepsi/i, /tum urunler/i, /filtreyi kaldir/i, /filtreyi temizle/i],
+    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/i, /hepsi/i, /tum urunler/i],
     FILTER_DONE:   [/sayilan(lar)?\s*(goster|ac)?$/i, /tamamlananlar/i, /bitti/i],
     FILTER_TODO:   [/sayilmayan(lar)?\s*(goster|ac)?$/i, /bekleyenler/i, /kalanlar/i, /eksikler/i],
     CAM_START:     [/kamera(yi)?\s*(ac|baslat)/i, /barkod\s*(ac|tara|oku)/i, /qr oku/i, /^tara$/i],
@@ -5778,6 +5813,22 @@ if (shipWaBtn) {
     if (type === 'STATUS_SUMMARY')return { type, label: 'DURUM' };
     if (type === 'FIRE_SUMMARY')  return { type, label: 'FİRE ÖZETİ' };
     if (type === 'SHIP_SUMMARY')  return { type, label: 'SEVKİYAT DURUMU' };
+    if (type === 'TIME_QUERY')    return { type, label: 'SAAT' };
+    if (type === 'DATE_QUERY')    return { type, label: 'TARİH' };
+    if (type === 'THEME_DARK')    return { type: 'THEME_SET', theme: 'dark', label: 'KOYU TEMA' };
+    if (type === 'THEME_LIGHT')   return { type: 'THEME_SET', theme: 'light', label: 'AÇIK TEMA' };
+    if (type === 'THEME_AUTO')    return { type: 'THEME_SET', theme: 'auto', label: 'OTOMATİK TEMA' };
+    if (type === 'SOUND_ON')      return { type, label: 'SES AÇIK' };
+    if (type === 'SOUND_OFF')     return { type, label: 'SESSİZ MOD' };
+    if (type === 'HANDSFREE_ON')  return { type, label: 'SÜREKLİ DİNLEME' };
+    if (type === 'HANDSFREE_OFF') return { type, label: 'DİNLERKEN DUR' };
+    if (type === 'APP_CLOSE')     return { type, label: 'KAPAT' };
+    if (type === 'SEARCH_CLEAR')  return { type, label: 'ARAMA TEMİZLE' };
+    if (type === 'BACKUP_JSON')   return { type, label: 'YEDEK AL' };
+    if (type === 'EXPORT_EXCEL')  return { type, label: 'EXCEL RAPOR' };
+    if (type === 'PANO_SIPARIS')  return { type: 'PANO_VIEW', view: 'siparis', label: 'SİPARİŞ' };
+    if (type === 'PANO_ANALIZ')   return { type: 'PANO_VIEW', view: 'analiz', label: 'ANALİZ' };
+    if (type === 'SAYIM_SAVE')    return { type, label: 'SAYIM KAYDET' };
     if (type === 'NAV_SAY')   return { type: 'NAV_TAB', tab: 'say',   label: 'SAYIM' };
     if (type === 'NAV_SHIP')  return { type: 'NAV_TAB', tab: 'ship',  label: 'SEVKİYAT' };
     if (type === 'NAV_FIRE')  return { type: 'NAV_TAB', tab: 'fire',  label: 'FİRE' };
@@ -5859,6 +5910,11 @@ if (shipWaBtn) {
     const hasDeltaAdd = /\b(ekle|arttir|daha|ilave|ekleyiver)\b/.test(nText);
     const hasDeltaSub = /\b(dus|azalt|eksilt|cikar)\b/.test(nText) && !hasShipDel;
 
+    // Soru & Akıllı Bilgi Sorgulama Niyetleri
+    const hasCountQuery = /\b(kac kasa|kac kilo|ne kadar sayildi|sayim durumu|kac adet|ne kadar var|kalan ne|stok|durum ne|durumu ne|sayimi ne|kac sayildi)\b/.test(nText);
+    const hasPriceQuery = /\b(kac para|kac lira|kac tl|fiyat|fiyati|ucret|fiyat nedir|fiyati nedir)\b/.test(nText);
+    const hasFireQuery  = hasFireKw && (/\b(ne kadar|kac|kac kilo|durum|ozet|toplam)\b/.test(nText) || !hasQty);
+
     let why = 'diğer';
     if (/curuk|bozuk/.test(nText)) why = 'çürük';
     else if (/ezik|hasar/.test(nText)) why = 'ezik';
@@ -5873,7 +5929,8 @@ if (shipWaBtn) {
       'sevkiyata','sevkiyat','sevk','yukle','gonder',
       'sayimdan','sevkiyattan','sil','cikar','sifirla','temizle','kaldir',
       'ekle','arttir','daha','ilave','dus','azalt','eksilt',
-      'fiyat','fiyati','ucret','kac','para','lira','tl',
+      'fiyat','fiyati','ucret','kac','para','lira','tl','ne','kadar','sayildi','durum','durumu',
+      'stok','var','nedir','kalan',
       'bir','iki','uc','dort','bes','alti','yedi','sekiz','dokuz','on',
       'yirmi','otuz','kirk','elli','altmis','yetmis','seksen','doksan','yuz','bin',
       've','ile','de','da','den','dan','icin','e','a'
@@ -5887,12 +5944,17 @@ if (shipWaBtn) {
     const match = matchProductSmart(productQuery, products);
 
     // Ürünler sekmesinde sadece isim söylenmişse düzenlemeye aç
-    if (currentTab === 'urun' && match && !hasQty && !hasFireKw && !hasShipKw) {
+    if (currentTab === 'urun' && match && !hasQty && !hasFireKw && !hasShipKw && !hasCountQuery && !hasPriceQuery) {
       return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
 
     if (!match) return null;
     const p = match.p;
+
+    // Akıllı Soru & Bilgi Yanıtları
+    if (hasPriceQuery) return { type: 'PROD_QUERY_PRICE', product: p, label: 'FİYAT: ' + p.name };
+    if (hasFireQuery && !hasQty) return { type: 'PROD_QUERY_FIRE', product: p, label: 'FİRE: ' + p.name };
+    if (hasCountQuery && !hasQty) return { type: 'PROD_QUERY_COUNT', product: p, label: 'SAYIM: ' + p.name };
 
     // Fire sekmesinde ürün + miktar
     if (currentTab === 'fire' && hasQty && !hasShipKw) {
@@ -5937,7 +5999,8 @@ if (shipWaBtn) {
       return { type: 'SAYIM_SET', product: p, crates, kg, pieces, label: 'SAYIM: ' + p.name };
     }
 
-    return null;
+    // Tek başına ürün ismi söylenmişse seç / odaklan
+    return { type: 'PROD_SELECT', product: p, label: p.name.toUpperCase() };
   }
 
   /* =========================================================================
@@ -5995,6 +6058,15 @@ if (shipWaBtn) {
         return { type: 'PROD_SELECT', product: p, label: 'BARKOD: ' + p.name };
       }
       return { type: 'CODE_NOT_FOUND', code: bcode, label: 'BARKOD YOK: ' + bcode };
+    }
+
+    // 3.5. Doğrudan Ürün Arama (örn: "domates ara", "ara domates", "muz bul", "elma ara")
+    const mSearch = nText.match(/^(?:ara|bul)\s+(.+)/i) || nText.match(/(.+?)\s+(?:ara|bul)$/i);
+    if (mSearch && mSearch[1] && !/kamera|barkod|qr/.test(mSearch[1])) {
+      const qTerm = mSearch[1].trim();
+      if (qTerm.length > 1 && !['sayilanlar','sayilmayanlar','hepsi','tumu','durum','nedir','kac'].includes(qTerm)) {
+        return { type: 'SEARCH_QUERY', query: qTerm, label: 'ARA: ' + qTerm.toUpperCase() };
+      }
     }
 
     // 4. Sistem & Navigasyon Niyetleri
@@ -6648,6 +6720,239 @@ if (shipWaBtn) {
             break;
           }
 
+          /* ---- Akıllı Ürün Durumu & Fiyat Sorgulama ---- */
+          case 'PROD_QUERY_COUNT': {
+            const p = intent.product;
+            const c = (typeof B.cnt === 'function') ? B.cnt(p.id) : { crates: 0, loose: 0 };
+            const cr = c.crates || 0, ls = c.loose || 0;
+            const crateWeight = p.kg || 20;
+            const totalKg = cr * crateWeight + ls;
+            let qMsg = '';
+            if (cr === 0 && ls === 0) {
+              qMsg = p.name + ' henüz sayılmadı (0 kasa, 0 ' + (p.u || 'kg') + ')';
+            } else if (p.u === 'adet') {
+              qMsg = p.name + ': ' + cr + ' kasa, ' + ls + ' adet sayıldı (Kasa: ' + crateWeight + ' adet)';
+            } else {
+              qMsg = p.name + ': ' + cr + ' kasa, ' + ls + ' kg sayıldı (Toplam: ~' + Math.round(totalKg) + ' kg)';
+            }
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback(qMsg, false, false);
+            this.playVoiceResponse('PROD_FOUND');
+            const card = document.querySelector('#list .pc[data-id="' + p.id + '"]');
+            if (card) { card.classList.add('flash'); card.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            break;
+          }
+
+          case 'PROD_QUERY_PRICE': {
+            const p = intent.product;
+            const M = typeof B.M === 'function' ? B.M() : null;
+            let buyPrice = null, sellPrice = null;
+            if (M && M.meta) {
+              const o = M.meta.get('x|p|' + p.id);
+              if (o && o.v) { buyPrice = o.v.b; sellPrice = o.v.s; }
+            }
+            let prMsg = p.name;
+            if (!buyPrice && !sellPrice) {
+              prMsg += ' için kayıtlı fiyat bulunamadı (Pano > Fiyat sekmesinden girilebilir)';
+            } else {
+              prMsg += ' — Alış: ' + (buyPrice ? buyPrice + ' ₺' : '-') + ' · Satış: ' + (sellPrice ? sellPrice + ' ₺' : '-');
+            }
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback(prMsg, false, false);
+            this.playVoiceResponse('PROD_FOUND');
+            const card = document.querySelector('#list .pc[data-id="' + p.id + '"]');
+            if (card) { card.classList.add('flash'); card.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            break;
+          }
+
+          case 'PROD_QUERY_FIRE': {
+            const p = intent.product;
+            const d = typeof B.day === 'function' ? B.day() : new Date().toISOString().slice(0,10);
+            const M = typeof B.M === 'function' ? B.M() : null;
+            let fireList = [];
+            if (M && M.meta) {
+              const o = M.meta.get('x|w|' + d);
+              fireList = (o && Array.isArray(o.v)) ? o.v.filter(w => w.id === p.id) : [];
+            }
+            let sumKg = 0, sumAdet = 0;
+            fireList.forEach(w => { if (w.n) sumAdet += w.n; else sumKg += (w.kg || 0); });
+            let fqMsg = '';
+            if (!fireList.length) {
+              fqMsg = 'Bugün ' + p.name + ' için fire kaydı yok';
+            } else {
+              const qStr = p.u === 'adet' ? (sumAdet + ' adet') : (sumKg.toFixed(1) + ' kg');
+              fqMsg = 'Bugün ' + p.name + ' için ' + qStr + ' fire kaydedildi (' + fireList.length + ' kayıt)';
+            }
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback(fqMsg, false, false);
+            this.playVoiceResponse('FIRE_SUMMARY');
+            break;
+          }
+
+          /* ---- Saat & Tarih Bilgisi ---- */
+          case 'TIME_QUERY': {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+            this.playTone(800, 'sine', 0.1);
+            this.showFeedback('Saat ' + timeStr + ' · ' + dateStr, false, false);
+            this.playVoiceResponse('STATUS_SUMMARY');
+            break;
+          }
+
+          case 'DATE_QUERY': {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            this.playTone(800, 'sine', 0.1);
+            this.showFeedback('Bugün ' + dateStr + ' (Saat: ' + timeStr + ')', false, false);
+            this.playVoiceResponse('STATUS_SUMMARY');
+            break;
+          }
+
+          /* ---- Görünüm & Tema Kontrolü ---- */
+          case 'THEME_SET': {
+            if (typeof B.setTheme === 'function') {
+              B.setTheme(intent.theme);
+            } else {
+              const r = document.documentElement;
+              if (intent.theme === 'auto') r.removeAttribute('data-theme');
+              else r.setAttribute('data-theme', intent.theme);
+              try { localStorage.setItem('manav-theme', intent.theme); } catch(e) {}
+            }
+            const thMap = { dark: 'Koyu (Gece)', light: 'Açık (Gündüz)', auto: 'Otomatik' };
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Tema ' + (thMap[intent.theme] || intent.theme) + ' olarak ayarlandı', false, false);
+            this.playVoiceResponse('TAB_OPENED');
+            break;
+          }
+
+          /* ---- Sesli Asistan Kontrolleri ---- */
+          case 'SOUND_ON': {
+            this.soundEnabled = true;
+            try { localStorage.setItem('manav-vc-sound', '1'); } catch(e) {}
+            if (this.ttsToggle) {
+              this.ttsToggle.classList.add('on');
+              this.ttsToggle.title = 'Sesli Yanıt: Açık';
+            }
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Sesli yanıt açıldı', false, false);
+            this.playVoiceResponse('WAKEUP');
+            break;
+          }
+
+          case 'SOUND_OFF': {
+            this.soundEnabled = false;
+            try { localStorage.setItem('manav-vc-sound', '0'); } catch(e) {}
+            if (this.ttsToggle) {
+              this.ttsToggle.classList.remove('on');
+              this.ttsToggle.title = 'Sesli Yanıt: Kapalı';
+            }
+            if (this.currentAudio) {
+              try { this.currentAudio.pause(); this.currentAudio = null; } catch(e) {}
+            }
+            this.isSpeaking = false;
+            this.playTone(500, 'sine', 0.12);
+            this.showFeedback('Sesli yanıt kapatıldı (Sessiz mod)', false, false);
+            break;
+          }
+
+          case 'HANDSFREE_ON': {
+            this.handsFree = true;
+            if (this.hfToggle) {
+              this.hfToggle.classList.add('on');
+              this.hfToggle.title = 'Sürekli Dinleme: Açık';
+            }
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Sürekli dinleme (eller serbest) açıldı', false, false);
+            this.playVoiceResponse('WAKEUP');
+            break;
+          }
+
+          case 'HANDSFREE_OFF': {
+            this.handsFree = false;
+            if (this.hfToggle) {
+              this.hfToggle.classList.remove('on');
+              this.hfToggle.title = 'Sürekli Dinleme: Kapalı';
+            }
+            this.playTone(600, 'sine', 0.12);
+            this.showFeedback('Sürekli dinleme kapatıldı', false, false);
+            break;
+          }
+
+          case 'APP_CLOSE': {
+            this.completelyShutdown();
+            break;
+          }
+
+          /* ---- Arama & Filtreleme Komutları ---- */
+          case 'SEARCH_QUERY': {
+            if (this.getCurrentTab() !== 'say') await this.navToTab('say');
+            const q = document.getElementById('q');
+            if (q) {
+              q.value = intent.query;
+              q.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Aranıyor: ' + intent.query, false, false);
+            this.playVoiceResponse('PROD_FOUND');
+            break;
+          }
+
+          case 'SEARCH_CLEAR': {
+            const q = document.getElementById('q');
+            if (q) {
+              q.value = '';
+              q.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (typeof B.setFilt === 'function') B.setFilt('all');
+            this.playTone(700, 'sine', 0.1);
+            this.showFeedback('Arama ve filtreler temizlendi', false, false);
+            this.playVoiceResponse('FILTER_APPLIED');
+            break;
+          }
+
+          /* ---- Dışa Aktar & Yedekleme ---- */
+          case 'BACKUP_JSON': {
+            if (this.getCurrentTab() !== 'aktar') await this.navToTab('aktar');
+            const bdl = document.getElementById('bdl');
+            if (bdl) bdl.click();
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Yedek dosyası indiriliyor', false, false);
+            this.playVoiceResponse('TAB_OPENED');
+            break;
+          }
+
+          case 'EXPORT_EXCEL': {
+            if (this.getCurrentTab() !== 'aktar') await this.navToTab('aktar');
+            const rxl = document.getElementById('rxl') || document.getElementById('rcsv') || document.getElementById('ccs');
+            if (rxl) rxl.click();
+            this.playTone(850, 'sine', 0.12);
+            this.showFeedback('Rapor tablosu indiriliyor', false, false);
+            this.playVoiceResponse('TAB_OPENED');
+            break;
+          }
+
+          /* ---- Pano Segmentleri & Sayım Kaydet ---- */
+          case 'PANO_VIEW': {
+            if (this.getCurrentTab() !== 'pano') await this.navToTab('pano');
+            const btn = document.querySelector('#pnav-bar button[data-pview="' + intent.view + '"]');
+            if (btn) btn.click();
+            this.playTone(800, 'sine', 0.12);
+            this.showFeedback('Pano ' + intent.view.toUpperCase() + ' görünümü açıldı', false, false);
+            this.playVoiceResponse('TAB_OPENED');
+            break;
+          }
+
+          case 'SAYIM_SAVE': {
+            if (typeof B.render === 'function') B.render();
+            this.playTone(900, 'sine', 0.14);
+            this.showFeedback('Sayım kaydedildi ve senkronize edildi', false, false);
+            this.playVoiceResponse('SAYIM_SAVED');
+            break;
+          }
+
           /* ---- Modal İçi Komutlar ---- */
           case 'MODAL_SET_CRATE_KG': {
             const pk = document.getElementById('pk');
@@ -7022,7 +7327,7 @@ if (shipWaBtn) {
           }
           case 'HELP': {
             this.playTone(800, 'sine', 0.1);
-            this.showFeedback('Örnekler: "domates 3 kasa" · "domates PLU 85 olsun" · "kasa ağırlığı 5 kilo" · "yeni ürün elma PLU 220 kaydet" · "muz fire 2 kilo" · "sevkiyat başlat" · "pano sipariş" · "aktar raporlar" · "ara domates" · "geri al"', false, false);
+            this.showFeedback('Örnekler: "domates 3 kasa" · "domates kaç kasa" · "muz fiyatı" · "karanlık mod" · "yedek al" · "saat kaç" · "elma ara" · "elma fire 2 kilo" · "geri al"', false, false);
             break;
           }
           case 'SCROLL': { window.scrollBy({ top: intent.dy, behavior: 'smooth' }); this.playTone(700, 'sine', 0.08); this.showFeedback('Kaydırıldı', false, false); break; }
@@ -7138,12 +7443,22 @@ if (shipWaBtn) {
           this.playTone(700,'sine',0.12);
           this.showFeedback('Son sevkiyat işlemi geri alındı', false, false);
           this.playVoiceResponse('UNDO_SUCCESS');
+        } else if (item.type === 'FIRE_LAST' && typeof B.undoFire === 'function') {
+          const ok = await B.undoFire(item.id, item.amount);
+          if (ok) {
+            this.playTone(700,'sine',0.12);
+            this.showFeedback('Son fire kaydı geri alındı', false, false);
+            this.playVoiceResponse('UNDO_SUCCESS');
+          } else {
+            this.showFeedback('Geri alınacak fire kaydı bulunamadı', true, false);
+            this.playVoiceResponse('UNDO_EMPTY');
+          }
         } else {
           this.showFeedback('Son işlem geri alındı', false, false);
           this.playVoiceResponse('UNDO_SUCCESS');
         }
       } catch(e) {
-        this.showFeedback('Geri alma başarısız', true, false);
+        this.showFeedback('Geri alma başarısız: ' + (e.message || ''), true, false);
       }
     }
 
