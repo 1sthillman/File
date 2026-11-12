@@ -1,4 +1,4 @@
-const CACHE_NAME = 'file-manav-sayim-v29-20261112';
+const CACHE_NAME = 'file-manav-sayim-v30-20261113';
 const ASSETS = [
   './',
   './index.html',

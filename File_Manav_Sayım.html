@@ -2467,7 +2467,7 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 <div class="wrap">
 <div class="top">
   <h1>Manav Sayım</h1>
-  <button id="btn-top-terminal" class="terminal-top-pill" type="button" title="Zebra Terminali Hızlı Giriş" aria-label="Zebra Terminali">
+  <button id="btn-top-terminal" class="hide" style="display:none !important" class="terminal-top-pill" type="button" title="Zebra Terminali Hızlı Giriş" aria-label="Zebra Terminali">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
     <span>Terminal</span>
   </button>
@@ -2606,8 +2606,21 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <p class="sub">Zebra, QR'ı okutunca içindeki metni klavyeden yazılmış gibi imlecin olduğu kutuya yazar. Aşağıda QR oluşturunca Zebra'nın tam olarak ne yazacağı satır satır listelenir. Kod ürün kodudur, adet de kasa sayısıdır.</p>
   <div class="row"><div><label for="src">Hangi kod</label><select id="src"><option value="auto">PLU varsa PLU, yoksa barkod</option><option value="bar">Yalnızca barkod</option><option value="plu">Yalnızca PLU</option></select></div>
   <div><label for="scope">Veri kaynağı</label><select id="scope"><option value="done" selected>Sayılan ürünler (Bugünün sayımı)</option><option value="ship">Sevkiyat verileri (Açık/Son)</option><option value="all">Tüm ürün kataloğu</option><option value="fire">Fire kayıtları (Son 30 gün)</option></select></div></div>
-  <div class="row"><div><label for="mode">Zebra formatı</label><select id="mode"><option value="ean13" selected>Terazi Barkodları (EAN-13, Kilo/Gram dahil)</option><option value="csv">Sütunlu Liste (PLU;Barkod;Ad;Kasa;Kg;Birim)</option><option value="key">DataWedge Tuşlama (Kod [ENTER] Miktar [ENTER])</option><option value="sync">Manav PWA Senkronizasyon (Cihazdan Cihaza)</option><option value="q">Kod + Kasa adedi</option><option value="k">Kod + Toplam Kg</option><option value="r">Kodu kasa sayısı kadar tekrarla</option><option value="c">Yalnızca kodlar</option></select></div>
-  <div><label for="sep">Kodlar arası tuş</label><select id="sep"><option value="n">Enter (LF, önerilen)</option><option value="r">Enter (CR)</option><option value="crlf">Enter (CRLF)</option><option value="t">Tab</option><option value=";">Noktalı virgül (;)</option><option value=",">Virgül (,)</option></select></div></div>
+  <div class="row"><div><label for="mode">Zebra formatı</label><select id="mode">
+  <option value="zebra_flow" selected>Zebra Terminal Tam Akış (Barkod → Kg/Adet → Koli → Kaydet)</option>
+  <option value="smart">Akıllı Zebra (Kg: Terazi 28... EAN-13, Adet: 411...)</option>
+  <option value="ean13">Terazi Barkodları (EAN-13, 28+PLU+Gram)</option>
+  <option value="sync">Manav PWA Senkronizasyon (Cihazdan Cihaza JSON)</option>
+  <option value="key">DataWedge Tuşlama (Kod [ENTER] Miktar [ENTER])</option>
+  <option value="csv">Sütunlu Liste (PLU;Barkod;Ad;Kasa;Kg;Birim)</option>
+  <option value="q">Kod + Kasa adedi</option>
+  <option value="k">Kod + Toplam Kg</option>
+  <option value="r">Kodu kasa sayısı kadar tekrarla</option>
+  <option value="c">Yalnızca kodlar</option>
+</select></div>
+  <div><label for="sep">Kodlar arası tuş</label><select id="sep"><option value="t" selected>Tab [TAB] (Kutular arası geçiş - Önerilen)</option><option value="n">Enter [LF]</option><option value="r">Enter [CR]</option><option value="crlf">Enter [CRLF]</option><option value=";">Noktalı virgül (;)</option><option value=",">Virgül (,)</option></select></div></div>
+  <div class="row"><div><label for="zkoli">Zebra Koli alanı değeri</label><select id="zkoli"><option value="auto" selected>Varsa koli sayısı, yoksa 0 (Önerilen: Koli kutusunu doldurur)</option><option value="zero">Her zaman 0 yaz</option><option value="actual">Yalnızca gerçek koli sayısı (yoksa boş geç)</option><option value="empty">Koliye değer yazma (boş geç)</option></select></div>
+  <div><label for="zsave">Zebra Kaydet tuşu</label><select id="zsave"><option value="enter" selected>Enter [LF] (Koli'de kaydet ve bitir)</option><option value="tab_enter">Tab + Enter (Kaydet butonuna tıkla)</option><option value="crlf">Enter [CRLF]</option></select></div></div>
   <label for="dens">QR yoğunluğu</label><select id="dens"><option value="450" selected>Önerilen: rahat okuma, parça başına 450 karakter</option><option value="900">Dengeli, parça başına 900 karakter</option><option value="2400">Tek QR'a sığdır, 2400 karakter</option></select>
   <div class="row mt"><button id="mk">QR oluştur</button><button class="g" id="mkt">Deneme QR, 3 kod</button></div>
   <div id="qr" class="hide"></div><p class="sub" id="qinfo" style="text-align:center"></p>
@@ -3403,23 +3416,34 @@ async function scan(raw, t) {
         if (data && data.items && Array.isArray(data.items)) {
           let count = 0;
           for (const it of data.items) {
-            const p = findP(it.plu || it.bar || it.id);
+            const p = findP(it.plu || it.bar || it.id || it.barcode || it.code);
             if (p) {
               if (data.type === 'ship' || t === 'ship') {
                 const s = curShip();
                 if (s) {
-                  await setL(p.id, { c: it.cr || 0, l: it.loose || 0, p: 0 });
+                  const cr = it.cr != null ? it.cr : (it.crates != null ? it.crates : 0);
+                  const ls = it.loose != null ? it.loose : 0;
+                  const prevL = s.lines[p.id] || { c: 0, p: 0, l: 0 };
+                  await setL(p.id, { c: prevL.c + cr, l: +(prevL.l + ls).toFixed(3), p: prevL.p });
                   count++;
                 }
               } else {
-                await setC(p.id, { crates: it.cr || 0, loose: it.loose || 0 });
+                const cr = it.cr != null ? it.cr : (it.crates != null ? it.crates : 0);
+                const ls = it.loose != null ? it.loose : (it.kg != null ? it.kg : 0);
+                const prevC = cnt(p.id);
+                if (p.u === 'adet') {
+                  // For adet products: accumulate adet count
+                  await setC(p.id, { crates: prevC.crates + cr, loose: prevC.loose + (ls || 0) });
+                } else {
+                  await setC(p.id, { crates: prevC.crates + cr, loose: +(prevC.loose + ls).toFixed(3) });
+                }
                 count++;
               }
             }
           }
           beep(2);
           vib([100, 50, 100]);
-          toast(count + ' adet urun Zebra cihazina basariyla aktarildi');
+          toast(count + ' ürün Zebra terminale aktarıldı');
           render();
           renderShip();
           return;
@@ -3559,10 +3583,12 @@ const SEP = { n: '\n', r: '\r', crlf: '\r\n', t: '\t', ';': ';', ',': ',' };
 function items() {
   ZR.length = 0;
   const src = $('#src') ? $('#src').value : 'auto';
-  const sepKey = $('#sep') ? $('#sep').value : 'n';
-  const sp = SEP[sepKey] || sepKey || '\n';
-  const md = $('#mode') ? $('#mode').value : 'ean13';
+  const sepKey = $('#sep') ? $('#sep').value : 't';
+  const sp = SEP[sepKey] || sepKey || '\t';
+  const md = $('#mode') ? $('#mode').value : 'zebra_flow';
   const scope = $('#scope') ? $('#scope').value : 'done';
+  const zkoliMode = $('#zkoli') ? $('#zkoli').value : 'auto';
+  const zsaveMode = $('#zsave') ? $('#zsave').value : 'enter';
 
   let list = [];
   if (scope === 'ship') {
@@ -3617,6 +3643,11 @@ function items() {
     return [payload];
   }
 
+  // Tuş ve kaydetme dizisi parametreleri
+  const tabChar = '\t';
+  const enterChar = (zsaveMode === 'crlf') ? '\r\n' : '\n';
+  const saveSeq = (zsaveMode === 'tab_enter') ? (tabChar + enterChar) : enterChar;
+
   return list.map(x => {
     const p = x.p;
     const cCode = src === 'bar' ? p.barcode : src === 'plu' ? p.plu : (p.plu || p.barcode || p.id);
@@ -3625,17 +3656,72 @@ function items() {
     let t = '';
     const miktar = p.u === 'adet' ? String(x.crates || x.loose || 1) : fmt(x.kg || 0);
 
-    if (md === 'ean13') {
-      const grams = Math.round((x.kg || 0) * 1000);
-      const ean = makeEan13('27', p.plu || p.barcode, grams);
-      t = ean + sp;
-      ZR.push({ c: ean, n: p.name, q: fmt(x.kg) + ' kg (' + x.crates + ' kasa)', d: 'EAN-13 Terazi Barkodu' });
+    // Koli alanına yazılacak değer
+    let koliVal = '0';
+    if (zkoliMode === 'zero') {
+      koliVal = '0';
+    } else if (zkoliMode === 'empty') {
+      koliVal = '';
+    } else if (zkoliMode === 'actual') {
+      koliVal = x.crates ? String(x.crates) : '';
+    } else {
+      // auto: varsa koli, yoksa 0
+      koliVal = String(x.crates || 0);
+    }
+
+    if (md === 'zebra_flow' || md === 'smart') {
+      /* =====================================================================
+         ZEBRA TERMINAL TAM İŞ YERİ AKIŞI (İş yerindeki Zebra Ekranı ile %100 Uyumlu)
+         - Kilolu ürün: Terazi EAN-13 (28+PLU+GRAM+CHECK). Zebra barkod ve kg'yi
+           otomatik doldurur ve Koli'ye geçer. Ardından koli yazılır + KAYDET tuşlanır!
+           Böylece sıradaki barkod asla Koli kutusuna taşmaz!
+         - Adetli ürün: Barkod -> TAB -> Adet -> TAB -> Koli -> KAYDET tuşlanır.
+         ===================================================================== */
+      if (p.u === 'adet') {
+        const barCode = p.barcode || ('411' + (p.plu || '').padStart(5, '0'));
+        const adetVal = String(x.crates || Math.round(x.loose) || 1);
+        
+        // BARKOD -> [TAB] -> ADET -> [TAB] -> KOLİ -> [KAYDET]
+        t = barCode + tabChar + adetVal + tabChar + koliVal + saveSeq;
+        
+        ZR.push({
+          c: barCode,
+          n: p.name + ' (Adet)',
+          q: adetVal + ' adet' + (koliVal && koliVal !== '0' ? ', ' + koliVal + ' koli' : ''),
+          d: 'Zebra Akış: ' + barCode + ' [TAB] ' + adetVal + ' [TAB] ' + koliVal + ' [KAYDET]'
+        });
+      } else {
+        const grams = Math.round((x.kg || 0) * 1000);
+        const ean = makeEan13('28', p.plu || p.barcode, grams);
+        
+        // BARKOD (Terazi kg otomatik) -> [TAB] -> KOLİ -> [KAYDET]
+        t = ean + tabChar + koliVal + saveSeq;
+        
+        ZR.push({
+          c: ean,
+          n: p.name + ' (Kg)',
+          q: fmt(x.kg) + ' kg' + (koliVal && koliVal !== '0' ? ', ' + koliVal + ' koli' : ''),
+          d: 'Zebra Akış: ' + ean + ' (Tartım) [TAB] ' + koliVal + ' [KAYDET]'
+        });
+      }
+    } else if (md === 'ean13') {
+      if (p.u === 'adet') {
+        const c411 = '411' + (p.plu || '').padStart(5, '0');
+        const adet = x.crates || Math.round(x.loose) || 1;
+        t = c411 + sp + String(adet) + sp + koliVal + saveSeq;
+        ZR.push({ c: c411, n: p.name + ' (Adet)', q: adet + ' adet', d: 'Adetli: 411+PLU+TAB+ADET' });
+      } else {
+        const grams = Math.round((x.kg || 0) * 1000);
+        const ean = makeEan13('28', p.plu || p.barcode, grams);
+        t = ean + tabChar + koliVal + saveSeq;
+        ZR.push({ c: ean, n: p.name, q: fmt(x.kg) + ' kg (' + x.crates + ' kasa)', d: 'EAN-13 Terazi (28+PLU+GRAM) + Koli + Kaydet' });
+      }
     } else if (md === 'csv') {
       const lineSep = sp === '\n' || sp === '\r' || sp === '\r\n' ? ';' : sp;
       t = [p.plu || '', p.barcode || '', p.name, x.crates, fmt(x.kg), p.u || 'kg'].join(lineSep) + (sp === '\n' || sp === '\r' || sp === '\r\n' ? sp : '\n');
-      ZR.push({ c: p.plu || p.barcode || '-', n: p.name, q: x.crates + ' kasa / ' + fmt(x.kg) + ' ' + (p.u || 'kg'), d: 'Sutunlu CSV' });
+      ZR.push({ c: p.plu || p.barcode || '-', n: p.name, q: x.crates + ' kasa / ' + fmt(x.kg) + ' ' + (p.u || 'kg'), d: 'Sütunlu CSV' });
     } else if (md === 'key') {
-      t = cCode + sp + miktar + sp;
+      t = cCode + sp + miktar + sp + koliVal + saveSeq;
       ZR.push({ c: cCode, n: p.name, q: miktar + ' (' + (p.u || 'kg') + ')', d: 'DataWedge Klavye' });
     } else if (md === 'q') {
       t = cCode + sp + x.crates + sp;
@@ -3645,10 +3731,10 @@ function items() {
       ZR.push({ c: cCode, n: p.name, q: fmt(x.kg) + ' kg', d: 'Kod + Kg' });
     } else if (md === 'r') {
       t = (cCode + sp).repeat(Math.max(1, x.crates));
-      ZR.push({ c: cCode, n: p.name, q: x.crates + ' kez okutma', d: 'Tekrarli' });
+      ZR.push({ c: cCode, n: p.name, q: x.crates + ' kez okutma', d: 'Tekrarlı' });
     } else {
       t = cCode + sp;
-      ZR.push({ c: cCode, n: p.name, q: 'Yalnizca kod', d: 'Barkod' });
+      ZR.push({ c: cCode, n: p.name, q: 'Yalnızca kod', d: 'Barkod' });
     }
     return t;
   }).filter(Boolean);
@@ -4251,23 +4337,19 @@ function zTab() {
   if (!p) { el.innerHTML = ''; return; }
   let off = 0;
   for (let i = 0; i < qi; i++) off += parts[i].n;
-  const sv = $('#sep') ? $('#sep').value : 'n';
-  const sn = esc(sv === 'n' || sv === 'r' || sv === 'crlf' ? 'Enter' : sv === 't' ? 'Tab' : sv);
-  const md = $('#mode') ? $('#mode').value : 'ean13';
-  const k = t => '<span class="kk">' + t + '</span>';
+  const k = t => '<span class="kk" style="background:#0a5866;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;margin:0 2px">' + t + '</span>';
 
-  el.innerHTML = '<div class="chk"><b><i class="k"></i>Zebra DataWedge Cikis Onizlemesi</b>'
-    + '<p>Imlec hangi kutudaysa sirayla tuslanir. Parca ' + (qi + 1) + ' / ' + parts.length + ' (' + p.n + ' urun)</p>'
+  el.innerHTML = '<div class="chk"><b><i class="k"></i>Zebra Terminal Tuşlama Önizlemesi (İş Yeri Akışı)</b>'
+    + '<p class="sub">Zebra QR\'ı okutunca terminal ekranındaki kutular sırasıyla aşağıdaki gibi doldurulur. Parça ' + (qi + 1) + ' / ' + parts.length + ' (' + p.n + ' ürün)</p>'
     + ZR.slice(off, off + p.n).map((r, i) =>
-        '<div class="zr"><span>' + (off + i + 1) + '</span>'
-        + '<div><b>' + esc(r.n) + '</b><small>' + (r.d || ('Kod ' + r.c + ' · ' + r.q)) + '</small></div>'
-        + '<div class="zk"><code>' + r.c + '</code>' + k(sn)
-        + (md === 'key' || md === 'q' || md === 'k' ? '<code>' + r.q.replace(/[^0-9.,]/g, '') + '</code>' + k(sn) : '')
+        '<div class="zr" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee"><span>' + (off + i + 1) + '</span>'
+        + '<div style="flex:1;margin:0 12px"><b>' + esc(r.n) + '</b><small style="display:block;color:#666">' + (r.d || ('Kod ' + r.c + ' · ' + r.q)) + '</small></div>'
+        + '<div class="zk" style="font-family:monospace;font-size:12px;background:#f8fafc;padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0">'
+        + '<code>' + r.c + '</code>' + k('TAB') + '<code>' + (r.q.split(',')[1] || r.q).trim() + '</code>' + k('KAYDET')
         + '</div></div>'
       ).join('')
     + '</div>';
 }
-
 (()=>{const i=$('#ztest'),o=$('#ztout');if(!i)return;let L=[];const nm={Enter:'[ENTER]',Tab:'[TAB]'};
 i.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Tab')e.preventDefault();if(e.key==='Shift'||e.key==='Unidentified')return;L.push(nm[e.key]||(e.key.length===1?e.key:'['+e.key+']'));if(L.length>150)L.shift();o.textContent='Zebra şunu gönderdi:\n'+L.join(' ')+'\nToplam '+L.length+' tuş'});
 
@@ -5016,17 +5098,28 @@ function parseBatchLines(raw) {
     if (isPairs) {
       for (let i = 0; i < rawLines.length; i += 2) {
         const c = rawLines[i];
-        const val = parseFloat(rawLines[i + 1].replace(',', '.')) || 0;
+        const rawVal = rawLines[i + 1];
+        const val = parseFloat(rawVal.replace(',', '.')) || 0;
+        const cDigits = dg(c);
+        // Check if this is a scale barcode with embedded kg (28xxxxxxxx format)
+        const isScaleBarcode = /^2\d{11,12}$/.test(cDigits);
+        const scaleParsedKg = isScaleBarcode
+          ? (() => { const g = parseInt(cDigits.slice(7, 12), 10); return g > 0 ? +(g / 1000).toFixed(3) : null; })()
+          : null;
         const p = findP(c);
         if (p) {
-          items.push({
-            p,
-            code: c,
-            kg: p.u === 'adet' ? null : val,
-            crates: p.u === 'adet' ? Math.round(val) : Math.floor(val / (p.kg || 1)),
-            loose: p.u === 'adet' ? 0 : +(val % (p.kg || 1)).toFixed(3),
-            val
-          });
+          if (scaleParsedKg != null) {
+            // Scale barcode: weight embedded in barcode - ignore the value line (it may be junk)
+            items.push({ p, code: c, kg: scaleParsedKg, crates: 0, loose: scaleParsedKg, isScale: true });
+          } else if (p.u === 'adet') {
+            const adet = Math.round(val) || 1;
+            items.push({ p, code: c, kg: null, crates: adet, loose: 0, val });
+          } else {
+            // kg product: val is total kg, split into crates + loose
+            const cr = p.kg && p.kg > 0 && val >= p.kg ? Math.floor(val / p.kg) : 0;
+            const ls = +(val - cr * (p.kg || 0)).toFixed(3);
+            items.push({ p, code: c, kg: val, crates: cr, loose: Math.max(0, ls), val });
+          }
         }
       }
       if (items.length) return items;
