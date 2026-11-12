@@ -6711,10 +6711,19 @@ if (shipWaBtn) {
   const KW = { plu:'plu', kod:'plu', barkod:'bc', agirlik:'kg', birim:'unit', ad:'name' };
   const FILL = new Set(['olsun','yap','yaz','gir','ayarla','olarak','degistir','guncelle','no','ve','ile','de','da','yapin','lutfen','su','bu',
     'kaydet','kod','plu','barkod','agirlik','birim','ad','kasa','urun','nin','nun','kilo','adet','gram','bucuk','yarim','icin','bir','olsunda']);
-  const NAVV = new Set(['ac','git','gec','goster','sayfasi','sayfa','ekrani','ekran','sekmesi','sekme','bolumu','menusu','ekranina','sayfasina',
-    'sekmesine','bolume','lutfen','bana','simdi','hadi','ya','bak','gidelim','don','girelim','sayfasini','ekranini','ekle']);
-  const TABW = { say:['sayim','say','sayma'], ship:['sevkiyat','sevk','teslimat'], fire:['fire','zayiat'],
-    pano:['pano','panel','rapor','istatistik','grafik','siparis'], urun:['urun','urunler','stok','katalog'], aktar:['aktar','aktarim','yedek'] };
+  const NAVV = new Set([
+    'ac','acil','git','gidelim','gec','gecelim','goster','sayfasi','sayfa','ekrani','ekran','sekmesi','sekme',
+    'bolumu','menusu','ekranina','sayfasina','sekmesine','sekmesini','sayfasini','ekranini','menusunu','menuye',
+    'bolumune','bolumunu','lutfen','bana','simdi','hadi','ya','bak','don','donelim','girelim','ekle'
+  ]);
+  const TABW = {
+    say:   ['sayim','say','sayma','sayimlar','sayimi','sayima','sayimin'],
+    ship:  ['sevkiyat','sevk','teslimat','sevkiyati','sevkiyata','irsaliye','sevkiyatin'],
+    fire:  ['fire','zayiat','fireler','fireye','fireyi','firelerin'],
+    pano:  ['pano','panel','rapor','istatistik','grafik','siparis','panoya','panoyu','ozet','panonun'],
+    urun:  ['urun','urunler','urunleri','urune','urunlere','urunlerin','stok','katalog','fiyatlar','listesi'],
+    aktar: ['aktar','aktarim','aktarma','aktarmaya','yedek','yedekleme','aktara','aktarimi','aktarimlar','disa aktar','disa aktarim']
+  };
   const TABL = { say:'SAYIM', ship:'SEVKİYAT', fire:'FİRE', pano:'PANO', urun:'ÜRÜNLER', aktar:'AKTAR' };
   const DANGER = new Set(['reset','uclr','ztclr','bfix','bun','brp']);
   const isD = t => /^\d+(\.\d+)?$/.test(t);
@@ -6794,8 +6803,13 @@ if (shipWaBtn) {
 
   function tabOf(tk) {
     const c = tk.filter(t => !NAVV.has(t));
-    if (!c.length || c.length > 2) return null;
-    for (const tab in TABW) if (c.every(t => TABW[tab].some(w => t === w || (t.length > 3 && lev(t, w) <= 1)))) return tab;
+    if (!c.length) return null;
+    for (const tab in TABW) {
+      if (c.every(t => TABW[tab].some(w => t === w || (t.length > 3 && (t.startsWith(w) || w.startsWith(t) || lev(t, w) <= 1))))) return tab;
+    }
+    for (const tab in TABW) {
+      if (c.some(t => TABW[tab].includes(t))) return tab;
+    }
     return null;
   }
 
@@ -6856,16 +6870,116 @@ if (shipWaBtn) {
     return [...new Set(out)].slice(0, 4);
   }
 
+  
+  /* ---- Sayfa İçi Semantik Komut Eşleyici (Hızlı ve Güvenilir) ---- */
+  function matchSemanticAction(text, normText, modalOpen) {
+    const n = normText || norm(text);
+    if (!n || isFiller(n)) return null;
+
+    // Test / Deneme QR
+    if (/test\s*qr|deneme\s*qr|ornek\s*qr|3\s*kod/.test(n)) {
+      const el = document.getElementById('zq-test') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Test QR') || b.textContent.includes('Deneme'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'TEST QR OLUŞTUR' };
+    }
+
+    // Toplu QR
+    if (/toplu\s*(?:zebra\s*)?qr|qr\s*kod\s*olustur|qr\s*olustur|zebra\s*qr|toplu\s*kod|qr\s*kod/.test(n)) {
+      const el = document.getElementById('zq-gen') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('QR Kod'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'TOPLU QR OLUŞTUR' };
+    }
+
+    // Raporlama & Dışa Aktarım
+    if (/(?:pdf|dokuman)\s*(?:indir|olustur|kaydet|al)|(?:pdf\s*raporu?)/.test(n) || n === 'pdf') {
+      const el = document.getElementById('bpdf') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('PDF'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'PDF İNDİR' };
+    }
+    if (/excel|xlsx|(?:tablo\s*(?:indir|olustur|al))/.test(n)) {
+      const el = document.getElementById('bxls') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Excel'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'EXCEL İNDİR' };
+    }
+    if (/(?:csv)\s*(?:indir|olustur|kaydet|al)|(?:csv\s*raporu?)/.test(n) || n === 'csv') {
+      const el = document.getElementById('bcsv') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('CSV'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'CSV İNDİR' };
+    }
+    if (/whatsapp|paylas|whatsapptan\s*paylas|whatsapptan\s*gonder|rapor\s*paylas/.test(n)) {
+      const el = document.getElementById('bwap') || document.getElementById('rwa') || document.querySelector('.wap') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('WhatsApp'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'WHATSAPP PAYLAŞ' };
+    }
+    if (/siparis(?:i)?\s*(?:gonder|paylas|olustur|tamamla)/.test(n)) {
+      const el = document.getElementById('rsip') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Siparişi Gönder'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'SİPARİŞİ GÖNDER' };
+    }
+
+    // Yedekleme & Onarım
+    if (/(?:yedek|yedegi|json)\s*(?:indir|al|kaydet|dosyasi)/.test(n)) {
+      const el = document.getElementById('bexp') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Yedek Dosyasını İndir'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'YEDEK İNDİR' };
+    }
+    if (/panoya\s*kopyala|panoya\s*al/.test(n) || (n === 'kopyala' && !modalOpen)) {
+      const el = document.getElementById('bcp') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Panoya Kopyala'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'PANOYA KOPYALA' };
+    }
+    if (/veritaban(?:i|ini)?\s*(?:onar|tamir\s*et|duzelt)|sistemi\s*onar|veritabani\s*onari?m/.test(n)) {
+      const el = document.getElementById('bdbfix') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Veritabanını Onar'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'VERİTABANINI ONAR' };
+    }
+    if (/son\s*(?:anlik\s*)?(?:goruntu|snap|yedek|kurtar)/.test(n)) {
+      const el = document.getElementById('bsnap') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Son Anlık'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'SON ANLIK GÖRÜNTÜ' };
+    }
+
+    // Kamera & Barkod & Klavye
+    if (/(?:kamera(?:yi)?|barkod)\s*(?:ac|baslat|calistir)|kamerayla\s*oku(?:t)?/.test(n) || n === 'kamera') {
+      return { type: 'CAM_START', label: 'KAMERA AÇ' };
+    }
+    if (/(?:kamera(?:yi)?|barkod)\s*(?:kapat|durdur|sonlandir)/.test(n)) {
+      return { type: 'CAM_STOP', label: 'KAMERA KAPAT' };
+    }
+    if (/klavye(?:yi)?\s*(?:ac|kapat|goster|gizle)/.test(n) || n === 'klavye') {
+      const el = document.getElementById('bkb') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Klavye'));
+      return { type: 'DOM_CLICK', el, label: 'KLAVYE' };
+    }
+
+    // Ürün & Sevkiyat
+    if (!modalOpen && (/yeni\s*urun(?:s*ekle)?|urun\s*ekle/.test(n))) {
+      const el = document.getElementById('padd') || document.getElementById('btn-new-product') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Yeni Ürün'));
+      return { type: 'DOM_CLICK', el, tab: 'urun', label: 'YENİ ÜRÜN EKLE' };
+    }
+    if (/terazi\s*(?:listesi)?/.test(n)) {
+      const el = document.getElementById('bter') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Terazi'));
+      return { type: 'DOM_CLICK', el, tab: 'urun', label: 'TERAZİ LİSTESİ' };
+    }
+    if (/sevkiyat(?:i)?\s*(?:baslat|ac)/.test(n)) {
+      return { type: 'SHIP_START', label: 'SEVKİYATI BAŞLAT' };
+    }
+    if (/sevkiyat(?:i)?\s*(?:kapat|bitir|tamamla)/.test(n)) {
+      return { type: 'SHIP_FINISH', label: 'SEVKİYATI KAPAT' };
+    }
+    if (/geri\s*al|son\s*islemi\s*geri\s*al/.test(n)) {
+      return { type: 'UNDO', label: 'GERİ AL' };
+    }
+
+    return null;
+  }
+
   /* ---- Ana çözümleyici: tek bir metin için niyet üretir ---- */
   function understandOne(raw, products, tab, modalOpen, ctx) {
     const text = String(raw || '').trim();
+    if (!text || isFiller(text)) return null;
+
     const t0 = norm(text).split(' ');
     const dl = document.getElementById('dlg');
     if (dl && !dl.classList.contains('hide')) {
       if (t0.some(t => ['evet','tamam','onayla','sil','olur','kabul','devam'].includes(t))) return { type: 'DOM_CLICK', el: document.getElementById('dy'), label: 'EVET' };
       if (t0.some(t => ['hayir','vazgec','iptal','kapat','olmaz','dur'].includes(t))) return { type: 'DOM_CLICK', el: document.getElementById('dn'), label: 'HAYIR' };
     }
-    if (!text || isFiller(text)) return null;
+
+    // 0. Öncelikli Sekme ve Semantik Komut Eşleme (Gecikmesiz & Kusursuz)
+    const sem = matchSemanticAction(text, norm(text), modalOpen);
+    if (sem) return sem;
+
+    const directTab = tabOf(t0);
+    if (directTab) return { type: 'NAV_TAB', tab: directTab, label: TABL[directTab] };
     const pw = new Set(); products.forEach(p => norm(p.name).split(' ').forEach(w => pw.add(w)));
     const n = heal(norm(text), pw), tk = n.split(' ').filter(Boolean);
     const rawTk = text.toLocaleLowerCase('tr').replace(/[^\p{L}\p{N}. ]/gu, ' ').split(/\s+/).filter(Boolean);
@@ -7006,6 +7120,11 @@ if (shipWaBtn) {
 
       r.onresult = (event) => {
         try {
+          // Asistan ses çıkarırken veya yankı süresi içindeyken gelen her şeyi tamamen yut
+          if (this.isSpeaking || Date.now() < (this._echoSuppressUntil || 0)) {
+            if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
+            return;
+          }
           this.resetWatchdog();
           if (!event || !event.results) return;
 
@@ -7115,14 +7234,18 @@ if (shipWaBtn) {
     }
 
     handleSpeechResult(rawText, alts) {
-      if (this.isSpeaking) return;
+      if (this.isSpeaking || Date.now() < (this._echoSuppressUntil || 0)) return;
 
       const finalClean = String(rawText || '').trim();
       if (!finalClean) return;
 
       const nIn = norm(finalClean);
+      // Echo Filter: Asistanın vault seslerindeki veya geribildirimlerindeki kelimeleri yok say
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
-          nIn === 'sayim kaydedildi' || nIn === 'yazilimcisi sedat daglidir') {
+          nIn.includes('sayim kaydedildi') || nIn.includes('yazilimcisi sedat daglidir') ||
+          nIn.includes('urun bulundu') || nIn.includes('fire kaydedildi') ||
+          nIn.includes('sevkiyat eklendi') || nIn.includes('sekme acildi') ||
+          nIn.includes('filtre uygulandi') || nIn.includes('calistirildi')) {
         return;
       }
 
@@ -7946,9 +8069,24 @@ if (shipWaBtn) {
             this.playTone(850, 'sine', 0.12); this.showFeedback('Alan dolduruldu: ' + intent.value, false, false); this.playVoiceResponse('MODAL_NAME_SET'); break;
           }
           case 'DOM_CLICK': {
-            if (!intent.el) break;
-            if (intent.tab && this.getCurrentTab() !== intent.tab) { await this.navToTab(intent.tab); await this.delay(200); }
-            intent.el.click(); this.playTone(800, 'sine', 0.12); this.showFeedback(intent.label + ' çalıştırıldı', false, false); this.playVoiceResponse('TAB_OPENED'); break;
+            if (!intent.el) {
+              if (intent.selector) {
+                intent.el = document.querySelector(intent.selector);
+              }
+            }
+            if (intent.tab && this.getCurrentTab() !== intent.tab) {
+              await this.navToTab(intent.tab);
+              await this.delay(220);
+            }
+            if (!intent.el && intent.selector) {
+              intent.el = document.querySelector(intent.selector);
+            }
+            if (intent.el) {
+              try { intent.el.click(); } catch(e) {}
+            }
+            this.playTone(800, 'sine', 0.12);
+            this.showFeedback(intent.label + ' çalıştırıldı', false, false);
+            break;
           }
 
           default:
@@ -8070,14 +8208,20 @@ if (shipWaBtn) {
     }
 
     async navToTab(tab) {
-      const B = this.B();
-      if (typeof B.setTab === 'function') {
-        B.setTab(tab);
-      } else {
-        const btn = document.querySelector('nav button[data-tab="' + tab + '"]');
-        if (btn) btn.click();
+      // 1. Gerçek DOM sekme butonuna tıkla (tüm event ve UI animasyonlarını kusursuz tetikler)
+      const btn = document.querySelector('nav button[data-t="' + tab + '"], nav button[data-tab="' + tab + '"]');
+      if (btn) {
+        try { btn.click(); } catch(e) {}
       }
-      await this.delay(100);
+      // 2. Global ve köprü setTab fonksiyonunu da garanti olarak çalıştır
+      try {
+        if (typeof setTab === 'function') setTab(tab);
+        else {
+          const B = this.B();
+          if (typeof B.setTab === 'function') B.setTab(tab);
+        }
+      } catch(e) {}
+      await this.delay(120);
     }
 
     delay(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -8088,25 +8232,47 @@ if (shipWaBtn) {
       const dataUri = VOICE_AUDIO_VAULT[key];
       if (!dataUri) return;
 
+      // Echo / Loopback Önlemi 1: Ses başlamadan önce mikrofonu tamamen durdur
+      if (this.recognition && this.isRecognizing) {
+        try { this.recognition.abort(); } catch(e) {}
+        this.isRecognizing = false;
+      }
+      if (this._interimTimer) {
+        clearTimeout(this._interimTimer);
+        this._interimTimer = null;
+      }
+
       if (this.currentAudio) {
         try { this.currentAudio.pause(); this.currentAudio = null; } catch(e) {}
       }
 
       this.isSpeaking = true;
+      const resumeListeningAfterAudio = () => {
+        this.currentAudio = null;
+        // Hoparlör ve oda yankısının tamamen sönümlenmesi için 480ms bekle
+        setTimeout(() => {
+          this.isSpeaking = false;
+          // Yankı filtresi: mikrofon açıldıktan sonraki 400ms boyunca yankıyı yoksay
+          this._echoSuppressUntil = Date.now() + 400;
+          if (this.shouldKeepListening() && !this.manuallyPaused) {
+            this.startListening();
+          }
+        }, 480);
+      };
+
       try {
         const audio = new Audio(dataUri);
         this.currentAudio = audio;
-        audio.onended = () => {
-          this.currentAudio = null;
-          setTimeout(() => { this.isSpeaking = false; }, 350);
-        };
+        audio.onended = resumeListeningAfterAudio;
         audio.onerror = () => {
           this.currentAudio = null;
           this.isSpeaking = false;
+          if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
         };
         audio.play().catch(() => {
           this.currentAudio = null;
           this.isSpeaking = false;
+          if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
         });
       } catch(e) {
         this.currentAudio = null;
