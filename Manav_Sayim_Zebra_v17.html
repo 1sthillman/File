@@ -6227,7 +6227,7 @@ if (shipWaBtn) {
                 }
                 if (candidate && candidate !== this._lastCommittedText) {
                   console.log('[VC Auto-Commit]', candidate);
-                  try { if (this.recognition) this.recognition.abort(); } catch(e) {}
+                  // continuous:true modunda abort() gereksiz — döngüye neden olur
                   this.handleSpeechResult(candidate, [candidate]);
                 }
               }, delay);
@@ -6273,8 +6273,9 @@ if (shipWaBtn) {
         this.isRecognizing = false;
         this.clearWatchdog();
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          // _errCount yüksekse (döngü var) → uzun bekle; aksi halde hızlı başlat
-          const delay = (this._errCount || 0) > 2 ? Math.min(10000, 800 * this._errCount) : 150;
+          // no-speech/network hataları _errCount'u artırır → yavaş restart
+          // normal bitiş (isFinal sonrası) veya abort → _errCount=0 → hızlı restart
+          const delay = (this._errCount || 0) > 2 ? Math.min(10000, 800 * this._errCount) : 300;
           this.scheduleRestart(delay);
         } else {
           this.updateUIStatus('Hazır', 'idle');
@@ -6331,17 +6332,19 @@ if (shipWaBtn) {
       if (this.isRecognizing) return;
       try {
         if (!this.recognition) {
+          // Recognition nesnesi hiç oluşturulmamışsa ilk kez kur
           this.initSpeechRecognition();
         }
+        // Sadece .start() çağır — yeni nesne oluşturma (abort() döngüsünü önler)
         this.recognition.start();
         this.manuallyPaused = false;
       } catch(e) {
         if (e.name === 'InvalidStateError') {
-          this.cleanupRecognition();
-          this.initSpeechRecognition();
-          try { this.recognition.start(); } catch(e2) { this.scheduleRestart(200); }
+          // Zaten çalışıyor — sorun yok, bir şey yapma
+          this.isRecognizing = true;
         } else {
-          this.scheduleRestart(300);
+          // Başka bir hata — kısa gecikmede tekrar dene
+          this.scheduleRestart(500);
         }
       }
     }
