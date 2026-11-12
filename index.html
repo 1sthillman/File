@@ -6060,6 +6060,7 @@ if (shipWaBtn) {
       this._lastNotUnderstoodTime = 0;
       this._pendingCandidate = null;
       this._pendingAlts = null;
+      this._errCount = 0;
 
       // DOM Refs
       this.hud = null; this.btnFab = null; this.centerMic = null;
@@ -6144,7 +6145,8 @@ if (shipWaBtn) {
         this.updateUIStatus('Dinleniyor', 'listening');
         this.setListeningVisuals(true);
         this.resetWatchdog();
-        console.log('[VC v12] Recognition started — lang:', this.recognition.lang);
+        this._errCount = 0;
+        console.log('[VC v14] Recognition started — lang:', this.recognition.lang);
       };
 
       this.recognition.onresult = (event) => {
@@ -6237,23 +6239,41 @@ if (shipWaBtn) {
       };
 
       this.recognition.onerror = (ev) => {
-        if (ev.error === 'no-speech') return;
+        console.warn('[VC onerror]', ev.error);
         if (ev.error === 'not-allowed') {
           this.updateUIStatus('Mikrofon izni verilmedi', 'error');
           this.setListeningVisuals(false);
+          this._errCount = 99; // tamamen durdur
           return;
         }
-        if (ev.error === 'network') this.updateUIStatus('Konuşma tanıma için internet gerekli', 'error');
-        if (ev.error === 'language-not-supported') this.recognition.lang = 'tr';
         this._errCount = (this._errCount || 0) + 1;
-        if (this.shouldKeepListening()) this.scheduleRestart(Math.min(3000, 250 * this._errCount));
+        if (ev.error === 'no-speech') {
+          // no-speech normaldir — döngüyü önlemek için yavaş yeniden başlat
+          if (this._errCount > 8) {
+            this.updateUIStatus('Ses algılanamıyor — internet veya mikrofon kontrolü yapın', 'error');
+          }
+          if (this.shouldKeepListening()) {
+            const delay = Math.min(10000, 600 * this._errCount);
+            this.scheduleRestart(delay);
+          }
+          return;
+        }
+        if (ev.error === 'network') {
+          this.updateUIStatus('Konuşma tanıma için internet gerekli', 'error');
+          if (this.shouldKeepListening()) this.scheduleRestart(Math.min(10000, 1500 * this._errCount));
+          return;
+        }
+        if (ev.error === 'language-not-supported') this.recognition.lang = 'tr';
+        if (this.shouldKeepListening()) this.scheduleRestart(Math.min(5000, 500 * this._errCount));
       };
 
       this.recognition.onend = () => {
         this.isRecognizing = false;
         this.clearWatchdog();
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          this.scheduleRestart(80);
+          // _errCount yüksekse (döngü var) → uzun bekle; aksi halde hızlı başlat
+          const delay = (this._errCount || 0) > 2 ? Math.min(10000, 800 * this._errCount) : 150;
+          this.scheduleRestart(delay);
         } else {
           this.updateUIStatus('Hazır', 'idle');
           this.setListeningVisuals(false);
@@ -7193,7 +7213,7 @@ if (shipWaBtn) {
       this.initSpeechRecognition();
       this.initEvents();
       this.initAudioAnalyser();
-      console.info('[VC v13] VoiceCommander v13 Aktif — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
+      console.info('[VC v14] VoiceCommander v14 Aktif — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
     }
   }
 
