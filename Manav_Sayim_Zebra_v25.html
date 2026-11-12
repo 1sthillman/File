@@ -3508,8 +3508,8 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setTab(b.datase
 IC.cam='<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>';
 document.querySelectorAll('.camb').forEach(b=>b.innerHTML=ico('cam'));
 const O=()=>Object.assign({snd:true,fl:false},M.meta.get('opt')||{});
-let AC=null;const aud=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC};
-['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>{aud()},{passive:true}));
+let AC=null,UG=false;const aud=()=>{if(!UG)return null;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC};
+['pointerdown','keydown','touchstart','click'].forEach(ev=>addEventListener(ev,()=>{UG=true;aud()},{passive:true,capture:true}));
 function tone(f,t0,d,v,ty){const a=aud();if(!a)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=ty||'sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.03)}
 function beep(ok){if(!O().snd)return;if(ok){tone(1175,0,.1,.22);tone(1568,.075,.16,.22)}else{tone(220,0,.12,.28,'square');tone(165,.15,.2,.28,'square')}}
 function syncOpt(){const o=O();[['snd','Ses'],['fl','Okutma flaşı']].forEach(([k,l])=>{const b=document.querySelector('#optb [data-o="'+k+'"]');if(b){b.textContent=l+(o[k]?' açık':' kapalı');b.classList.toggle('on',!!o[k])}});$('#csn').classList.toggle('on',!!o.snd);$('#cfl').classList.toggle('on',!!o.fl);$('#csn').innerHTML=ico(o.snd?'vol':'volx');$('#cfl').innerHTML=ico('bolt');$('#ctf').innerHTML=ico('torch');$('#cx').innerHTML=ico('x');$('#czm').innerHTML=ico('zoom');$('#ctf').classList.toggle('on',torchOn)}
@@ -5482,67 +5482,17 @@ if (shipWaBtn) {
   /* =========================================================================
      NORMALİZASYON & YARDIMCILAR (TAM TÜRKÇE KARAKTER DESTEĞİ)
      ========================================================================= */
-  /* TR word-to-digit pre-converter: runs on raw speech before norm() */
-  const TR_WNUM = {
-    'sifir':0,'bir':1,'iki':2,'uc':3,'dort':4,'bes':5,'alti':6,'yedi':7,'sekiz':8,'dokuz':9,
-    'on':10,'yirmi':20,'otuz':30,'kirk':40,'elli':50,'altmis':60,'yetmis':70,'seksen':80,'doksan':90,
-    'yuz':100,'bin':1000
-  };
-  function preNorm(raw) {
-    // Turkish chars to ASCII (before split, so we can match normalized word forms)
-    let s = String(raw||'')
-      .replace(/İ/g,'i').replace(/I/g,'i').replace(/ı/g,'i')
-      .toLowerCase()
-      .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    // Preserve decimal comma "1,5" -> "1.5"
-    s = s.replace(/(\d),(\d)/g,'$1.$2');
-    // Handle "X bucuk" -> decimal (e.g. "bir bucuk" -> "1.5", "2 bucuk" -> "2.5")
-    s = s.replace(/\b(bir|iki|uc|dort|bes|alti|yedi|sekiz|dokuz|on|yirmi|otuz|kirk|elli|altmis|yetmis|seksen|doksan|\d+)\s+bucuk\b/g, function(m,p1){
-      const v = TR_WNUM[p1] !== undefined ? TR_WNUM[p1] : parseFloat(p1);
-      return isNaN(v) ? m : (v+0.5).toString();
-    });
-    s = s.replace(/\byarim\b/g,'0.5');
-    s = s.replace(/\bceyrek\b/g,'0.25');
-    // Convert consecutive TR number words to Arabic digits
-    const words = s.split(/\s+/);
-    const out = [];
-    let buf = [];
-    const flushBuf = () => {
-      if (!buf.length) return;
-      let total=0,cur=0,found=false;
-      for (const w of buf) {
-        let v = TR_WNUM[w];
-        if (v===undefined) { const n=parseFloat(w); if(!isNaN(n)){v=n;} }
-        if (v!==undefined) {
-          found=true;
-          if(v===1000){cur=(cur||1)*1000;total+=cur;cur=0;}
-          else if(v===100){cur=(cur||1)*100;}
-          else cur+=v;
-        }
-      }
-      total+=cur;
-      out.push(found?total.toString():buf.join(' '));
-      buf=[];
-    };
-    for (const w of words) {
-      if (TR_WNUM[w]!==undefined || /^\d+(\.\d+)?$/.test(w)) {
-        buf.push(w);
-      } else { flushBuf(); out.push(w); }
-    }
-    flushBuf();
-    return out.join(' ');
-  }
   function norm(s) {
-    // First convert TR number words to digits, then normalize
-    const pre = preNorm(s);
-    return pre
-      // Keep decimal numbers intact: temporarily protect digit.digit
-      .replace(/(\d)\.(\d)/g,'$1__D__$2')
-      .replace(/[^a-z0-9. ]/g,' ')
-      .replace(/\./g,' ')
-      .replace(/__D__/g,'.')
-      .replace(/\s+/g,' ')
+    return String(s || '')
+      .replace(/İ/g, 'i')
+      .replace(/I/g, 'i')
+      .replace(/ı/g, 'i')
+      .toLowerCase()
+      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+      .replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/(\d)[.,](\d)/g, '$1\u0001$2').replace(/[^a-z0-9\u0001 ]/g, ' ').replace(/\u0001/g, '.')
+      .replace(/\s+/g, ' ')
       .trim();
   }
 
@@ -5570,27 +5520,24 @@ if (shipWaBtn) {
 
   function parseNumberTokens(tokens) {
     if (!tokens.length) return null;
-    // After preNorm, tokens should already be Arabic numerals (floats possible)
     const str = tokens.join(' ').trim();
-    // Try direct numeric parse (handles "1.5", "0.5", "72", etc.)
+    if (tokens.length > 1 && tokens.some(t => /^\d+(\.\d+)?$/.test(t)) && tokens.every(t => /^\d+(\.\d+)?$/.test(t) || t === 'bucuk' || t === 'yarim'))
+      return tokens.reduce((a, t) => a + (/^\d/.test(t) ? parseFloat(t) : 0.5), 0);
     const direct = parseFloat(str.replace(',', '.'));
-    if (!isNaN(direct) && tokens.length === 1) return direct;
-    // Multi-token: try summing (e.g. preNorm left "1 5" from some edge case)
-    let total = 0;
+    if (!isNaN(direct)) return direct;
+
+    let result = 0, current = 0;
     for (const t of tokens) {
-      const n = parseFloat(t);
-      if (!isNaN(n)) total += n;
-      else {
-        const v = TR_NUMS[t];
-        if (v !== undefined) {
-          if (v === 1000) total = (total || 1) * 1000;
-          else if (v === 1000000) total = (total || 1) * 1000000;
-          else if (v === 100) total = (total || 1) * 100;
-          else total += v;
-        }
-      }
+      const v = TR_NUMS[t];
+      if (v === undefined) continue;
+      if (v === 1000) { current = (current || 1) * 1000; }
+      else if (v === 1000000) { current = (current || 1) * 1000000; }
+      else if (v === 100) { current = (current || 1) * 100; }
+      else { current += v; }
     }
-    return total > 0 ? total : null;
+    result = current;
+    if (result === 0 && tokens.some(t => TR_NUMS[t] !== undefined)) result = 0;
+    return result || null;
   }
 
   const UNIT_MAP = {
@@ -5610,44 +5557,29 @@ if (shipWaBtn) {
       let unitType = UNIT_MAP[t];
       if (!unitType) continue;
 
-      // kilo_half / kilo_quarter handled by preNorm now (yarim->0.5, ceyrek->0.25)
-      // but keep these for safety
-      if (unitType === 'kilo_half')   { kg += 0.5;  hasKg = true; usedIdx.add(i); continue; }
-      if (unitType === 'kilo_quarter'){ kg += 0.25; hasKg = true; usedIdx.add(i); continue; }
+      if (unitType === 'kilo_half')  { kg += 0.5; hasKg = true; usedIdx.add(i); continue; }
+      if (unitType === 'kilo_quarter') { kg += 0.25; hasKg = true; usedIdx.add(i); continue; }
 
-      // Find preceding number tokens (floats like "1.5" are single tokens)
       let numTokens = [];
       for (let j = i - 1; j >= 0 && j >= i - 5; j--) {
         if (usedIdx.has(j)) break;
         const tj = tokens[j];
-        if (/^\d+(\.\d+)?$/.test(tj) || TR_NUMS[tj] !== undefined) {
+        if (/^\d+([.,]\d+)?$/.test(tj) || TR_NUMS[tj] !== undefined ||
+            ['bucuk','yarim','ceyrek'].includes(tj)) {
           numTokens.unshift(tj);
         } else break;
       }
-      // If no preceding, try following
       if (!numTokens.length) {
         for (let j = i + 1; j < tokens.length && j <= i + 4; j++) {
-          if (usedIdx.has(j)) break;
-          if (/^\d+(\.\d+)?$/.test(tokens[j]) || TR_NUMS[tokens[j]] !== undefined) {
+          if (/^\d+([.,]\d+)?$/.test(tokens[j]) || TR_NUMS[tokens[j]] !== undefined) {
             numTokens.push(tokens[j]);
           } else break;
         }
       }
       if (!numTokens.length) continue;
-
-      // Parse the number — try direct float first (single token)
-      let qty;
-      if (numTokens.length === 1 && /^\d+(\.\d+)?$/.test(numTokens[0])) {
-        qty = parseFloat(numTokens[0]);
-      } else {
-        qty = parseNumberTokens(numTokens);
-      }
-      if (qty === null || isNaN(qty)) continue;
-
-      // Mark used
-      for (let ni = 0; ni < numTokens.length; ni++) {
-        usedIdx.add(i - numTokens.length + ni);
-      }
+      const qty = parseNumberTokens(numTokens);
+      if (qty === null) continue;
+      numTokens.forEach((_, ni) => usedIdx.add(i - numTokens.length + ni));
       usedIdx.add(i);
 
       if (unitType === 'kasa') crates = (crates || 0) + qty;
@@ -5726,10 +5658,10 @@ if (shipWaBtn) {
         const baseScore = 1.0 + (matchedWords / pWords.length) * 0.6;
         let penalty = (pWords.length - matchedWords) * 0.15;
 
-        // Kullanıcının söylemediği özel ayırt edici modifier varsa ceza
+        // Kullanıcının söylemediği özel ayırt edici modifier varsa ağır ceza
         for (const pw of pWords) {
           if (!qWords.includes(pw) && MODIFIER_WORDS.has(pw)) {
-            penalty += 0.85;
+            penalty += 0.85; // Mor Soğan, Salkım Domates, Baby Muz cezalandırılır
           }
         }
         score = Math.max(score, baseScore - penalty);
@@ -5758,12 +5690,10 @@ if (shipWaBtn) {
   /* =========================================================================
      DOLGU / SAÇMA KELİME FİLTRESİ
      ========================================================================= */
-  const FILLER_RE = /^(ee+|ii+|mm+|yy+|aa+|hm+|um+|sey|tamam|ok|evet|hayir|yani|iste|aslinda|bilmiyorum|alo|merhaba|selam|test|be|ha|he)$/i;
+  const FILLER_RE = /^(ee+|ii+|mm+|yy+|aa+|hm+|um+|sey|bir sey|tamam|ok|evet|hayir|yani|iste|aslinda|bilmiyorum|alo|merhaba|selam|test|bir|iki|uc|be|ha|he)$/i;
   function isFiller(text) {
     const t = norm(text);
     if (!t || t.length < 2) return true;
-    // Standalone numbers (after preNorm) are valid commands (PLU code, etc.)
-    if (/^\d+(\.\d+)?$/.test(t)) return false;
     return FILLER_RE.test(t);
   }
 
@@ -5772,25 +5702,25 @@ if (shipWaBtn) {
      ========================================================================= */
   const INTENT_PATTERNS = {
     DEV_INFO:      [/yazilimci/i, /gelistirici/i, /bunu kim yapti/i, /kim kodladi/i, /programci/i, /sedat/i],
-    STATUS_SUMMARY:[/sayim durumu/i, /durum nedir/i, /kac urun/i, /sayim nasil/i, /kaci kaldi/i, /kalanlar neler/i],
+    STATUS_SUMMARY:[/sayim durumu/i, /durum nedir/i, /kac urun/i, /sayim nasil/i, /kaci kaldi/i, /kalanlar/i],
     FIRE_SUMMARY:  [/bugunku fire/i, /fire durumu/i, /toplam fire/i, /fire ne kadar/i, /fire ozeti/i],
     SHIP_SUMMARY:  [/sevkiyat durumu/i, /sevkiyatta ne var/i, /sevkiyat nasil/i, /sevkiyatta kac/i],
-    NAV_SAY:       [/^sayim$/, /sayim(i|a)\s*(ac|gec|ekrani|sayfasi|git)?$/, /sayim ekranina git/, /sayima git/, /^sayima$/, /^sayi[mn]a?$/],
-    NAV_SHIP:      [/^sevkiyat$/, /sevkiyat(i|a)?\s*(ac|gec|ekrani|sekmesi|sayfasi|git)?$/, /sevkiyata\s*git/, /teslimat\s*(ekran)?/, /^teslimat$/],
-    NAV_FIRE:      [/^fire$/, /fire(ye|yi|ya)?\s*(ac|gec|ekrani|sekmesi|sayfasi|git)?$/, /^curuk(ler)?$/, /^zayiat$/],
-    NAV_PANO:      [/^pano$/, /pano(yu|ya)?\s*(ac|gec|ekrani|sayfasi|git)?$/, /^panel$/, /^grafik$/, /^istatistik$/, /^analiz$/],
-    NAV_URUN:      [/^urunler?$/, /urun(ler|leri|lere)?\s*(ac|gec|ekrani|yonet|sayfasi|git)?$/, /urun listesi/, /urun katalogu/],
-    NAV_AKTAR:     [/^aktar$/, /aktar(im|imi|ima)?\s*(ac|gec|ekrani|sayfasi|git)?$/, /^yedek$/, /disa aktar/, /ice aktar/],
-    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/, /^hepsi$/, /tum urunler/, /filtreyi (kaldir|temizle)/],
-    FILTER_DONE:   [/sayilan(lar)?\s*(goster|ac)?$/, /^tamamlananlar$/, /sayilanlar/],
-    FILTER_TODO:   [/sayilmayan(lar)?\s*(goster|ac)?$/, /^bekleyenler$/, /^eksikler$/, /sayilmayanlar/],
-    CAM_START:     [/kamera(yi)?\s*(ac|baslat)/, /barkod\s*(ac|tara|oku)/, /qr oku/, /^tara$/],
-    CAM_STOP:      [/kamera(yi)?\s*kapat/, /kapat kamera/],
-    WHATSAPP:      [/whatsapp/, /wp\s*(rapor)?/, /raporu paylas/],
-    SHIP_START:    [/sevkiyat(i)?\s*(baslat|ac|yeni)/, /yeni sevkiyat/, /sevkiyata basla/, /sevkiyati baslat/],
-    SHIP_CLOSE:    [/sevkiyat(i)?\s*(kapat|bitir|tamam)/, /sevkiyat bitti/, /sevkiyati kapat/],
-    PROD_NEW:      [/yeni urun\s*(ekle|olustur|kaydet)?/, /^urun ekle$/, /yeni urun olustur/],
-    UNDO:          [/^geri al$/, /geri al$/, /^iptal$/, /yanlis oldu/, /son islemi (geri al|iptal)/],
+    NAV_SAY:       [/sayim(i|a)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^sayim$/i],
+    NAV_SHIP:      [/sevkiyat(i|a)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^sevkiyat$/i, /teslimat/i],
+    NAV_FIRE:      [/fire(ye|yi|ya)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^fire$/i, /curukler/i, /zayiat/i],
+    NAV_PANO:      [/pano(yu|ya)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^pano$/i, /panel/i, /grafik/i, /istatistik/i, /analiz/i],
+    NAV_URUN:      [/urun(ler|leri|lere)?\s*(ac|gec|ekrani|yonet|sayfasi)?$/i, /^urunler$/i],
+    NAV_AKTAR:     [/aktar(im|imi|ima)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^aktar$/i, /yedek/i, /disa aktar/i, /ice aktar/i],
+    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/i, /hepsi/i, /tum urunler/i, /filtreyi kaldir/i, /filtreyi temizle/i],
+    FILTER_DONE:   [/sayilan(lar)?\s*(goster|ac)?$/i, /tamamlananlar/i, /bitti/i],
+    FILTER_TODO:   [/sayilmayan(lar)?\s*(goster|ac)?$/i, /bekleyenler/i, /kalanlar/i, /eksikler/i],
+    CAM_START:     [/kamera(yi)?\s*(ac|baslat)/i, /barkod\s*(ac|tara|oku)/i, /qr oku/i, /^tara$/i],
+    CAM_STOP:      [/kamera(yi)?\s*kapat/i, /kapat kamera/i],
+    WHATSAPP:      [/whatsapp/i, /wp\s*(rapor)?/i, /raporu paylas/i],
+    SHIP_START:    [/sevkiyat(i)?\s*(baslat|ac|yeni)/i, /yeni sevkiyat/i, /sevkiyata basla/i],
+    SHIP_CLOSE:    [/sevkiyat(i)?\s*(kapat|bitir|tamam)/i, /sevkiyat bitti/i],
+    PROD_NEW:      [/yeni urun\s*(ekle|olustur|kaydet)?/i, /urun ekle/i, /yeni urun/i],
+    UNDO:          [/geri al/i, /^iptal$/i, /yanlis oldu/i, /sil son/i],
   };
 
   function buildSystemIntent(type, nText, rawText) {
@@ -5825,6 +5755,7 @@ if (shipWaBtn) {
      MODAL İÇİ SESLİ DÜZENLEME
      ========================================================================= */
   function classifyModal(nText) {
+    // PLU Kodu
     const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|kod)\s*[:#]?\s*(\d+)/i) ||
                  nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kod)\b/i);
     if (mPLU) {
@@ -5832,6 +5763,7 @@ if (shipWaBtn) {
       return { type: 'MODAL_SET_PLU', plu: code, label: 'PLU: ' + code };
     }
 
+    // Barkod
     const mBC = nText.match(/\bbarkod(?:u)?\s*(?:kodu?)?\s*(\d+)/i) ||
                 nText.match(/\b(\d{7,14})\s*(?:nolu\s+)?barkod\b/i);
     if (mBC) {
@@ -5839,19 +5771,23 @@ if (shipWaBtn) {
       return { type: 'MODAL_SET_BARCODE', barcode: bcode, label: 'BARKOD: ' + bcode };
     }
 
+    // Kasa ağırlığı
     if (/kasa\s*(agirlig\w*|kilos\w*|kilo)?\s*(\d+([.,]\d+)?)|(\d+([.,]\d+)?)\s*(kilo|kg)\s*kasa/i.test(nText)) {
       const m = nText.match(/\d+([.,]\d+)?/);
       if (m) return { type: 'MODAL_SET_CRATE_KG', kg: parseFloat(m[0].replace(',','.')), label: 'KASA AĞIRLIĞI' };
     }
 
+    // Birim
     if (/birim\w*\s*adet|^adet\s*(yap|olsun)$/i.test(nText))  return { type: 'MODAL_SET_UNIT', unit: 'adet', label: 'BİRİM: ADET' };
     if (/birim\w*\s*(kilo|kg)|^kilo\s*(yap|olsun)$/i.test(nText)) return { type: 'MODAL_SET_UNIT', unit: 'kg', label: 'BİRİM: KG' };
 
+    // Ürün adı
     if (/urun\s*(adi|ismi|name)?\s*(.+)/i.test(nText)) {
       const m = nText.match(/urun\s*(adi|ismi|name)?\s*(.+)/i);
       if (m && m[2] && m[2].length > 1) return { type: 'MODAL_SET_NAME', name: m[2].trim(), label: 'AD: ' + m[2].trim().toUpperCase() };
     }
 
+    // Kaydet / İptal
     if (/kaydet|tamam|bitti\s*urun|urun\s*kaydet/i.test(nText)) return { type: 'MODAL_SAVE', label: 'KAYDET' };
     if (/vazgec|iptal|kapat\s*(modal|pencere)?/i.test(nText))   return { type: 'MODAL_CANCEL', label: 'İPTAL' };
 
@@ -5900,6 +5836,7 @@ if (shipWaBtn) {
     const productQuery = productTokens.join(' ').trim();
     const match = matchProductSmart(productQuery, products);
 
+    // Ürünler sekmesinde sadece isim söylenmişse düzenlemeye aç
     if (currentTab === 'urun' && match && !hasQty && !hasFireKw && !hasShipKw) {
       return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
@@ -5907,26 +5844,33 @@ if (shipWaBtn) {
     if (!match) return null;
     const p = match.p;
 
+    // Fire sekmesinde ürün + miktar
     if (currentTab === 'fire' && hasQty && !hasShipKw) {
       const amount = crates !== null ? crates : (kg !== null ? kg : (pieces || 1));
       const unit   = crates !== null ? 'kasa' : (kg !== null ? 'kg' : 'adet');
       return { type: 'FIRE_ADD', product: p, amount, unit, why, label: 'FİRE: ' + p.name };
     }
 
+    // Sevkiyat sekmesinde ürün + miktar
     if (currentTab === 'ship' && hasQty && !hasFireKw) {
       return { type: 'SHIP_ADD_AUTO', product: p, crates, pieces, loose: kg, label: 'SEVKİYAT: ' + p.name };
     }
 
+    // Açık fire ifadesi
     if (hasFireKw && hasQty) {
       const amount = crates !== null ? crates : (kg !== null ? kg : (pieces || 1));
       const unit   = crates !== null ? 'kasa' : (kg !== null ? 'kg' : 'adet');
       return { type: 'FIRE_ADD', product: p, amount, unit, why, label: 'FİRE: ' + p.name };
     }
 
+    // Açık sevkiyat ifadesi
     if (hasShipDel) return { type: 'SHIP_DEL', product: p, label: 'SEVKİYATTAN SİL: ' + p.name };
     if (hasShipKw && hasQty) return { type: 'SHIP_ADD_AUTO', product: p, crates, pieces, loose: kg, label: 'SEVKİYAT: ' + p.name };
+
+    // Sayımdan sil
     if (hasClearKw) return { type: 'SAYIM_CLR', product: p, label: 'SIFIRLA: ' + p.name };
 
+    // Delta ekleme / azaltma
     if ((hasDeltaAdd || hasDeltaSub) && hasQty) {
       const sign = hasDeltaSub ? -1 : 1;
       return {
@@ -5938,6 +5882,7 @@ if (shipWaBtn) {
       };
     }
 
+    // Standart sayım
     if (hasQty) {
       return { type: 'SAYIM_SET', product: p, crates, kg, pieces, label: 'SAYIM: ' + p.name };
     }
@@ -5948,11 +5893,9 @@ if (shipWaBtn) {
   /* =========================================================================
      ANA BAĞLAMSAL SINIFLANDIRICI (TAB-AWARE & PLU ÖNCELİKLİ)
      ========================================================================= */
-  function classifyContextAware(raw, products, currentTab, isModalOpen) {
+  function classifyLegacy(raw, products, currentTab, isModalOpen) {
     const text = String(raw || '').trim();
     if (!text || text.length < 2 || isFiller(text)) return null;
-    // preNorm converts TR number words to digits BEFORE norm strips non-alphanum
-    // This allows "plu yetmiş iki" to match as "plu 72"
     const nText = norm(text);
 
     // 1. Modal Açıkken Öncelik Modal İçi Komutlarda
@@ -5962,9 +5905,8 @@ if (shipWaBtn) {
     }
 
     // 2. PLU / Kasa Kodu Tespiti (örn: "kasa plu kodu 72", "plu 72", "kod 72", "72 nolu plu")
-    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|kod)\s*[:#]?\s*(\d+(\.\d+)?)/i) ||
-                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kasa\s*kodu|urun\s*kodu|kodu|kod)\b/i) ||
-                 (/^\d+$/.test(nText) ? [nText, nText] : null);
+    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|kod)\s*[:#]?\s*(\d+)/i) ||
+                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kasa\s*kodu|urun\s*kodu|kodu|kod)\b/i);
     if (mPLU) {
       const code = mPLU[1] || mPLU[2];
       if (isModalOpen) {
@@ -6031,6 +5973,220 @@ if (shipWaBtn) {
     return classifyProductIntent(nText, text, products, currentTab);
   }
 
+  /*V9-BEGIN*/
+  /* =========================================================================
+     v9 AKILLI ANLAMA KATMANI — alan çözümleyici, ASR onarımı, bağlam, DOM erişimi
+     ========================================================================= */
+  const HEAL_MAP = { plus:'plu', pilu:'plu', blu:'plu', pelu:'plu', plug:'plu', plo:'plu', pulu:'plu', pl:'plu',
+    barcode:'barkod', barkot:'barkod', barkodu:'barkod', barkodun:'barkod', kilogram:'kilo', kilosu:'kilo', kilosunu:'kilo', kg:'kilo', kilo:'kilo',
+    gramaj:'agirlik', agirligi:'agirlik', agirligini:'agirlik', agirliginin:'agirlik', agirlikta:'agirlik', tane:'adet',
+    kodu:'kod', koda:'kod', kodunu:'kod', numarasi:'no', nolu:'no', numara:'no', adi:'ad', ismi:'ad', isim:'ad', ismini:'ad', adini:'ad',
+    kaza:'kasa', kasasi:'kasa', kasanin:'kasa', kasada:'kasa', birimi:'birim', birimini:'birim', kaydedin:'kaydet', kaydeder:'kaydet', kaydedelim:'kaydet' };
+  const VOCAB = ['sayim','sevkiyat','fire','urun','urunler','barkod','plu','agirlik','kilo','adet','birim','kaydet','vazgec','iptal',
+    'duzenle','pano','aktar','kamera','whatsapp','sifirla','temizle','goster','sayilmayanlar','sayilanlar','baslat','kapat','kasa','ekle','sil','yeni'];
+  const KW = { plu:'plu', kod:'plu', barkod:'bc', agirlik:'kg', birim:'unit', ad:'name' };
+  const FILL = new Set(['olsun','yap','yaz','gir','ayarla','olarak','degistir','guncelle','no','ve','ile','de','da','yapin','lutfen','su','bu',
+    'kaydet','kod','plu','barkod','agirlik','birim','ad','kasa','urun','nin','nun','kilo','adet','gram','bucuk','yarim','icin','bir','olsunda']);
+  const NAVV = new Set(['ac','git','gec','goster','sayfasi','sayfa','ekrani','ekran','sekmesi','sekme','bolumu','menusu','ekranina','sayfasina',
+    'sekmesine','bolume','lutfen','bana','simdi','hadi','ya','bak','gidelim','don','girelim','sayfasini','ekranini','ekle']);
+  const TABW = { say:['sayim','say','sayma'], ship:['sevkiyat','sevk','teslimat'], fire:['fire','zayiat'],
+    pano:['pano','panel','rapor','istatistik','grafik','siparis'], urun:['urun','urunler','stok','katalog'], aktar:['aktar','aktarim','yedek'] };
+  const TABL = { say:'SAYIM', ship:'SEVKİYAT', fire:'FİRE', pano:'PANO', urun:'ÜRÜNLER', aktar:'AKTAR' };
+  const DANGER = new Set(['reset','uclr','ztclr','bfix','bun','brp']);
+  const isD = t => /^\d+(\.\d+)?$/.test(t);
+  const isNT = t => isD(t) || TR_NUMS[t] !== undefined;
+  const LEARN_KEY = 'manav-vc-learn';
+  const learned = () => { try { return JSON.parse(localStorage.getItem(LEARN_KEY) || '{}'); } catch (e) { return {}; } };
+  function learn(k, cmd) { try { const o = learned(); o[k] = cmd; localStorage.setItem(LEARN_KEY, JSON.stringify(o)); } catch (e) {} }
+
+  function heal(n, pw) {
+    n = n.replace(/\bbar kod/g, 'barkod').replace(/\bp l u\b|\bpl u\b/g, 'plu');
+    return n.split(' ').filter(Boolean).map(t => {
+      if (HEAL_MAP[t]) return HEAL_MAP[t];
+      if (/^plu(su|yu|nun|nu|yi)$/.test(t)) return 'plu';
+      if (t.length < 4 || /\d/.test(t) || VOCAB.includes(t) || pw.has(t) || TR_NUMS[t] !== undefined) return t;
+      for (const v of VOCAB) if (v[0] === t[0] && Math.abs(v.length - t.length) <= 1 && lev(v, t) <= (v.length >= 7 ? 2 : 1)) return v;
+      return t;
+    }).join(' ');
+  }
+
+  function code(tk) {
+    const t = tk.filter(isNT);
+    if (!t.length) return null;
+    if (t.every(x => /^\d+$/.test(x))) return t.join('');
+    if (t.every(x => /^\d+$/.test(x) || (TR_NUMS[x] >= 0 && TR_NUMS[x] < 10))) return t.map(x => /^\d+$/.test(x) ? x : TR_NUMS[x]).join('');
+    const v = parseNumberTokens(t); return v === null ? null : String(v);
+  }
+  const lead = (tk, idx) => { const r = []; let sk = 0; for (const x of idx) { const t = tk[x];
+    if (isNT(t) || ['no','kilo','gram','adet','bucuk','yarim'].includes(t)) r.push(x);
+    else if (!r.length && sk < 2 && (t.length <= 3 || FILL.has(t))) sk++; else break; } return r; };
+
+  /* Cümleden alan/değer çiftlerini çıkarır: PLU, barkod, kasa ağırlığı, birim, ad */
+  function parseFields(tk, modalOpen, rawTk) {
+    const f = {}, used = new Set(), kws = [];
+    for (let i = 0; i < tk.length; i++) {
+      const t = tk[i], nx = tk[i + 1]; let k = KW[t];
+      if (t === 'kasa') {
+        if (nx === 'agirlik' || nx === 'kod' || nx === 'plu') { used.add(i); continue; }
+        if (modalOpen && (isNT(nx) || nx === 'kilo')) k = 'kg';
+      }
+      if (t === 'urun' && nx === 'ad') { used.add(i); continue; }
+      if (k) kws.push([i, k]);
+    }
+    kws.forEach(([i, k], j) => {
+      used.add(i);
+      const end = j + 1 < kws.length ? kws[j + 1][0] : tk.length;
+      let vs = []; for (let x = i + 1; x < end; x++) vs.push(x);
+      if (k !== 'name' && k !== 'unit' && !vs.some(x => isNT(tk[x]))) {
+        const back = []; for (let x = i - 1; x >= 0 && !used.has(x); x--) { if (isNT(tk[x]) || ['no','kilo'].includes(tk[x])) back.unshift(x); else break; }
+        vs = vs.concat(back);
+      }
+      const vt = vs.map(x => tk[x]);
+      if (k === 'plu' || k === 'bc') {
+        const c = code(lead(tk, vs).map(x => tk[x])); if (c) { f[k === 'plu' ? 'plu' : 'barcode'] = c; vs = lead(tk, vs); }
+      } else if (k === 'kg') {
+        const ix = lead(tk, vs), nums = ix.map(x => tk[x]).filter(isNT);
+        let q = nums.length ? (nums.length === 1 && isD(nums[0]) ? parseFloat(nums[0]) : parseNumberTokens(nums)) : null;
+        if (q) { if (vt.includes('gram')) q = q / 1000; f.kg = q; if (vt.includes('adet')) f.unit = 'adet'; vs = ix; }
+      } else if (k === 'unit') {
+        if (vt.includes('adet')) f.unit = 'adet'; else if (vt.includes('kilo')) f.unit = 'kg';
+      } else if (k === 'name') {
+        const nm = vs.filter(x => !FILL.has(tk[x])).map(x => (rawTk && rawTk.length === tk.length ? rawTk[x] : tk[x]));
+        if (nm.length) f.name = nm.join(' ').toLocaleUpperCase('tr');
+      }
+      vs.forEach(x => used.add(x));
+    });
+    const restIdx = tk.map((t, i) => i).filter(i => !used.has(i) && !FILL.has(tk[i]) && !isNT(tk[i]));
+    const rest = restIdx.map(i => tk[i]);
+    return { f, rest, restIdx, save: tk.includes('kaydet'), any: Object.keys(f).length > 0 };
+  }
+
+  function resolveProduct(tokens, products) {
+    if (!tokens.length) return null;
+    let m = matchProductSmart(tokens.join(' '), products);
+    if (!m) { const st = tokens.map(t => t.length > 4 ? t.replace(/(nin|nun|in|un|i|u|a|e)$/, '') : t); m = matchProductSmart(st.join(' '), products); }
+    return m ? m.p : null;
+  }
+
+  function tabOf(tk) {
+    const c = tk.filter(t => !NAVV.has(t));
+    if (!c.length || c.length > 2) return null;
+    for (const tab in TABW) if (c.every(t => TABW[tab].some(w => t === w || (t.length > 3 && lev(t, w) <= 1)))) return tab;
+    return null;
+  }
+
+  /* ---- Uygulamanın tüm damarlarına erişim: görünür buton ve alanları sesle yönet ---- */
+  const vis = e => e.offsetParent !== null && !e.closest('#voice-hud') && e.id !== 'btn-voice-float' && !e.disabled;
+  const tokOk = (a, b) => a === b || (a.length > 3 && b.length > 3 && (lev(a, b) <= 1 || a.startsWith(b) || b.startsWith(a)));
+  function hiddenOnlyByTab(el, sec) {
+    for (let x = el; x && x !== sec; x = x.parentElement) if (x.classList.contains('hide') || getComputedStyle(x).display === 'none') return false;
+    return true;
+  }
+  function domAct(n, modalOpen, onlyTab) {
+    const skip = new Set(['bas','tikla','calistir','butonu','butonuna','dugmesi','yap','et','i','e','a','u','ye']);
+    const tk = n.split(' ').filter(t => t && !NAVV.has(t) && !skip.has(t));
+    if (!tk.length) return null;
+    const root = modalOpen ? document.getElementById('pmodal') : document;
+    if (!root) return null;
+    let best = null, bs = 0;
+    for (const el of root.querySelectorAll('input:not([type=checkbox]):not([type=file]):not([type=hidden]),select,textarea')) {
+      if (!vis(el)) continue;
+      const lb = (el.id && root.querySelector('label[for="' + el.id + '"]')) || null;
+      const lt = norm((lb ? lb.textContent : '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.placeholder || '')).split(' ').filter(w => w.length > 1);
+      if (!lt.length) continue;
+      const hit = lt.filter(w => tk.some(t => tokOk(t, w))).length, sc = hit / Math.min(lt.length, 3);
+      const vals = tk.filter(t => !lt.some(w => tokOk(t, w)));
+      if (hit && sc >= 0.67 && vals.length && sc > bs) { bs = sc; best = { el, vals }; }
+    }
+    if (best) {
+      const { el, vals } = best; let v;
+      if (el.tagName === 'SELECT') { const o = [...el.options].find(o => vals.some(t => norm(o.textContent).includes(t))); if (!o) return null; v = o.value; }
+      else v = (el.inputMode === 'numeric' || el.inputMode === 'decimal') ? (el.inputMode === 'decimal' ? String(parseNumberTokens(vals.filter(isNT)) || '') : code(vals)) : vals.join(' ');
+      if (v) return { type: 'DOM_FILL', el, value: v, label: 'ALAN' };
+    }
+    let cb = null, cs = 0, ct = null;
+    for (const el of root.querySelectorAll('button,[role=button],nav a,summary,.chip')) {
+      if (DANGER.has(el.id) || el.closest('#voice-hud') || el.disabled) continue;
+      let tabKey = null; const sec = el.closest('section[id^="t-"]');
+      if (!vis(el)) {
+        if (modalOpen || !sec || !hiddenOnlyByTab(el, sec)) continue;
+        tabKey = sec.id.slice(2); if (onlyTab && tabKey !== onlyTab) continue;
+      } else if (onlyTab && sec && sec.id !== 't-' + onlyTab) continue;
+      const tt = norm(el.textContent + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.title || '')).split(' ').filter(Boolean);
+      if (!tt.length || tt.length > 8) continue;
+      const cov = tk.filter(t => tt.some(w => tokOk(t, w))).length / tk.length;
+      const sc = cov - tt.length * 0.01 - (tabKey ? 0.3 : 0) + (el.closest('#pnav-bar') ? 0.25 : 0);
+      if (cov === 1 && sc > cs) { cs = sc; cb = el; ct = tabKey; }
+    }
+    return cb ? { type: 'DOM_CLICK', el: cb, tab: ct, label: norm(cb.textContent).slice(0, 24).toUpperCase() || 'BUTON' } : null;
+  }
+
+  const PHRASES = ['durum nedir','sayılmayanları göster','sayılanları göster','tümünü göster','sevkiyat başlat','sevkiyatı kapat','kamera aç','kamerayı kapat',
+    'yeni ürün ekle','whatsapp raporu','geri al','bugünkü fire','sevkiyat durumu','sayım sayfası','ürünler sayfası','fire sayfası','pano','aktarım'];
+  function suggest(n, products, tab, modalOpen) {
+    const tk = n.split(' ').filter(t => t.length > 2), out = [];
+    if (modalOpen) out.push('plu kodu 85', 'kasa ağırlığı 5 kilo', 'barkod 8690000000000', 'kaydet');
+    for (const p of products) { const pw = norm(p.name).split(' '); if (tk.some(t => pw.some(w => tokOk(t, w)))) { out.push(p.name + (tab === 'urun' ? ' düzenle' : ' 1 kasa')); if (out.length > 5) break; } }
+    const sc = PHRASES.map(p => [p, Math.max(0, ...tk.map(t => Math.max(0, ...norm(p).split(' ').map(w => (tokOk(t, w) ? 1 - lev(t, w) / Math.max(t.length, w.length) : 0)))))]);
+    sc.sort((a, b) => b[1] - a[1]).forEach(([p, s]) => { if (s > 0.5) out.push(p); });
+    return [...new Set(out)].slice(0, 4);
+  }
+
+  /* ---- Ana çözümleyici: tek bir metin için niyet üretir ---- */
+  function understandOne(raw, products, tab, modalOpen, ctx) {
+    const text = String(raw || '').trim();
+    const t0 = norm(text).split(' ');
+    const dl = document.getElementById('dlg');
+    if (dl && !dl.classList.contains('hide')) {
+      if (t0.some(t => ['evet','tamam','onayla','sil','olur','kabul','devam'].includes(t))) return { type: 'DOM_CLICK', el: document.getElementById('dy'), label: 'EVET' };
+      if (t0.some(t => ['hayir','vazgec','iptal','kapat','olmaz','dur'].includes(t))) return { type: 'DOM_CLICK', el: document.getElementById('dn'), label: 'HAYIR' };
+    }
+    if (!text || isFiller(text)) return null;
+    const pw = new Set(); products.forEach(p => norm(p.name).split(' ').forEach(w => pw.add(w)));
+    const n = heal(norm(text), pw), tk = n.split(' ').filter(Boolean);
+    const rawTk = text.toLocaleLowerCase('tr').replace(/[^\p{L}\p{N}. ]/gu, ' ').split(/\s+/).filter(Boolean);
+
+    if (tk.length <= 3 && tk.some(t => ['asagi','alta','yukari','uste','basa','sona'].includes(t)))
+      return { type: 'SCROLL', dy: tk.some(t => ['yukari','uste','basa'].includes(t)) ? -600 : 600, label: 'KAYDIR' };
+    if (['ara','bul','arama'].includes(tk[0]) && tk.length > 1) {
+      const el = [...document.querySelectorAll('#uq,#fsearch,input[placeholder*="ara" i],input[type=search]')].find(vis);
+      if (el) return { type: 'DOM_FILL', el, value: rawTk.length === tk.length ? rawTk.slice(1).join(' ') : tk.slice(1).join(' '), label: 'ARA' };
+    }
+    if (!modalOpen && tk.includes('yeni') && (tk.includes('urun') || tk.includes('ekle'))) {
+      const p2 = parseFields(tk, false, rawTk), f = Object.assign({}, p2.f);
+      const nm = p2.restIdx.filter(i => !['yeni','ekle','urun'].includes(tk[i])).map(i => rawTk.length === tk.length ? rawTk[i] : tk[i]);
+      if (nm.length && !f.name) f.name = nm.join(' ').toLocaleUpperCase('tr');
+      return { type: 'PROD_NEW_FIELDS', f, save: p2.save, label: 'YENİ ÜRÜN' + (f.name ? ': ' + f.name : '') };
+    }
+    const fp = parseFields(tk, modalOpen, rawTk);
+    if (fp.any) {
+      const fl = Object.entries(fp.f).map(([k, v]) => ({ plu: 'PLU', barcode: 'BARKOD', kg: 'KASA KG', unit: 'BİRİM', name: 'AD' }[k] + ' ' + v)).join(' · ');
+      if (modalOpen) return { type: 'MODAL_MULTI', f: fp.f, save: fp.save, label: fl };
+      const p = resolveProduct(fp.rest, products) || (!fp.rest.length && ctx && ctx.product && Date.now() - ctx.t < 120000 ? ctx.product : null);
+      if (p) return { type: 'PROD_FIELDS', product: p, f: fp.f, save: fp.save, label: p.name + ': ' + fl };
+      if (fp.rest.length && (fp.f.kg || fp.f.unit || fp.f.name)) return { type: 'ASK', msg: '"' + fp.rest.join(' ') + '" ürünü bulunamadı', label: 'ÜRÜN YOK' };
+    }
+    if (modalOpen && /^(kaydet|tamam|bitti|onayla)$/.test(tk.join(' '))) return { type: 'MODAL_SAVE', label: 'KAYDET' };
+    if (tk.some(t => ['yardim','komutlar'].includes(t)) || /neler yap|ne diyebil|nasil kullan/.test(n)) return { type: 'HELP', label: 'YARDIM' };
+    const tabTok = tk.filter(t => Object.values(TABW).some(a => a.some(w => t === w || (t.length > 3 && lev(t, w) <= 1))));
+    if (tabTok.length && tk.length <= 4 && !tk.some(isNT)) {
+      const key = Object.keys(TABW).find(k => TABW[k].some(w => tabTok[0] === w || (tabTok[0].length > 3 && lev(tabTok[0], w) <= 1)));
+      const others = tk.filter((t, i) => i !== tk.indexOf(tabTok[0]) && !NAVV.has(t));
+      if (others.length) { const r = domAct(others.join(' '), modalOpen, key); if (r) { r.tab = r.tab || key; return r; } }
+    }
+    const tab2 = tabOf(tk);
+    if (tab2) return { type: 'NAV_TAB', tab: tab2, label: TABL[tab2] };
+    let it = classifyLegacy(n, products, tab, modalOpen);
+    if (it) return it;
+    const qty = extractQuantities(tk), hasQ = qty.crates !== null || qty.kg !== null || qty.pieces !== null;
+    if (hasQ && ctx && ctx.product && Date.now() - ctx.t < 120000 && !resolveProduct(tk.filter(t => !isNT(t)), products)) {
+      it = classifyLegacy(n + ' ' + norm(ctx.product.name), products, tab, modalOpen);
+      if (it) { it.label += ' (son ürün)'; return it; }
+    }
+    return domAct(n, modalOpen);
+  }
+  /*V9-END*/
+
   /* =========================================================================
      VOICE COMMANDER ENGINE — STUDIO VAULT 35 TRACKS (ZERO ROBOTIC TTS)
      ========================================================================= */
@@ -6052,16 +6208,9 @@ if (shipWaBtn) {
       this.dataArray      = null;
       this.animFrame      = null;
       this.lastProcessedTimestamp = 0;
-      this._lastCommittedText = '';
-      this._lastCommittedTime = 0;
-      this._interimTimer  = null;
-      this._speakingSafetyTimer = null;
       this._lastFabClick  = 0;
       this._lastNotUnderstoodTime = 0;
-      this._pendingCandidate = null;
-      this._pendingAlts = null;
-      this._errCount = 0;
-      this._micPermissionGranted = false;
+      this.ctx = null; this._pendingLearn = null;
 
       // DOM Refs
       this.hud = null; this.btnFab = null; this.centerMic = null;
@@ -6099,70 +6248,100 @@ if (shipWaBtn) {
       }));
     }
 
-    understand(raw, alts, products, tab, modalOpen) {
-      if (!raw) return null;
-      let it = classifyContextAware(raw, products, tab, modalOpen);
-      if (it) return it;
-      for (const a of (alts || [])) {
-        if (a && a !== raw) {
-          it = classifyContextAware(a, products, tab, modalOpen);
-          if (it) return it;
-        }
-      }
-      return null;
+    CFGS() {
+      return [
+        { c: true,  i: true,  m: 5, local: 'auto' },
+        { c: true,  i: true,  m: 3, local: false },
+        { c: false, i: false, m: 1, local: false, lang: 'tr' }
+      ];
     }
+    cfg() { const l = this.CFGS(); return l[Math.min(this._cfgIdx || 0, l.length - 1)]; }
+    _saveCfg() { try { localStorage.setItem('manav-vc-cfg4', String(this._cfgIdx || 0)); } catch(e) {} }
 
-    cleanupRecognition() {
-      if (this.recognition) {
-        try {
-          this.recognition.onstart = null;
-          this.recognition.onresult = null;
-          this.recognition.onerror = null;
-          this.recognition.onend = null;
-          this.recognition.abort();
-        } catch(e) {}
-        this.recognition = null;
-      }
-      this.isRecognizing = false;
+    async prepareLocal() {
+      if (this._local !== undefined) return;
+      this._local = false;
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      try {
+        if (!SR || typeof SR.available !== 'function') return;
+        const o = { langs: ['tr-TR'], processLocally: true };
+        let st = await SR.available(o);
+        if (st !== 'available' && typeof SR.install === 'function') {
+          this.updateUIStatus('Çevrimdışı Türkçe paketi indiriliyor…', 'idle');
+          try { await SR.install(o); } catch(e) {}
+          st = await SR.available(o);
+        }
+        this._local = (st === 'available'); this._localState = st;
+        let brave = false; try { brave = !!(navigator.brave && await navigator.brave.isBrave()); } catch (e) {}
+        console.info('[VC tanı]', { tarayici: navigator.userAgent, brave, onDevice: st, SRvar: !!SR });
+        if (brave) { this._useVosk = true; console.warn('[VC] Brave: Web Speech çalışmaz → çevrimdışı Vosk motoru'); }
+        console.log('[VC] Tanıma modu:', this._local ? 'CİHAZ ÜSTÜ (çevrimdışı)' : 'çevrimiçi');
+      } catch(e) { console.warn('[VC local]', e); }
     }
 
     initSpeechRecognition() {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRec) {
-        this.updateUIStatus('Tarayıcı desteklemiyor', 'error');
+        this._useVosk = true;
+        this.updateUIStatus('Tarayıcı konuşma tanımayı desteklemiyor — çevrimdışı motora geçiliyor', 'error');
         return;
       }
+      if (this._cfgIdx === undefined) {
+        this._cfgIdx = 0; this._shortCount = 0;
+        try { this._cfgIdx = Math.max(0, parseInt(localStorage.getItem('manav-vc-cfg4')) || 0); } catch(e) {}
+      }
+      if (this.recognition) {
+        try { const o = this.recognition; o.onstart = o.onresult = o.onerror = o.onend = null; o.abort(); } catch(e) {}
+        this.recognition = null; this.isRecognizing = false;
+      }
+      const cfg = this.cfg();
+      const r = new SpeechRec();
+      this.recognition = r;
+      r.lang = cfg.lang || 'tr-TR';
+      r.continuous = cfg.c;
+      r.interimResults = cfg.i;
+      r.maxAlternatives = cfg.m;
+      const ms = () => '+' + (Date.now() - (this._t0 || Date.now())) + 'ms';
+      ['soundstart', 'speechstart'].forEach(n => r.addEventListener(n, () => { this._lvl = 1; }));
+      r.addEventListener('speechstart', () => {
+        this._gotThis = false; if (this._resT) clearTimeout(this._resT);
+        this._resT = setTimeout(() => {
+          if (this._gotThis || !this.isRecognizing) return;
+          this._flips = (this._flips || 0) + 1;
+          if (this._flips >= this.CFGS().length) {
+            this._flips = 0; this._cfgIdx = 0; this._saveCfg();
+            console.warn('[VC] Web Speech bu tarayıcıda sonuç vermiyor → çevrimdışı Vosk motoruna geçiliyor');
+            try { this.recognition.abort(); } catch (e) {}
+            this._useVosk = true; this.startVosk();
+            return;
+          }
+          console.warn('[VC] ses var ama sonuç yok → yapılandırma değişiyor');
+          this._cfgIdx = ((this._cfgIdx || 0) + 1) % this.CFGS().length; this._saveCfg();
+          this.updateUIStatus('Tanıma ayarı değişti — tekrar söyleyin', 'idle');
+          this.initSpeechRecognition(); this.scheduleRestart(300);
+        }, 7000);
+      });
+      ['audiostart', 'soundstart', 'speechstart', 'speechend', 'audioend'].forEach(n => r.addEventListener(n, () => console.log('[VC ev]', n, ms())));
 
-      this.cleanupRecognition();
-
-      this.recognition = new SpeechRec();
-      this.recognition.lang = 'tr-TR';
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.maxAlternatives = 5;
-
-      this.recognition.onstart = () => {
+      r.onstart = () => {
         this.isRecognizing = true;
+        this._t0 = Date.now(); this._gotResult = false;
         this.updateUIStatus('Dinleniyor', 'listening');
         this.setListeningVisuals(true);
         this.resetWatchdog();
-        this._errCount = 0;
-        console.log('[VC v14] Recognition started — lang:', this.recognition.lang);
+        console.log('[VC] başladı — yapılandırma #' + (this._cfgIdx || 0), JSON.stringify(cfg));
       };
 
-      this.recognition.onresult = (event) => {
+      r.onresult = (event) => {
         try {
-          this.resetWatchdog();
-          this._errCount = 0;
+          this.resetWatchdog(); this._errCount = 0;
           if (!event || !event.results) return;
-
+          this._gotResult = true; this._naCount = 0; this._gotThis = true; this._flips = 0; this._lvl = 1; this._shortCount = 0; this._saveCfg();
           let interimText = '';
           const startIdx = typeof event.resultIndex === 'number' ? event.resultIndex : 0;
-
           for (let i = startIdx; i < event.results.length; i++) {
             const res = event.results[i];
             if (!res || !res.length) continue;
-
             if (res.isFinal) {
               let bestCandidate = (res[0] && typeof res[0].transcript === 'string') ? res[0].transcript : '';
               let bestConf = (res[0] && typeof res[0].confidence === 'number') ? res[0].confidence : 0;
@@ -6172,113 +6351,62 @@ if (shipWaBtn) {
                   bestConf = res[a].confidence || 0;
                 }
               }
-              const alts = [];
-              for (let a = 0; a < res.length; a++) {
-                if (res[a] && res[a].transcript) alts.push(res[a].transcript.trim());
-              }
               const final = (bestCandidate || '').trim();
-              if (final) {
-                console.log('[VC isFinal]', final, '| conf:', bestConf.toFixed(2), '| isSpeaking:', this.isSpeaking);
-                if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
-                this.handleSpeechResult(final, alts);
-              }
+              console.log('[VC sonuç]', final);
+              const alts = []; for (let a = 0; a < res.length; a++) { if (res[a] && res[a].transcript) alts.push(res[a].transcript.trim()); }
+              if (final) this.handleSpeechResult(final, alts);
             } else {
-              if (res[0] && typeof res[0].transcript === 'string') {
-                interimText += res[0].transcript + ' ';
-              }
+              if (res[0] && typeof res[0].transcript === 'string') interimText += res[0].transcript + ' ';
             }
           }
-
-          // SMART AUTO-COMMIT — Her zaman transcript göster, sadece işlemeyi isSpeaking'e bağla
-          if (interimText) {
-            const candidate = interimText.trim();
-            // Transcript kutusunu her zaman güncelle (isSpeaking olsa bile)
-            this.showTranscript(candidate, true);
-            console.log('[VC interim]', candidate, '| isSpeaking:', this.isSpeaking);
-
-            if (this._interimTimer) {
-              clearTimeout(this._interimTimer);
-              this._interimTimer = null;
-            }
-
-            // Ses çalıyorsa komutu kuyruğa al ama atmа
-            if (this.isSpeaking) {
-              this._pendingCandidate = candidate;
-              this._pendingAlts = [candidate];
-            } else {
-              this._pendingCandidate = null;
-              this._pendingAlts = null;
-
-              const products = this.getProducts();
-              const currentTab = this.getCurrentTab();
-              const pmodal = document.getElementById('pmodal');
-              const isModalOpen = pmodal && !pmodal.classList.contains('hide');
-
-              const fastTest = this.understand(candidate, [candidate], products, currentTab, isModalOpen);
-              // Tanınan komut -> 350ms, genel -> 600ms
-              const delay = fastTest ? 350 : 600;
-
-              this._interimTimer = setTimeout(() => {
-                this._interimTimer = null;
-                if (this.isSpeaking) {
-                  // Ses hâlâ çalıyorsa pending olarak tut
-                  this._pendingCandidate = candidate;
-                  this._pendingAlts = [candidate];
-                  return;
-                }
-                if (candidate && candidate !== this._lastCommittedText) {
-                  console.log('[VC Auto-Commit]', candidate);
-                  // continuous:true modunda abort() gereksiz — döngüye neden olur
-                  this.handleSpeechResult(candidate, [candidate]);
-                }
-              }, delay);
-            }
-          }
+          if (interimText && !this.isSpeaking) this.showTranscript(interimText.trim(), true);
         } catch(err) {
           console.warn('[VC onresult error]', err);
         }
       };
 
-      this.recognition.onerror = (ev) => {
-        console.warn('[VC onerror]', ev.error);
-        // 'aborted' = biz kasıtlı abort() çağırdık → restart onend'e bırak
-        if (ev.error === 'aborted') return;
-        if (ev.error === 'not-allowed') {
-          this._micPermissionGranted = false; // bir sonraki denemede izin tekrar istenecek
-          this.updateUIStatus('Mikrofon izni gerekli — sayfada mikrofon simgesine tıklayın', 'error');
-          this.setListeningVisuals(false);
-          this._errCount = 99; // tamamen durdur
-          return;
+      r.onerror = (ev) => {
+        console.warn('[VC hata]', ev.error, ms());
+        this._lastErr = ev.error;
+        const msg = {
+          'not-allowed': 'Mikrofon izni verilmedi',
+          'service-not-allowed': 'Tarayıcı konuşma servisine izin vermiyor',
+          'audio-capture': 'Mikrofon bulunamadı veya başka uygulama kullanıyor',
+          'network': 'Konuşma servisine ulaşılamıyor (internet / cihaz üstü paket)',
+          'language-not-supported': 'Türkçe tanıma desteklenmiyor'
+        }[ev.error];
+        if (msg) this.updateUIStatus(msg, 'error');
+        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+          this._micOk = false; this._naCount = (this._naCount || 0) + 1;
+          const L = this.CFGS();
+          if (L[this._cfgIdx || 0].local) { this._cfgIdx = L.findIndex(c => c.local === false); this._saveCfg(); this.initSpeechRecognition(); }
+          if (this._naCount < 4) this.scheduleRestart(800);
+          else { this._naCount = 0; this.setListeningVisuals(false); this.manuallyPaused = true; this.updateUIStatus('Mikrofon izni yok — kilit simgesinden izin verip mikrofon düğmesine dokunun', 'error'); }
         }
-        this._errCount = (this._errCount || 0) + 1;
-        if (ev.error === 'no-speech') {
-          // no-speech normaldir — döngüyü önlemek için yavaş yeniden başlat
-          if (this._errCount > 8) {
-            this.updateUIStatus('Ses algılanamıyor — internet veya mikrofon kontrolü yapın', 'error');
-          }
-          if (this.shouldKeepListening()) {
-            const delay = Math.min(10000, 600 * this._errCount);
-            this.scheduleRestart(delay);
-          }
-          return;
-        }
-        if (ev.error === 'network') {
-          this.updateUIStatus('Konuşma tanıma için internet gerekli', 'error');
-          if (this.shouldKeepListening()) this.scheduleRestart(Math.min(10000, 1500 * this._errCount));
-          return;
-        }
-        if (ev.error === 'language-not-supported') this.recognition.lang = 'tr';
-        if (this.shouldKeepListening()) this.scheduleRestart(Math.min(5000, 500 * this._errCount));
       };
 
-      this.recognition.onend = () => {
+      r.onend = () => {
         this.isRecognizing = false;
         this.clearWatchdog();
+        const dur = Date.now() - (this._t0 || 0);
+        if (dur < 2000 && !this._gotResult && this._lastErr !== 'no-speech' && !this.manuallyPaused) this._shortCount = (this._shortCount || 0) + 1;
+        else if (dur >= 2000) this._shortCount = 0;
+        this._lastErr = null;
+        if (this._shortCount >= 2) {
+          // Oturum hemen düşüyor: yapılandırmayı otomatik değiştir
+          this._shortCount = 0; this._cfgIdx = (this._cfgIdx || 0) + 1;
+          if (this._cfgIdx >= this.CFGS().length) {
+            this._cfgIdx = 0; this._saveCfg();
+            this.updateUIStatus('Tarayıcı konuşma oturumunu sürekli kapatıyor — ikona dokunup tekrar deneyin', 'error');
+            this.setListeningVisuals(false);
+            this.manuallyPaused = true;
+            return;
+          }
+          console.warn('[VC] oturum hemen düşüyor → yapılandırma #' + this._cfgIdx);
+          this.initSpeechRecognition();
+        }
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          // no-speech/network hataları _errCount'u artırır → yavaş restart
-          // normal bitiş (isFinal sonrası) veya abort → _errCount=0 → hızlı restart
-          const delay = (this._errCount || 0) > 2 ? Math.min(10000, 800 * this._errCount) : 300;
-          this.scheduleRestart(delay);
+          this.scheduleRestart(this._shortCount ? 600 : 100);
         } else {
           this.updateUIStatus('Hazır', 'idle');
           this.setListeningVisuals(false);
@@ -6286,39 +6414,81 @@ if (shipWaBtn) {
       };
     }
 
+    /* ---- Tarayıcıdan bağımsız ÇEVRİMDIŞI motor: Vosk (WASM) + Türkçe küçük model ---- */
+    async blobUrl(url) {
+      const c = await caches.open('manav-vosk-v1');
+      let r = await c.match(url);
+      if (!r) { r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(url, r.clone()); }
+      return URL.createObjectURL(await r.blob());
+    }
+    async startVosk() {
+      if (this._voskOn || this._voskLoading) return;
+      this._voskLoading = true; this._useVosk = true;
+      try {
+        if (!this._vosk) {
+          this.updateUIStatus('Çevrimdışı Türkçe model yükleniyor…', 'idle');
+          if (!window.Vosk) {
+            let src; try { src = await this.blobUrl('./vendor/vosk.js'); } catch (e) { src = await this.blobUrl('https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js'); }
+            await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = () => no(new Error('vosk.js yüklenemedi')); document.head.appendChild(sc); });
+          }
+          const murl = localStorage.getItem('manav-vosk-url') || './models/vosk-model-small-tr-0.3.tar.gz';
+          let mb; try { mb = await this.blobUrl(murl); } catch (e) { throw new Error('Model dosyası yok: ' + murl); }
+          this._vosk = await Vosk.createModel(mb);
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') await ctx.resume();
+        const rec = new this._vosk.KaldiRecognizer(ctx.sampleRate);
+        rec.on('result', m => { const t = ((m.result && m.result.text) || '').trim(); if (t) { this._lvl = 1; console.log('[VC sonuç/vosk]', t); this.handleSpeechResult(t, [t]); } });
+        rec.on('partialresult', m => { const p = m.result && m.result.partial; if (p) { this._lvl = 1; if (!this.isSpeaking) this.showTranscript(p, true); } });
+        const node = ctx.createScriptProcessor(4096, 1, 1), src = ctx.createMediaStreamSource(stream);
+        node.onaudioprocess = e => { if (this.isSpeaking) return; try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
+        src.connect(node); node.connect(ctx.destination);
+        this._voskOn = { stream, ctx, node, src, rec };
+        this.isRecognizing = true; this.manuallyPaused = false;
+        this.setListeningVisuals(true); this.updateUIStatus('Dinleniyor (çevrimdışı)', 'listening');
+        console.info('[VC] Vosk çevrimdışı motor aktif');
+      } catch (e) {
+        console.error('[VC vosk]', e);
+        this.manuallyPaused = true; this.setListeningVisuals(false);
+        this.updateUIStatus(String((e && e.message) || e).slice(0, 100), 'error');
+      } finally { this._voskLoading = false; }
+    }
+    stopVosk() {
+      const v = this._voskOn; if (!v) return; this._voskOn = null;
+      try { v.node.disconnect(); v.src.disconnect(); v.stream.getTracks().forEach(t => t.stop()); v.ctx.close(); } catch (e) {}
+      this.isRecognizing = false;
+    }
+
+    startSupervisor() {
+      setInterval(() => {
+        if (document.hidden || this.manuallyPaused || this._starting || this.isRecognizing || this.restartTimer) return;
+        if (this.shouldKeepListening()) this.startListening();
+      }, 4000);
+    }
+
     handleSpeechResult(rawText, alts) {
-      // isSpeaking kontrolünü kaldırdık — artık pending mekanizması kullanıyoruz
-      if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
+      if (this.isSpeaking) return;
 
-      const finalClean = String(rawText || '').trim();
-      if (!finalClean) return;
-
-      const now = Date.now();
-      // Deduplicate: If same text was committed in the last 1200ms, ignore
-      if (finalClean === this._lastCommittedText && (now - (this._lastCommittedTime || 0) < 1200)) {
-        return;
-      }
-      this._lastCommittedText = finalClean;
-      this._lastCommittedTime = now;
-
-      const nIn = norm(finalClean);
+      const nIn = norm(rawText);
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
           nIn === 'sayim kaydedildi' || nIn === 'yazilimcisi sedat daglidir') {
         return;
       }
 
-      this.showTranscript('"' + finalClean + '"', false);
-      this.processCommand(finalClean, alts);
+      const now = Date.now();
+      if (now - this.lastProcessedTimestamp < 350) return;
+      this.lastProcessedTimestamp = now;
+
+      this.showTranscript('"' + rawText + '"', false);
+      this.processCommand(rawText, alts);
     }
 
     resetWatchdog() {
       this.clearWatchdog();
       this.watchdogTimer = setTimeout(() => {
-        if (this.isRecognizing) {
-          console.warn('[VC Watchdog] Stalled recognition refresh...');
-          try { if (this.recognition) this.recognition.abort(); } catch(e) {}
-        }
-      }, 10000);
+        if (this.isRecognizing) { try { this.recognition.stop(); } catch(e) {} }
+      }, 15000);
     }
     clearWatchdog() {
       if (this.watchdogTimer) { clearTimeout(this.watchdogTimer); this.watchdogTimer = null; }
@@ -6329,58 +6499,33 @@ if (shipWaBtn) {
         if (this.shouldKeepListening() && !this.isRecognizing) this.startListening();
       }, ms);
     }
-    startListening() {
-      if (this.manuallyPaused) return;
-      if (this.isRecognizing) return;
-
-      // İzin zaten alındıysa direkt başlat
-      if (this._micPermissionGranted) {
-        this._doStartRecognition();
-        return;
-      }
-
-      // İlk seferde getUserMedia ile mikrofon izni iste,
-      // izin alındıktan sonra stream'i kapat (SpeechRecognition kendi stream'ini açar)
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        this._micPermissionGranted = true;
-        this._doStartRecognition();
-        return;
-      }
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(stream => {
-          stream.getTracks().forEach(t => t.stop()); // stream'i hemen kapat
-          this._micPermissionGranted = true;
-          if (!this.manuallyPaused && !this.isRecognizing) {
-            this._doStartRecognition();
-          }
-        })
-        .catch(err => {
-          console.warn('[VC mic permission denied]', err.name);
-          this.updateUIStatus('Mikrofon izni verilmedi — Chrome ayarlarından açın', 'error');
-          this.setListeningVisuals(false);
-        });
-    }
-
-    _doStartRecognition() {
+    async startListening() {
+      if (this._useVosk) return this.startVosk();
+      if (this.isRecognizing || this._starting) return;
+      this._starting = true;
       try {
-        if (!this.recognition) {
-          this.initSpeechRecognition();
-        }
+        await this.prepareLocal();
+        if (!this.recognition) this.initSpeechRecognition();
+        if (!this.recognition) return;
+        const cfg = this.cfg();
+        let loc = cfg.local === 'auto' ? !!this._local : !!cfg.local;
+        if (!navigator.onLine && this._local) loc = true;
+        try { if ('processLocally' in this.recognition) this.recognition.processLocally = loc; } catch(e) {}
+        if (!(await this.ensureMic())) return;
         this.recognition.start();
         this.manuallyPaused = false;
       } catch(e) {
-        if (e.name === 'InvalidStateError') {
-          this.isRecognizing = true;
-        } else {
-          this.scheduleRestart(500);
-        }
+        if (e && e.name === 'InvalidStateError') this.scheduleRestart(200);
+        else console.warn('[VC start]', e);
+      } finally {
+        this._starting = false;
       }
     }
     stopListening() {
+      this.stopVosk();
       this.clearWatchdog();
-      if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.restartTimer) { clearTimeout(this.restartTimer); this.restartTimer = null; }
-      this.cleanupRecognition();
+      if (this.recognition && this.isRecognizing) { try { this.recognition.stop(); } catch(e) {} }
     }
     shouldKeepListening() {
       return (this.handsFree || (this.hud && !this.hud.classList.contains('hide'))) && !this.manuallyPaused;
@@ -6409,6 +6554,52 @@ if (shipWaBtn) {
     /* =========================================================================
        KOMUT YÜRÜTÜCÜ (PROCESS COMMAND) — STUDIO VAULT 35
        ========================================================================= */
+    understand(raw, alts, products, tab, modalOpen) {
+      const L = learned(), k = norm(raw);
+      if (L[k]) { const it = understandOne(L[k], products, tab, modalOpen, this.ctx); if (it) return it; }
+      for (const a of [raw].concat((alts || []).filter(x => x && x !== raw))) {
+        const it = understandOne(a, products, tab, modalOpen, this.ctx); if (it) return it;
+      }
+      return null;
+    }
+
+    renderSuggestions(list) {
+      if (!this.feedbackCard) return;
+      let c = document.getElementById('voice-sugg');
+      if (!c) { c = document.createElement('div'); c.id = 'voice-sugg'; c.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+        this.feedbackCard.parentNode.insertBefore(c, this.feedbackCard.nextSibling); }
+      c.innerHTML = '';
+      (list || []).forEach(s => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'voice-hint-chip'; b.textContent = s;
+        b.onclick = () => { if (this._pendingLearn) learn(this._pendingLearn, s); this._pendingLearn = null; this.renderSuggestions([]);
+          this.showTranscript('"' + s + '"', false); this.processCommand(s); };
+        c.appendChild(b);
+      });
+    }
+
+    async applyFields(it) {
+      const f = it.f || {}, done = [];
+      const set = (id, v) => { const e = document.getElementById(id); if (!e) return false; e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); return true; };
+      if (f.name !== undefined && set('pn', f.name)) done.push('Ad: ' + f.name);
+      if (f.plu && set('pp', f.plu)) done.push('PLU ' + f.plu);
+      if (f.barcode && set('pb', f.barcode)) done.push('Barkod ' + f.barcode);
+      if (f.unit) { const pu = document.getElementById('pu'); if (pu) { pu.value = f.unit; if (typeof pu.onchange === 'function') pu.onchange(); done.push('Birim ' + f.unit); } }
+      if (f.kg && set('pk', f.kg)) done.push('Kasa ' + f.kg + (f.unit === 'adet' ? ' adet' : ' kg'));
+      const key = f.kg ? 'MODAL_CRATE_SET' : f.plu ? 'MODAL_PLU_SET' : f.barcode ? 'MODAL_BARCODE_SET' : f.unit ? 'MODAL_UNIT_SET' : 'MODAL_NAME_SET';
+      if (it.save) {
+        await this.delay(120);
+        const ps = document.getElementById('psave'); if (ps) ps.click();
+        await this.delay(300);
+        const er = document.getElementById('perr');
+        if (er && er.textContent.trim()) { this.playTone(320, 'sine', 0.15); this.showFeedback((done.join(' · ') || 'Kayıt') + ' — ' + er.textContent.trim(), true, false); this.playVoiceResponse('NOT_UNDERSTOOD'); }
+        else { this.playTone(900, 'sine', 0.14); this.showFeedback((done.join(' · ') || 'Ürün') + ' — kaydedildi', false, false); this.playVoiceResponse('PROD_SAVED'); }
+        return;
+      }
+      this.playTone(850, 'sine', 0.12);
+      this.showFeedback((done.join(' · ') || 'Güncellendi') + ' — kaydetmek için "kaydet" deyin', false, false);
+      this.playVoiceResponse(key);
+    }
+
     async processCommand(rawText, alts) {
       const products   = this.getProducts();
       const currentTab = this.getCurrentTab();
@@ -6421,10 +6612,12 @@ if (shipWaBtn) {
       if (!intent) {
         this.playTone(320, 'sine', 0.12);
         this.showIntent('?');
-        this.showFeedback('Anlaşılamadı — lütfen tekrar edin', true, false);
+        this._pendingLearn = norm(rawText);
+        const sg = suggest(norm(rawText), products, currentTab, isModalOpen);
+        this.showFeedback(sg.length ? 'Tam anlayamadım — şunlardan biri mi?' : 'Anlayamadım. Örnek: "domates PLU 85", "kasa ağırlığı 5 kilo"', true, false);
+        this.renderSuggestions(sg);
         const now = Date.now();
-        // Anlaşılamadı sesini sadece 5 saniyede bir çal, sadece uzun konuşmalar için
-        if (rawText.length >= 5 && (now - this._lastNotUnderstoodTime > 5000)) {
+        if (rawText.length >= 4 && (now - this._lastNotUnderstoodTime > 3000)) {
           this._lastNotUnderstoodTime = now;
           this.playVoiceResponse('NOT_UNDERSTOOD');
         }
@@ -6432,6 +6625,8 @@ if (shipWaBtn) {
       }
 
       this.showIntent(intent.label);
+      if (intent.type !== 'ASK') this.renderSuggestions([]);
+      if (intent.product) this.ctx = { product: intent.product, t: Date.now() };
 
       try {
         switch (intent.type) {
@@ -6527,11 +6722,7 @@ if (shipWaBtn) {
             break;
           }
           case 'MODAL_SAVE': {
-            const psave = document.getElementById('psave');
-            if (psave) psave.click();
-            this.playTone(900,'sine',0.14);
-            this.showFeedback('Ürün kaydedildi', false, false);
-            this.playVoiceResponse('PROD_SAVED');
+            await this.applyFields({ f: {}, save: true });
             break;
           }
           case 'MODAL_CANCEL': {
@@ -6637,19 +6828,13 @@ if (shipWaBtn) {
           /* ---- Sevkiyat Başlat / Kapat ---- */
           case 'SHIP_START': {
             if (this.getCurrentTab() !== 'ship') await this.navToTab('ship');
-            await this.delay(80);
-            // Fill in party name before clicking start (if provided)
+            const snew = document.getElementById('snew');
+            if (snew) snew.click();
             if (intent.party) {
-              const partyInput = document.getElementById('party');
-              if (partyInput) { partyInput.value = intent.party; partyInput.dispatchEvent(new Event('input')); }
+              await this.delay(100);
+              const sparty = document.getElementById('sparty');
+              if (sparty) { sparty.value = intent.party; sparty.dispatchEvent(new Event('input')); }
             }
-            const sstartBtn = document.getElementById('sstart');
-            if (sstartBtn) sstartBtn.click();
-            if (!sstartBtn) {
-              const snewFallback = document.getElementById('snew');
-              if (snewFallback) snewFallback.click();
-            }
-            await this.delay(100);
             this.playTone(800,'sine',0.12);
             const shMsg = 'Sevkiyat başlatıldı' + (intent.party ? ' (' + intent.party + ')' : '');
             this.showFeedback(shMsg, false, false);
@@ -6836,6 +7021,41 @@ if (shipWaBtn) {
             break;
           }
 
+          case 'ASK': {
+            this.playTone(320, 'sine', 0.12); this.showFeedback(intent.msg, true, false); this.playVoiceResponse('NOT_UNDERSTOOD'); break;
+          }
+          case 'MODAL_MULTI': { await this.applyFields(intent); break; }
+          case 'PROD_NEW_FIELDS': {
+            if (this.getCurrentTab() !== 'urun') await this.navToTab('urun');
+            if (typeof B.openProductEdit === 'function') B.openProductEdit(null);
+            await this.delay(160);
+            await this.applyFields(intent);
+            break;
+          }
+          case 'HELP': {
+            this.playTone(800, 'sine', 0.1);
+            this.showFeedback('Örnekler: "domates 3 kasa" · "domates PLU 85 olsun" · "kasa ağırlığı 5 kilo" · "yeni ürün elma PLU 220 kaydet" · "muz fire 2 kilo" · "sevkiyat başlat" · "pano sipariş" · "aktar raporlar" · "ara domates" · "geri al"', false, false);
+            break;
+          }
+          case 'SCROLL': { window.scrollBy({ top: intent.dy, behavior: 'smooth' }); this.playTone(700, 'sine', 0.08); this.showFeedback('Kaydırıldı', false, false); break; }
+          case 'PROD_FIELDS': {
+            if (this.getCurrentTab() !== 'urun') await this.navToTab('urun');
+            if (typeof B.openProductEdit === 'function') B.openProductEdit(intent.product.id);
+            await this.delay(160);
+            await this.applyFields(intent);
+            break;
+          }
+          case 'DOM_FILL': {
+            const el = intent.el; el.value = intent.value;
+            el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+            this.playTone(850, 'sine', 0.12); this.showFeedback('Alan dolduruldu: ' + intent.value, false, false); this.playVoiceResponse('MODAL_NAME_SET'); break;
+          }
+          case 'DOM_CLICK': {
+            if (!intent.el) break;
+            if (intent.tab && this.getCurrentTab() !== intent.tab) { await this.navToTab(intent.tab); await this.delay(200); }
+            intent.el.click(); this.playTone(800, 'sine', 0.12); this.showFeedback(intent.label + ' çalıştırıldı', false, false); this.playVoiceResponse('TAB_OPENED'); break;
+          }
+
           default:
             this.showFeedback('İşlem tanımlı değil: ' + intent.type, true, false);
             this.playVoiceResponse('NOT_UNDERSTOOD');
@@ -6963,63 +7183,40 @@ if (shipWaBtn) {
       const dataUri = VOICE_AUDIO_VAULT[key];
       if (!dataUri) return;
 
-      if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
-
       if (this.currentAudio) {
         try { this.currentAudio.pause(); this.currentAudio = null; } catch(e) {}
       }
 
       this.isSpeaking = true;
-      if (this._speakingSafetyTimer) clearTimeout(this._speakingSafetyTimer);
-      // Unconditional safety unlock: Never stay muted longer than 2 seconds
-      this._speakingSafetyTimer = setTimeout(() => {
-        this.isSpeaking = false;
-        // Safety timeout sonrası da pending komutu işle
-        if (this._pendingCandidate) {
-          const pc = this._pendingCandidate;
-          const pa = this._pendingAlts || [pc];
-          this._pendingCandidate = null;
-          this._pendingAlts = null;
-          console.log('[VC Safety-Flush]', pc);
-          this.handleSpeechResult(pc, pa);
-        }
-      }, 2000);
-
       try {
         const audio = new Audio(dataUri);
         this.currentAudio = audio;
-        const finishAudio = () => {
-          if (this._speakingSafetyTimer) clearTimeout(this._speakingSafetyTimer);
+        audio.onended = () => {
           this.currentAudio = null;
-          setTimeout(() => {
-            this.isSpeaking = false;
-            if (this.shouldKeepListening() && !this.isRecognizing) {
-              this.startListening();
-            }
-            // Ses biterken kuyruktaki bekleyen komutu işle
-            if (this._pendingCandidate) {
-              const pc = this._pendingCandidate;
-              const pa = this._pendingAlts || [pc];
-              this._pendingCandidate = null;
-              this._pendingAlts = null;
-              console.log('[VC Pending Flush]', pc);
-              this.handleSpeechResult(pc, pa);
-            }
-          }, 200);
+          setTimeout(() => { this.isSpeaking = false; }, 350);
         };
-        audio.onended = finishAudio;
-        audio.onerror = finishAudio;
-        audio.play().catch(() => { finishAudio(); });
+        audio.onerror = () => {
+          this.currentAudio = null;
+          this.isSpeaking = false;
+        };
+        audio.play().catch(() => {
+          this.currentAudio = null;
+          this.isSpeaking = false;
+        });
       } catch(e) {
+        this.currentAudio = null;
         this.isSpeaking = false;
       }
     }
 
     /* ---- Ses Efektleri ---- */
     getAudioCtx() {
+      /* Chrome otomatik oynatma politikası: kullanıcı hareketinden önce AudioContext oluşturulmaz (developer.chrome.com/blog/autoplay) */
+      if (!this._gesture) return null;
       if (!this.audioCtx) {
         try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
       }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') { try { this.audioCtx.resume(); } catch(e) {} }
       return this.audioCtx;
     }
     playTone(freq, type, vol, dur) {
@@ -7038,9 +7235,35 @@ if (shipWaBtn) {
 
     /* ---- Gerçek Zamanlı Spektrum Dalgası (Web Audio Analyser) ---- */
     initAudioAnalyser() {
-      // getUserMedia ile ayrı bir mikrofon stream'i açmıyoruz —
-      // Chrome SpeechRecognition ile çakışıp 'aborted' hatasına yol açıyor.
-      // Waveform için CSS keyframe animasyonu yeterli (renderWaveBars fallback'i çalışır).
+      /* v22: ikinci getUserMedia akışı KALDIRILDI. Tanıyıcı ile aynı mikrofonu paylaşan ikinci akış,
+         Chrome/Windows'ta SpeechRecognition'a sessiz ses gönderip sonuç gelmemesine yol açıyordu.
+         Dalga animasyonu artık yalnızca tanıyıcı olaylarıyla sürülür. */
+      this.analyser = null; this._lvl = 0;
+      this._gesture = false;
+      ['pointerdown', 'keydown', 'touchstart', 'click'].forEach(ev => window.addEventListener(ev, () => { this._gesture = true; }, { capture: true, passive: true }));
+      this.renderWaveBars();
+    }
+
+    /* Mikrofon izni: yalnızca izni almak için kısa süre açılır ve HEMEN kapatılır (tanıyıcıyla eşzamanlı akış yok). */
+    async ensureMic() {
+      if (this._micOk) return true;
+      let st = 'prompt';
+      try { if (navigator.permissions) st = (await navigator.permissions.query({ name: 'microphone' })).state; } catch (e) {}
+      if (st === 'denied') {
+        this.updateUIStatus('Mikrofon engelli — adres çubuğundaki kilit simgesinden izin verin', 'error');
+        return false;
+      }
+      if (st === 'prompt' && !this._gesture) return false;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        this._micOk = true;
+        await new Promise(r => setTimeout(r, 300));
+        return true;
+      } catch (e) {
+        this.updateUIStatus(e && e.name === 'NotFoundError' ? 'Mikrofon bulunamadı' : 'Mikrofon izni alınamadı', 'error');
+        return false;
+      }
     }
 
     renderWaveBars() {
@@ -7048,13 +7271,12 @@ if (shipWaBtn) {
       if (!bars || !bars.length) return;
 
       const draw = () => {
-        if (this.isRecognizing && this.analyser && this.dataArray) {
-          this.analyser.getByteFrequencyData(this.dataArray);
+        if (this.isRecognizing) {
+          const t = performance.now(); this._lvl = (this._lvl || 0) * 0.94;
           for (let i = 0; i < bars.length; i++) {
-            const val = this.dataArray[i * 2] || 0;
-            const h = Math.max(4, Math.min(36, Math.round((val / 255) * 36)));
-            bars[i].style.height = h + 'px';
-            bars[i].style.opacity = Math.max(0.35, val / 255);
+            const w = 0.55 + 0.45 * Math.sin(t / 110 + i * 1.3);
+            bars[i].style.height = Math.max(4, Math.round(4 + this._lvl * 32 * w)) + 'px';
+            bars[i].style.opacity = Math.max(0.35, 0.35 + this._lvl * 0.65);
           }
         }
         this.animFrame = requestAnimationFrame(draw);
@@ -7092,10 +7314,14 @@ if (shipWaBtn) {
       this.feedbackCard.classList.toggle('err', !!isError);
       this.feedbackCard.style.display = 'flex';
       if (this.undoBtn) this.undoBtn.style.display = showUndo ? 'inline-flex' : 'none';
+      if (typeof toast === 'function' && !isError) {
+        // toast(text);
+      }
     }
 
     /* ---- Olay Dinleyicileri (Event Listeners) ---- */
     initEvents() {
+      /* FAB butonu — tek tık: modal aç/kapa, çift tık: tamamen kapat */
       if (this.btnFab) {
         this.btnFab.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -7112,6 +7338,7 @@ if (shipWaBtn) {
         });
       }
 
+      /* Merkez mikrofon — tek tık: dur/başla, çift tık: tamamen kapat */
       if (this.centerMic) {
         let _cmLast = 0;
         this.centerMic.addEventListener('click', () => {
@@ -7143,6 +7370,7 @@ if (shipWaBtn) {
       if (this.closeBtn) this.closeBtn.addEventListener('click', () => this.closeHUD());
       if (this.backdrop) this.backdrop.addEventListener('click', () => this.closeHUD());
 
+      /* Ses Aç/Kapa (Stüdyo Sesi) */
       if (this.ttsToggle) {
         const updateSoundUI = () => {
           this.ttsToggle.classList.toggle('on', this.soundEnabled);
@@ -7166,6 +7394,7 @@ if (shipWaBtn) {
         });
       }
 
+      /* Sürekli Dinleme Aç/Kapa */
       if (this.hfToggle) {
         this.hfToggle.classList.toggle('on', this.handsFree);
         this.hfToggle.title = 'Sürekli Dinleme: ' + (this.handsFree ? 'Açık' : 'Kapalı');
@@ -7178,8 +7407,10 @@ if (shipWaBtn) {
         });
       }
 
+      /* Geri Al butonu */
       if (this.undoBtn) this.undoBtn.addEventListener('click', () => this.executeUndo());
 
+      /* Hızlı ipucu chip butonları */
       document.querySelectorAll('.voice-hint-chip').forEach(chip => {
         chip.addEventListener('click', () => {
           const cmd = chip.dataset.cmd;
@@ -7228,14 +7459,15 @@ if (shipWaBtn) {
       this.statusLabel  = document.getElementById('voice-status-text');
 
       if (!this.hud || !this.btnFab) {
-        console.warn('[VC v12] Voice HUD elementleri bulunamadı.');
+        console.warn('[VC v8] Voice HUD elementleri bulunamadı.');
         return;
       }
 
       this.initSpeechRecognition();
       this.initEvents();
       this.initAudioAnalyser();
-      console.info('[VC v14] VoiceCommander v14 Aktif — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
+      this.startSupervisor();
+      console.info('[VC v15] VoiceCommander v15 Aktif (Web Speech + çevrimdışı Vosk yedek motor) (hata görünür + otomatik yapılandırma + çevrimdışı) — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
     }
   }
 
@@ -7245,7 +7477,7 @@ if (shipWaBtn) {
       engine.init();
       window.__voiceEngine = engine;
     } catch(err) {
-      console.error('[VC v11] Başlatma hatası:', err);
+      console.error('[VC v8] Başlatma hatası:', err);
     }
   }
 

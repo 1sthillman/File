@@ -19,8 +19,10 @@ const MIME_TYPES = {
 function startServer(port) {
   const server = http.createServer((req, res) => {
     let reqPath = decodeURI(req.url.split('?')[0]);
-    if (reqPath === '/' || reqPath === '' || reqPath === '/index.html' || reqPath === '/Manav_Sayim_Zebra_v16.html' || reqPath === '/Manav_Sayim_Zebra_v17.html') {
-      reqPath = '/Manav_Sayim_Zebra_v17.html';
+    if (reqPath === '/' || reqPath === '' || reqPath === '/index.html' ||
+        reqPath === '/Manav_Sayim_Zebra_v16.html' || reqPath === '/Manav_Sayim_Zebra_v17.html' ||
+        reqPath === '/Manav_Sayim_Zebra_v25.html') {
+      reqPath = '/Manav_Sayim_Zebra_v25.html';
     }
     
     const filePath = path.join(ROOT, reqPath);
@@ -57,7 +59,7 @@ function startServer(port) {
   });
 
   server.listen(port, '0.0.0.0', () => {
-    console.log(`MANAV SAYIM ZEBRA SUNUCUSU AKTIF (v17): http://localhost:${port}`);
+    console.log(`MANAV SAYIM ZEBRA SUNUCUSU AKTIF (v25): http://localhost:${port}`);
   });
 }
 
