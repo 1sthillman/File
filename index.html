@@ -6061,6 +6061,7 @@ if (shipWaBtn) {
       this._pendingCandidate = null;
       this._pendingAlts = null;
       this._errCount = 0;
+      this._micPermissionGranted = false;
 
       // DOM Refs
       this.hud = null; this.btnFab = null; this.centerMic = null;
@@ -6243,7 +6244,8 @@ if (shipWaBtn) {
         // 'aborted' = biz kasıtlı abort() çağırdık → restart onend'e bırak
         if (ev.error === 'aborted') return;
         if (ev.error === 'not-allowed') {
-          this.updateUIStatus('Mikrofon izni verilmedi', 'error');
+          this._micPermissionGranted = false; // bir sonraki denemede izin tekrar istenecek
+          this.updateUIStatus('Mikrofon izni gerekli — sayfada mikrofon simgesine tıklayın', 'error');
           this.setListeningVisuals(false);
           this._errCount = 99; // tamamen durdur
           return;
@@ -6330,20 +6332,46 @@ if (shipWaBtn) {
     startListening() {
       if (this.manuallyPaused) return;
       if (this.isRecognizing) return;
+
+      // İzin zaten alındıysa direkt başlat
+      if (this._micPermissionGranted) {
+        this._doStartRecognition();
+        return;
+      }
+
+      // İlk seferde getUserMedia ile mikrofon izni iste,
+      // izin alındıktan sonra stream'i kapat (SpeechRecognition kendi stream'ini açar)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        this._micPermissionGranted = true;
+        this._doStartRecognition();
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          stream.getTracks().forEach(t => t.stop()); // stream'i hemen kapat
+          this._micPermissionGranted = true;
+          if (!this.manuallyPaused && !this.isRecognizing) {
+            this._doStartRecognition();
+          }
+        })
+        .catch(err => {
+          console.warn('[VC mic permission denied]', err.name);
+          this.updateUIStatus('Mikrofon izni verilmedi — Chrome ayarlarından açın', 'error');
+          this.setListeningVisuals(false);
+        });
+    }
+
+    _doStartRecognition() {
       try {
         if (!this.recognition) {
-          // Recognition nesnesi hiç oluşturulmamışsa ilk kez kur
           this.initSpeechRecognition();
         }
-        // Sadece .start() çağır — yeni nesne oluşturma (abort() döngüsünü önler)
         this.recognition.start();
         this.manuallyPaused = false;
       } catch(e) {
         if (e.name === 'InvalidStateError') {
-          // Zaten çalışıyor — sorun yok, bir şey yapma
           this.isRecognizing = true;
         } else {
-          // Başka bir hata — kısa gecikmede tekrar dene
           this.scheduleRestart(500);
         }
       }
