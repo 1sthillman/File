@@ -5482,16 +5482,66 @@ if (shipWaBtn) {
   /* =========================================================================
      NORMALİZASYON & YARDIMCILAR (TAM TÜRKÇE KARAKTER DESTEĞİ)
      ========================================================================= */
-  function norm(s) {
-    return String(s || '')
-      .replace(/İ/g, 'i')
-      .replace(/I/g, 'i')
-      .replace(/ı/g, 'i')
+  const TR_WNUM = {
+    'sifir':0,'bir':1,'iki':2,'uc':3,'dort':4,'bes':5,'alti':6,'yedi':7,'sekiz':8,'dokuz':9,
+    'on':10,'yirmi':20,'otuz':30,'kirk':40,'elli':50,'altmis':60,'yetmis':70,'seksen':80,'doksan':90,
+    'yuz':100,'bin':1000
+  };
+
+  function preNorm(raw) {
+    let s = String(raw || '')
+      .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
       .toLowerCase()
-      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
-      .replace(/ö/g, 'o').replace(/ç/g, 'c')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/(\d)[.,](\d)/g, '$1\u0001$2').replace(/[^a-z0-9\u0001 ]/g, ' ').replace(/\u0001/g, '.')
+      .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // Preserve decimal comma "1,5" -> "1.5"
+    s = s.replace(/(\d),(\d)/g, '$1.$2');
+
+    // Handle "X bucuk" -> decimal ("bir bucuk" -> "1.5", "2 bucuk" -> "2.5")
+    s = s.replace(/\b(bir|iki|uc|dort|bes|alti|yedi|sekiz|dokuz|on|yirmi|otuz|kirk|elli|altmis|yetmis|seksen|doksan|\d+)\s+bucuk\b/g, function(m, p1) {
+      const v = TR_WNUM[p1] !== undefined ? TR_WNUM[p1] : parseFloat(p1);
+      return isNaN(v) ? m : (v + 0.5).toString();
+    });
+    s = s.replace(/\byarim\b/g, '0.5');
+    s = s.replace(/\bceyrek\b/g, '0.25');
+
+    // Convert consecutive TR number words to Arabic digits
+    const words = s.split(/\s+/);
+    const out = [];
+    let buf = [];
+    const flushBuf = () => {
+      if (!buf.length) return;
+      let total = 0, cur = 0, found = false;
+      for (const w of buf) {
+        let v = TR_WNUM[w];
+        if (v === undefined) { const n = parseFloat(w); if (!isNaN(n)) { v = n; } }
+        if (v !== undefined) {
+          found = true;
+          if (v === 1000) { cur = (cur || 1) * 1000; total += cur; cur = 0; }
+          else if (v === 100) { cur = (cur || 1) * 100; }
+          else cur += v;
+        }
+      }
+      total += cur;
+      out.push(found ? total.toString() : buf.join(' '));
+      buf = [];
+    };
+    for (const w of words) {
+      if (TR_WNUM[w] !== undefined || /^\d+(\.\d+)?$/.test(w)) {
+        buf.push(w);
+      } else { flushBuf(); out.push(w); }
+    }
+    flushBuf();
+    return out.join(' ');
+  }
+
+  function norm(s) {
+    const pre = preNorm(s);
+    return pre
+      .replace(/(\d)\.(\d)/g, '$1\u0001$2')
+      .replace(/[^a-z0-9\u0001 ]/g, ' ')
+      .replace(/\u0001/g, '.')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -6248,100 +6298,50 @@ if (shipWaBtn) {
       }));
     }
 
-    CFGS() {
-      return [
-        { c: true,  i: true,  m: 5, local: 'auto' },
-        { c: true,  i: true,  m: 3, local: false },
-        { c: false, i: false, m: 1, local: false, lang: 'tr' }
-      ];
-    }
-    cfg() { const l = this.CFGS(); return l[Math.min(this._cfgIdx || 0, l.length - 1)]; }
-    _saveCfg() { try { localStorage.setItem('manav-vc-cfg4', String(this._cfgIdx || 0)); } catch(e) {} }
-
-    async prepareLocal() {
-      if (this._local !== undefined) return;
-      this._local = false;
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      try {
-        if (!SR || typeof SR.available !== 'function') return;
-        const o = { langs: ['tr-TR'], processLocally: true };
-        let st = await SR.available(o);
-        if (st !== 'available' && typeof SR.install === 'function') {
-          this.updateUIStatus('Çevrimdışı Türkçe paketi indiriliyor…', 'idle');
-          try { await SR.install(o); } catch(e) {}
-          st = await SR.available(o);
-        }
-        this._local = (st === 'available'); this._localState = st;
-        let brave = false; try { brave = !!(navigator.brave && await navigator.brave.isBrave()); } catch (e) {}
-        console.info('[VC tanı]', { tarayici: navigator.userAgent, brave, onDevice: st, SRvar: !!SR });
-        if (brave) { this._useVosk = true; console.warn('[VC] Brave: Web Speech çalışmaz → çevrimdışı Vosk motoru'); }
-        console.log('[VC] Tanıma modu:', this._local ? 'CİHAZ ÜSTÜ (çevrimdışı)' : 'çevrimiçi');
-      } catch(e) { console.warn('[VC local]', e); }
-    }
-
     initSpeechRecognition() {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRec) {
-        this._useVosk = true;
-        this.updateUIStatus('Tarayıcı konuşma tanımayı desteklemiyor — çevrimdışı motora geçiliyor', 'error');
+        this.updateUIStatus('Tarayıcınız ses tanımayı desteklemiyor (Chrome önerilir)', 'error');
         return;
       }
-      if (this._cfgIdx === undefined) {
-        this._cfgIdx = 0; this._shortCount = 0;
-        try { this._cfgIdx = Math.max(0, parseInt(localStorage.getItem('manav-vc-cfg4')) || 0); } catch(e) {}
-      }
       if (this.recognition) {
-        try { const o = this.recognition; o.onstart = o.onresult = o.onerror = o.onend = null; o.abort(); } catch(e) {}
-        this.recognition = null; this.isRecognizing = false;
+        try {
+          this.recognition.onstart = this.recognition.onresult = this.recognition.onerror = this.recognition.onend = null;
+          this.recognition.abort();
+        } catch(e) {}
+        this.recognition = null;
+        this.isRecognizing = false;
       }
-      const cfg = this.cfg();
+
       const r = new SpeechRec();
       this.recognition = r;
-      r.lang = cfg.lang || 'tr-TR';
-      r.continuous = cfg.c;
-      r.interimResults = cfg.i;
-      r.maxAlternatives = cfg.m;
-      const ms = () => '+' + (Date.now() - (this._t0 || Date.now())) + 'ms';
-      ['soundstart', 'speechstart'].forEach(n => r.addEventListener(n, () => { this._lvl = 1; }));
-      r.addEventListener('speechstart', () => {
-        this._gotThis = false; if (this._resT) clearTimeout(this._resT);
-        this._resT = setTimeout(() => {
-          if (this._gotThis || !this.isRecognizing) return;
-          this._flips = (this._flips || 0) + 1;
-          if (this._flips >= this.CFGS().length) {
-            this._flips = 0; this._cfgIdx = 0; this._saveCfg();
-            console.warn('[VC] Web Speech bu tarayıcıda sonuç vermiyor → çevrimdışı Vosk motoruna geçiliyor');
-            try { this.recognition.abort(); } catch (e) {}
-            this._useVosk = true; this.startVosk();
-            return;
-          }
-          console.warn('[VC] ses var ama sonuç yok → yapılandırma değişiyor');
-          this._cfgIdx = ((this._cfgIdx || 0) + 1) % this.CFGS().length; this._saveCfg();
-          this.updateUIStatus('Tanıma ayarı değişti — tekrar söyleyin', 'idle');
-          this.initSpeechRecognition(); this.scheduleRestart(300);
-        }, 7000);
-      });
-      ['audiostart', 'soundstart', 'speechstart', 'speechend', 'audioend'].forEach(n => r.addEventListener(n, () => console.log('[VC ev]', n, ms())));
+      r.lang = 'tr-TR';
+      r.continuous = true;
+      r.interimResults = true;
+      r.maxAlternatives = 3;
 
       r.onstart = () => {
         this.isRecognizing = true;
-        this._t0 = Date.now(); this._gotResult = false;
+        this._t0 = Date.now();
+        this._lvl = 1;
         this.updateUIStatus('Dinleniyor', 'listening');
         this.setListeningVisuals(true);
         this.resetWatchdog();
-        console.log('[VC] başladı — yapılandırma #' + (this._cfgIdx || 0), JSON.stringify(cfg));
+        console.log('[VC] Ses tanıma aktif — dil: tr-TR');
       };
 
       r.onresult = (event) => {
         try {
-          this.resetWatchdog(); this._errCount = 0;
+          this.resetWatchdog();
           if (!event || !event.results) return;
-          this._gotResult = true; this._naCount = 0; this._gotThis = true; this._flips = 0; this._lvl = 1; this._shortCount = 0; this._saveCfg();
+
           let interimText = '';
           const startIdx = typeof event.resultIndex === 'number' ? event.resultIndex : 0;
+
           for (let i = startIdx; i < event.results.length; i++) {
             const res = event.results[i];
             if (!res || !res.length) continue;
+
             if (res.isFinal) {
               let bestCandidate = (res[0] && typeof res[0].transcript === 'string') ? res[0].transcript : '';
               let bestConf = (res[0] && typeof res[0].confidence === 'number') ? res[0].confidence : 0;
@@ -6351,62 +6351,88 @@ if (shipWaBtn) {
                   bestConf = res[a].confidence || 0;
                 }
               }
+              const alts = [];
+              for (let a = 0; a < res.length; a++) {
+                if (res[a] && res[a].transcript) alts.push(res[a].transcript.trim());
+              }
               const final = (bestCandidate || '').trim();
-              console.log('[VC sonuç]', final);
-              const alts = []; for (let a = 0; a < res.length; a++) { if (res[a] && res[a].transcript) alts.push(res[a].transcript.trim()); }
-              if (final) this.handleSpeechResult(final, alts);
+              if (final) {
+                console.log('[VC isFinal]', final, '| conf:', (bestConf || 0).toFixed(2));
+                if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
+                this.handleSpeechResult(final, alts);
+              }
             } else {
-              if (res[0] && typeof res[0].transcript === 'string') interimText += res[0].transcript + ' ';
+              if (res[0] && typeof res[0].transcript === 'string') {
+                interimText += res[0].transcript + ' ';
+              }
             }
           }
-          if (interimText && !this.isSpeaking) this.showTranscript(interimText.trim(), true);
+
+          // Anlık canlı geri bildirim & akıllı auto-commit
+          if (interimText) {
+            const candidate = interimText.trim();
+            this._lvl = 1;
+            this.showTranscript(candidate, true);
+
+            if (this._interimTimer) {
+              clearTimeout(this._interimTimer);
+              this._interimTimer = null;
+            }
+
+            if (!this.isSpeaking) {
+              const products = this.getProducts();
+              const currentTab = this.getCurrentTab();
+              const pmodal = document.getElementById('pmodal');
+              const isModalOpen = pmodal && !pmodal.classList.contains('hide');
+
+              const fastTest = this.understand(candidate, [candidate], products, currentTab, isModalOpen);
+              // Tanınan bir komutsa 380ms sonra, değilse 700ms sonra işlet
+              const delay = fastTest ? 380 : 700;
+
+              this._interimTimer = setTimeout(() => {
+                this._interimTimer = null;
+                if (!this.isSpeaking && candidate && candidate !== this._lastCommittedText) {
+                  console.log('[VC Auto-Commit]', candidate);
+                  this.handleSpeechResult(candidate, [candidate]);
+                }
+              }, delay);
+            }
+          }
         } catch(err) {
           console.warn('[VC onresult error]', err);
         }
       };
 
       r.onerror = (ev) => {
-        console.warn('[VC hata]', ev.error, ms());
-        this._lastErr = ev.error;
-        const msg = {
-          'not-allowed': 'Mikrofon izni verilmedi',
-          'service-not-allowed': 'Tarayıcı konuşma servisine izin vermiyor',
-          'audio-capture': 'Mikrofon bulunamadı veya başka uygulama kullanıyor',
-          'network': 'Konuşma servisine ulaşılamıyor (internet / cihaz üstü paket)',
-          'language-not-supported': 'Türkçe tanıma desteklenmiyor'
-        }[ev.error];
-        if (msg) this.updateUIStatus(msg, 'error');
-        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-          this._micOk = false; this._naCount = (this._naCount || 0) + 1;
-          const L = this.CFGS();
-          if (L[this._cfgIdx || 0].local) { this._cfgIdx = L.findIndex(c => c.local === false); this._saveCfg(); this.initSpeechRecognition(); }
-          if (this._naCount < 4) this.scheduleRestart(800);
-          else { this._naCount = 0; this.setListeningVisuals(false); this.manuallyPaused = true; this.updateUIStatus('Mikrofon izni yok — kilit simgesinden izin verip mikrofon düğmesine dokunun', 'error'); }
+        const err = ev.error;
+        console.warn('[VC onerror]', err);
+        if (err === 'no-speech' || err === 'aborted') return;
+
+        if (err === 'not-allowed') {
+          this._micOk = false;
+          this.updateUIStatus('Mikrofon izni gerekli — lütfen kilit simgesinden izin verin', 'error');
+          this.setListeningVisuals(false);
+          this.manuallyPaused = true;
+          return;
+        }
+        if (err === 'network') {
+          this.updateUIStatus('Ses tanıma için internet bağlantısı gerekli', 'error');
+          return;
+        }
+        if (err === 'audio-capture') {
+          this.updateUIStatus('Mikrofon bulunamadı veya başka bir uygulama kullanıyor', 'error');
+          return;
+        }
+        if (err === 'language-not-supported') {
+          r.lang = 'tr';
         }
       };
 
       r.onend = () => {
         this.isRecognizing = false;
         this.clearWatchdog();
-        const dur = Date.now() - (this._t0 || 0);
-        if (dur < 2000 && !this._gotResult && this._lastErr !== 'no-speech' && !this.manuallyPaused) this._shortCount = (this._shortCount || 0) + 1;
-        else if (dur >= 2000) this._shortCount = 0;
-        this._lastErr = null;
-        if (this._shortCount >= 2) {
-          // Oturum hemen düşüyor: yapılandırmayı otomatik değiştir
-          this._shortCount = 0; this._cfgIdx = (this._cfgIdx || 0) + 1;
-          if (this._cfgIdx >= this.CFGS().length) {
-            this._cfgIdx = 0; this._saveCfg();
-            this.updateUIStatus('Tarayıcı konuşma oturumunu sürekli kapatıyor — ikona dokunup tekrar deneyin', 'error');
-            this.setListeningVisuals(false);
-            this.manuallyPaused = true;
-            return;
-          }
-          console.warn('[VC] oturum hemen düşüyor → yapılandırma #' + this._cfgIdx);
-          this.initSpeechRecognition();
-        }
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          this.scheduleRestart(this._shortCount ? 600 : 100);
+          this.scheduleRestart(120);
         } else {
           this.updateUIStatus('Hazır', 'idle');
           this.setListeningVisuals(false);
@@ -6414,122 +6440,84 @@ if (shipWaBtn) {
       };
     }
 
-    /* ---- Tarayıcıdan bağımsız ÇEVRİMDIŞI motor: Vosk (WASM) + Türkçe küçük model ---- */
-    async blobUrl(url) {
-      const c = await caches.open('manav-vosk-v1');
-      let r = await c.match(url);
-      if (!r) { r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(url, r.clone()); }
-      return URL.createObjectURL(await r.blob());
-    }
-    async startVosk() {
-      if (this._voskOn || this._voskLoading) return;
-      this._voskLoading = true; this._useVosk = true;
-      try {
-        if (!this._vosk) {
-          this.updateUIStatus('Çevrimdışı Türkçe model yükleniyor…', 'idle');
-          if (!window.Vosk) {
-            let src; try { src = await this.blobUrl('./vendor/vosk.js'); } catch (e) { src = await this.blobUrl('https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js'); }
-            await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = () => no(new Error('vosk.js yüklenemedi')); document.head.appendChild(sc); });
-          }
-          const murl = localStorage.getItem('manav-vosk-url') || './models/vosk-model-small-tr-0.3.tar.gz';
-          let mb; try { mb = await this.blobUrl(murl); } catch (e) { throw new Error('Model dosyası yok: ' + murl); }
-          this._vosk = await Vosk.createModel(mb);
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') await ctx.resume();
-        const rec = new this._vosk.KaldiRecognizer(ctx.sampleRate);
-        rec.on('result', m => { const t = ((m.result && m.result.text) || '').trim(); if (t) { this._lvl = 1; console.log('[VC sonuç/vosk]', t); this.handleSpeechResult(t, [t]); } });
-        rec.on('partialresult', m => { const p = m.result && m.result.partial; if (p) { this._lvl = 1; if (!this.isSpeaking) this.showTranscript(p, true); } });
-        const node = ctx.createScriptProcessor(4096, 1, 1), src = ctx.createMediaStreamSource(stream);
-        node.onaudioprocess = e => { if (this.isSpeaking) return; try { rec.acceptWaveform(e.inputBuffer); } catch (err) {} };
-        src.connect(node); node.connect(ctx.destination);
-        this._voskOn = { stream, ctx, node, src, rec };
-        this.isRecognizing = true; this.manuallyPaused = false;
-        this.setListeningVisuals(true); this.updateUIStatus('Dinleniyor (çevrimdışı)', 'listening');
-        console.info('[VC] Vosk çevrimdışı motor aktif');
-      } catch (e) {
-        console.error('[VC vosk]', e);
-        this.manuallyPaused = true; this.setListeningVisuals(false);
-        this.updateUIStatus(String((e && e.message) || e).slice(0, 100), 'error');
-      } finally { this._voskLoading = false; }
-    }
-    stopVosk() {
-      const v = this._voskOn; if (!v) return; this._voskOn = null;
-      try { v.node.disconnect(); v.src.disconnect(); v.stream.getTracks().forEach(t => t.stop()); v.ctx.close(); } catch (e) {}
-      this.isRecognizing = false;
-    }
-
-    startSupervisor() {
-      setInterval(() => {
-        if (document.hidden || this.manuallyPaused || this._starting || this.isRecognizing || this.restartTimer) return;
-        if (this.shouldKeepListening()) this.startListening();
-      }, 4000);
-    }
-
     handleSpeechResult(rawText, alts) {
       if (this.isSpeaking) return;
 
-      const nIn = norm(rawText);
+      const finalClean = String(rawText || '').trim();
+      if (!finalClean) return;
+
+      const nIn = norm(finalClean);
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
           nIn === 'sayim kaydedildi' || nIn === 'yazilimcisi sedat daglidir') {
         return;
       }
 
       const now = Date.now();
-      if (now - this.lastProcessedTimestamp < 350) return;
-      this.lastProcessedTimestamp = now;
+      if (finalClean === this._lastCommittedText && (now - (this._lastCommittedTime || 0) < 1200)) {
+        return;
+      }
+      this._lastCommittedText = finalClean;
+      this._lastCommittedTime = now;
 
-      this.showTranscript('"' + rawText + '"', false);
-      this.processCommand(rawText, alts);
+      this.showTranscript('"' + finalClean + '"', false);
+      this.processCommand(finalClean, alts);
     }
 
     resetWatchdog() {
       this.clearWatchdog();
       this.watchdogTimer = setTimeout(() => {
-        if (this.isRecognizing) { try { this.recognition.stop(); } catch(e) {} }
+        if (this.isRecognizing && this.recognition) {
+          try { this.recognition.stop(); } catch(e) {}
+        }
       }, 15000);
     }
+
     clearWatchdog() {
       if (this.watchdogTimer) { clearTimeout(this.watchdogTimer); this.watchdogTimer = null; }
     }
+
     scheduleRestart(ms) {
       if (this.restartTimer) clearTimeout(this.restartTimer);
       this.restartTimer = setTimeout(() => {
         if (this.shouldKeepListening() && !this.isRecognizing) this.startListening();
       }, ms);
     }
+
     async startListening() {
-      if (this._useVosk) return this.startVosk();
+      if (this.manuallyPaused) return;
       if (this.isRecognizing || this._starting) return;
       this._starting = true;
       try {
-        await this.prepareLocal();
+        if (!(await this.ensureMic())) return;
         if (!this.recognition) this.initSpeechRecognition();
         if (!this.recognition) return;
-        const cfg = this.cfg();
-        let loc = cfg.local === 'auto' ? !!this._local : !!cfg.local;
-        if (!navigator.onLine && this._local) loc = true;
-        try { if ('processLocally' in this.recognition) this.recognition.processLocally = loc; } catch(e) {}
-        if (!(await this.ensureMic())) return;
         this.recognition.start();
         this.manuallyPaused = false;
       } catch(e) {
-        if (e && e.name === 'InvalidStateError') this.scheduleRestart(200);
-        else console.warn('[VC start]', e);
+        if (e && e.name === 'InvalidStateError') {
+          this.isRecognizing = true;
+        } else {
+          this.scheduleRestart(250);
+        }
       } finally {
         this._starting = false;
       }
     }
+
     stopListening() {
-      this.stopVosk();
       this.clearWatchdog();
+      if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.restartTimer) { clearTimeout(this.restartTimer); this.restartTimer = null; }
-      if (this.recognition && this.isRecognizing) { try { this.recognition.stop(); } catch(e) {} }
+      if (this.recognition) {
+        try { this.recognition.stop(); } catch(e) {}
+      }
+      this.isRecognizing = false;
     }
+
     shouldKeepListening() {
       return (this.handsFree || (this.hud && !this.hud.classList.contains('hide'))) && !this.manuallyPaused;
     }
+
     completelyShutdown() {
       this.handsFree = false;
       this.manuallyPaused = true;
@@ -7248,20 +7236,26 @@ if (shipWaBtn) {
     async ensureMic() {
       if (this._micOk) return true;
       let st = 'prompt';
-      try { if (navigator.permissions) st = (await navigator.permissions.query({ name: 'microphone' })).state; } catch (e) {}
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          st = (await navigator.permissions.query({ name: 'microphone' })).state;
+        }
+      } catch (e) {}
       if (st === 'denied') {
         this.updateUIStatus('Mikrofon engelli — adres çubuğundaki kilit simgesinden izin verin', 'error');
         return false;
       }
-      if (st === 'prompt' && !this._gesture) return false;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(t => t.stop());
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(t => t.stop());
+        }
         this._micOk = true;
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 200));
         return true;
       } catch (e) {
-        this.updateUIStatus(e && e.name === 'NotFoundError' ? 'Mikrofon bulunamadı' : 'Mikrofon izni alınamadı', 'error');
+        console.warn('[VC ensureMic error]', e);
+        this.updateUIStatus(e && e.name === 'NotFoundError' ? 'Mikrofon bulunamadı' : 'Mikrofon izni gerekli', 'error');
         return false;
       }
     }
@@ -7466,8 +7460,7 @@ if (shipWaBtn) {
       this.initSpeechRecognition();
       this.initEvents();
       this.initAudioAnalyser();
-      this.startSupervisor();
-      console.info('[VC v15] VoiceCommander v15 Aktif (Web Speech + çevrimdışı Vosk yedek motor) (hata görünür + otomatik yapılandırma + çevrimdışı) — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
+      console.info('[VC v16] VoiceCommander v16 Aktif (Web Speech Google Cloud tr-TR) — Studio Vault 35 MP3 | Zero Robotic TTS | Sedat Dagli');
     }
   }
 
