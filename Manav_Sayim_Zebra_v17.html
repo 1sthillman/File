@@ -6240,6 +6240,8 @@ if (shipWaBtn) {
 
       this.recognition.onerror = (ev) => {
         console.warn('[VC onerror]', ev.error);
+        // 'aborted' = biz kasıtlı abort() çağırdık → restart onend'e bırak
+        if (ev.error === 'aborted') return;
         if (ev.error === 'not-allowed') {
           this.updateUIStatus('Mikrofon izni verilmedi', 'error');
           this.setListeningVisuals(false);
