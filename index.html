@@ -2297,6 +2297,12 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 }
 
 </style>
+<style>
+.pc .h{position:relative}.eye{flex:none;align-self:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--mute,#667);display:grid;place-items:center;margin-right:6px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.eye.on{color:#fff;background:var(--tc,#10b981);border-color:var(--tc,#10b981)}
+.bcv{margin:10px 0 2px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line);text-align:center}.bcv[hidden]{display:none}
+.bcv svg{width:168px;height:168px;max-width:100%;display:block;margin:0 auto;stroke:none!important;fill:none}.bcv svg path{stroke:none!important;stroke-width:0!important;fill:#000!important}.bcv svg rect{stroke:none!important;fill:#fff!important}.bcv b{display:block;margin-top:4px;font:700 15px/1 ui-monospace,monospace;letter-spacing:.18em;color:#000}
+</style>
 </head>
 <body data-tab="say">
 <div class="wrap">
@@ -2396,11 +2402,22 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <input type="file" id="ff" accept=".json,.txt,.csv" class="hide"><p class="sub mt" id="msg"></p>
  </div>
 
+ <div class="card" data-ag="yedek" id="jic">
+  <h2>Terminal sayımı (JSON)</h2>
+  <p class="sub">Terminalden veya yapay zekâdan gelen sayım JSON'unu yapıştırın. Ürünler PLU, barkod veya adla eşleşir. Önizlemeyi görmeden hiçbir kayıt değişmez.</p>
+  <textarea id="jt" aria-label="Sayım JSON" placeholder='{"date":"2026-11-12","counts":[{"plu":"101","kasa":5,"ek":2.5}]}'></textarea>
+  <div class="row mt"><div><label for="jd">Sayım tarihi</label><input type="date" id="jd"></div><div><label for="jm">Aynı güne ait kayıt</label><select id="jm"><option value="set">Sayımı bu JSON ile değiştir</option><option value="add">Mevcut sayımın üstüne ekle</option></select></div></div>
+  <div class="row mt"><button class="g" id="jfile">Dosyadan oku</button><button class="g" id="jpr">Yapay zekâ talimatını kopyala</button></div>
+  <div class="row mt"><button id="jpv">Önizle</button><button id="jap" disabled>Sayıma işle</button></div>
+  <input type="file" id="jff" accept=".json,.txt" class="hide"><div id="jout" class="mt"></div>
+ </div>
+
  <!-- 2. RAPORLAR -->
  <div class="card hide" data-ag="rapor">
   <h2>Rapor ve gönderim</h2>
   <p class="sub">Raporu PDF veya Excel dosyası olarak indirin ya da WhatsApp düğmesiyle doğrudan sohbete dosya olarak gönderin. İnternet gerekmez.</p>
   <select id="rk" aria-label="Rapor seç"></select>
+  <label class="sub" style="display:flex;align-items:center;gap:8px;margin:10px 0 0"><input type="checkbox" id="rqr" checked style="width:auto;margin:0"> Ürün QR kodlarını ekle (PDF ve Excel)</label>
   <div class="row mt"><button id="rpdf">PDF</button><button class="g" id="rxl">Excel</button></div>
   <div class="row mt"><button class="g" id="rwa">WhatsApp PDF</button><button class="g" id="rwx">WhatsApp Excel</button></div>
   <div class="row mt"><button class="g" id="rcsv">CSV</button></div>
@@ -2953,7 +2970,7 @@ function icon(name){const k=IK(name);if(ICA[k])return ICA[k];let r=IR.find(x=>x[
  return ICA[k]=`<div class="av" style="--tc:${tint}">${svg}</div>`}
 
 const tcOf=n=>(icon(n).match(/--tc:([^"]+)"/)||[])[1]||'#5fae3c';
-const card=(p,tot,on,body,sub)=>`<div class="pc ${on?'on':''}" data-id="${p.id}" style="--tc:${tcOf(p.name)}"><div class="h">${icon(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(codes(p))}</small><small>${sub||'Kasa '+fmt(p.kg)+(p.u==='adet'?' adet':' kg')}</small></div><div class="tot">${fmt(tot)}<small>${p.u==='adet'?'adet':'kg'}</small></div></div>${body?'<div class="fs">'+body+'</div>':''}</div>`;
+const card=(p,tot,on,body,sub)=>`<div class="pc ${on?'on':''}" data-id="${p.id}" style="--tc:${tcOf(p.name)}"><div class="h">${icon(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(codes(p))}</small><small>${sub||'Kasa '+fmt(p.kg)+(p.u==='adet'?' adet':' kg')}</small></div><button type="button" class="eye${EYE.has(p.id)?' on':''}" data-eye="${p.id}" aria-label="QR kodu göster">${EYESVG}</button><div class="tot">${fmt(tot)}<small>${p.u==='adet'?'adet':'kg'}</small></div></div>${bcBox(p)}${body?'<div class="fs">'+body+'</div>':''}</div>`;
 function wire(el,apply){el.addEventListener('click',e=>{const b=e.target.closest('button[data-f]');if(!b)return;const card=b.closest('.pc')||b.closest('[data-id]');if(!card)return;apply(card.dataset.id,b.dataset.f,null,+b.dataset.d);vib(8)});
  el.addEventListener('change',e=>{const i=e.target;if(i.tagName==='INPUT'&&i.dataset.f){const card=i.closest('.pc')||i.closest('[data-id]');if(card)apply(card.dataset.id,i.dataset.f,i.value,0)}})}
 
@@ -3076,9 +3093,24 @@ function parseScanInput(raw) {
     }
   }
 
+  // Terazi Barkodu / QR: Metin icinde veya dogrudan 12-13 haneli '2' ile baslayan EAN-13 (ornek: 2841049007241, 274110002000X)
+  const scaleEmbed = str.match(/(?:^|\D)(2\d{11,12})(?:\D|$)/);
+  if (scaleEmbed) {
+    const digits = scaleEmbed[1];
+    const grams = parseInt(digits.slice(7, 12), 10);
+    const kg = grams > 0 ? +(grams / 1000).toFixed(3) : null;
+    return {
+      code: digits,
+      kg: kg,
+      crates: null,
+      isScale: true,
+      scaleGrams: grams
+    };
+  }
+
   const digits = dg(str);
 
-  // Terazi Barkodu (12 veya 13 haneli, 2 ile baslayan EAN-13, ornek: 274110002000X veya 270022002000X)
+  // Terazi Barkodu fallback
   if (/^2\d{11,12}$/.test(digits)) {
     const grams = parseInt(digits.slice(7, 12), 10);
     const kg = grams > 0 ? +(grams / 1000).toFixed(3) : null;
@@ -3214,7 +3246,7 @@ document.querySelectorAll('.unk').forEach(u=>u.onclick=e=>{const b=e.target.clos
 function focusScan(){const i=$('#sc-'+tab);if(i&&i.offsetParent)i.focus({preventScroll:true})}
 
 /* ürünler */
-function renderP(){stats();const uq=($('#uq').value||'').trim().toLocaleLowerCase('tr'),ps=plist().filter(p=>!uq||p.name.toLocaleLowerCase('tr').includes(uq)||p.plu.includes(uq)||p.barcode.includes(uq));$('#plist').innerHTML=ps.length?ps.map(p=>`<div class="pc" data-id="${p.id}" style="--tc:${tcOf(p.name)}"><div class="h">${icon(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(codes(p))}</small><small>${p.kg?'Kasa '+fmt(p.kg)+(p.u==='adet'?' adet':' kg'):'Kasa kilosu girilmemiş, düzenleyin'}</small></div></div><div class="row mt"><button class="g" data-a="e">Düzenle</button><button class="d" data-a="x">Sil</button></div></div>`).join(''):'<div class="empty">Liste boş. Yukarıdan ürün ekleyin veya Aktar sekmesinden liste yapıştırın.</div>'}
+function renderP(){stats();const uq=($('#uq').value||'').trim().toLocaleLowerCase('tr'),ps=plist().filter(p=>!uq||p.name.toLocaleLowerCase('tr').includes(uq)||p.plu.includes(uq)||p.barcode.includes(uq));$('#plist').innerHTML=ps.length?ps.map(p=>`<div class="pc" data-id="${p.id}" style="--tc:${tcOf(p.name)}"><div class="h">${icon(p.name)}<div class="nm"><b>${esc(p.name)}</b><small>${esc(codes(p))}</small><small>${p.kg?'Kasa '+fmt(p.kg)+(p.u==='adet'?' adet':' kg'):'Kasa kilosu girilmemiş, düzenleyin'}</small></div><button type="button" class="eye${EYE.has(p.id)?' on':''}" data-eye="${p.id}" aria-label="QR kodu göster">${EYESVG}</button></div>${bcBox(p)}<div class="row mt"><button class="g" data-a="e">Düzenle</button><button class="d" data-a="x">Sil</button></div></div>`).join(''):'<div class="empty">Liste boş. Yukarıdan ürün ekleyin veya Aktar sekmesinden liste yapıştırın.</div>'}
 function openProductEdit(id){
   editId=id||null;
   const p=id?M.products.get(id):null;
@@ -3606,6 +3638,31 @@ setInterval(()=>{if(dbBad)heal()},20000);
 const SEED="274:ALABAŞ TURP|448:ARPACIK SOĞAN|729:BALKABAĞI|59:BROKOLİ|75:ÇALI FASULYE|64:ÇARLİSTON BİBER|80:ÇENGELKÖY SALATALIK|833:DİKENLİ SALATALIK|65:DOLMA BİBER|71:DOMATES|387:GÜMÜŞ SOĞAN|110:HAVUÇ|731:HAVUÇ PAKET KG|100:ISPANAK|548:KARNABAHAR|66:KALİFORNİA BİBER|67:KAPYA BİBER|78:KEMER PATLICAN|111:KEREVİZ|83:KIRMIZI LAHANA|167:KOKTEYL DOMATES|69:KÖY BİBER|550:KURU SOĞAN|82:LAHANA|114:MİNİ PATATES|386:MOR SOĞAN|206:PANCAR|113:PATATES (DÖKME)|522:PATATES KIZARTMA|521:PATATES YEMEKLİK|73:PEMBE DOMATES|84:PIRASA|732:PIRASA PAKET KG|81:SAKIZ KABAK|79:SALATALIK|72:SALKIM DOMATES|444:SARIMSAK|68:SİVRİ BİBER|523:SOĞAN YEMEKLİK|490:TARLA KABAK|804:TARLA PATLICAN|427:TATLI PATATES|109:TURP|112:ZENCEFİL|220:AMASYA ELMA|18:ANKARA ARMUT|21:AYVA|412:BABY AVOKADO|809:BABY MUZ|140:CEVİZ KABUKLU|778:ÇİLEK TARLA|816:ÇEKİRDEKSİZ KIRMIZI ÜZÜM|765:ÇEKİRDEKSİZ SULTANİ ÜZÜM|19:DEVECİ ARMUT|231:FUJİ ELMA|312:GALA ELMA|22:GOLDEN ELMA|23:GRANNY SMITH ELMA|11:GREYFURT|3:İTHAL MUZ|730:İZMİR MANDALİNA|774:KARMA ARMUT|264:KARMA ELMA|16:KESTANE|282:KIRKAĞAÇ KAVUN|48:KIRMIZI ERİK|736:KIŞLIK KAVUN KG|284:KİVİ|817:LİMON ENTER|818:LİMON ENTER FİLE|12:LİMON MAYER FİLE|13:MANDALİNA|410:MUŞMULA|44:NAR|14:PORTAKAL|458:PORTAKAL FİLE|42:RED GLOBE ÜZÜM|20:SANTA MARIA ARMUT|43:SİYAH ÜZÜM|24:STARKING ELMA|45:TRABZON HURMASI|95:SEMİZOTU|472:ROKA|90:NANE|89:DEREOTU|471:MAYDANOZ|99:TAZE SOĞAN|86:GÖBEK MARUL|85:MARUL|87:KIVIRCIK MARUL|405:BİBERİYE 25 G:0.025|397:FESLEĞEN 25 G:0.025|482:KÜLTÜR MANTARI 400 G:0.4|853:TERE 50 G:0.05|821:KUZU KULAĞI 50 G:0.05|483:KESTANE MANTARI 350 G:0.35|485:İSTİRİDYE MANTAR 200 G:0.2";
 const seedList=()=>SEED.split('|').map(s=>{const[a,n,k]=s.split(':');return{id:'plu'+a,name:n,plu:a,barcode:'411'+a.padStart(5,'0'),kg:+k||0}});
 async function seed(){const have=new Set([...M.products.values()].map(o=>o.plu)),a=seedList().filter(p=>!have.has(p.plu));if(a.length)await bulk('products',a);render();renderP();renderShip();return a.length}
+
+/* v26: katalog senkronu (koli içi miktarlar) + kartta göz/barkod */
+const EYE=new Set(),C128P=["212222", "222122", "222221", "121223", "121322", "131222", "122213", "122312", "132212", "221213", "221312", "231212", "112232", "122132", "122231", "113222", "123122", "123221", "223211", "221132", "221231", "213212", "223112", "312131", "311222", "321122", "321221", "312212", "322112", "322211", "212123", "212321", "232121", "111323", "131123", "131321", "112313", "132113", "132311", "211313", "231113", "231311", "112133", "112331", "132131", "113123", "113321", "133121", "313121", "211331", "231131", "213113", "213311", "213131", "311123", "311321", "331121", "312113", "312311", "332111", "314111", "221411", "431111", "111224", "111422", "121124", "121421", "141122", "141221", "112214", "112412", "122114", "122411", "142112", "142211", "241211", "221114", "413111", "241112", "134111", "111242", "121142", "121241", "114212", "124112", "124211", "411212", "421112", "421211", "212141", "214121", "412121", "111143", "111341", "131141", "114113", "114311", "411113", "411311", "113141", "114131", "311141", "411131", "211412", "211214", "211232", "2331112"];
+function bc128(v){v=String(v||'');if(!v||typeof QRC==='undefined')return'';const q=new QRC(-1,1);q.addData(v);q.make();const n=q.getModuleCount(),m=4,S=n+2*m;let r='';
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))r+='M'+(x+m)+' '+(y+m)+'h1v1h-1z';
+ return'<svg viewBox="0 0 '+S+' '+S+'" shape-rendering="crispEdges" role="img" aria-label="QR '+v+'" style="stroke:none;background:#fff"><rect width="'+S+'" height="'+S+'" fill="#fff" stroke="none"/><path d="'+r+'" fill="#000" stroke="none" stroke-width="0"/></svg>'}
+const bcOf=p=>p.barcode||(p.plu?'411'+String(p.plu).padStart(5,'0'):'');
+const bcBox=p=>{const b=bcOf(p);return'<div class="bcv" '+(EYE.has(p.id)?'':'hidden')+'>'+(EYE.has(p.id)?bc128(b)+'<b>'+esc(b)+'</b>':'')+'</div>'};
+const EYESVG='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+document.addEventListener('click',e=>{const b=e.target.closest('button.eye');if(!b)return;e.stopPropagation();const pc=b.closest('.pc'),id=b.dataset.eye,p=M.products.get(id),box=pc&&pc.querySelector('.bcv');if(!p||!box)return;
+ if(EYE.has(id)){EYE.delete(id);box.hidden=true;box.innerHTML='';b.classList.remove('on')}else{EYE.add(id);const c=bcOf(p);box.innerHTML=bc128(c)+'<b>'+esc(c)+'</b>';box.hidden=false;b.classList.add('on')}},true);
+async function syncCat(){if(M.meta.has('cat_v26'))return 0;const CAT="3:İTHAL MUZ:20:k|5:AVOKADO:20:a|6:HİNDİSTAN CEVİZİ:5:a|11:GREYFURT:16:k|13:MANDALİNA:8:k|14:PORTAKAL:15:k|16:KESTANE:8:k|18:ANKARA ARMUT:9:k|19:DEVECİ ARMUT:9:k|20:SANTA MARIA ARMUT:7:k|21:AYVA:9:k|23:GRANNY SMITH ELMA:14:k|24:STARKING ELMA:14:k|42:RED GLOBE ÜZÜM:6:k|44:NAR:9:k|45:TRABZON HURMASI:7:k|48:KIRMIZI ERİK:5:k|59:BROKOLİ:9:k|60:MISIR:25:a|64:ÇARLİSTON BİBER:7.5:k|65:DOLMA BİBER:6.5:k|66:KALİFORNİA BİBER:2.5:k|67:KAPYA KIRMIZI BİBER:8:k|68:SİVRİ BİBER:7:k|69:KÖY BİBER:6.5:k|71:DOMATES:15:k|72:SALKIM DOMATES:5.5:k|73:PEMBE DOMATES:7.5:k|75:ÇALI FASULYE:4.5:k|78:KEMER PATLICAN:8:k|79:SALATALIK:15:k|80:ÇENGELKÖY SALATALIK:10:k|81:SAKIZ KABAK:11:k|82:BEYAZ LAHANA:11:k|83:KIRMIZI LAHANA:12:k|84:PIRASA:12:k|85:MARUL:6:a|86:ICEBERG (ATOM):6:a|87:KIVIRCIK MARUL:6:a|89:DEREOTU:16:a|90:NANE:10:a|99:SOĞAN (TAZE):15:a|100:ISPANAK:5:k|109:TURP:5.5:k|110:HAVUÇ:8:k|111:KEREVİZ:8:k|112:ZENCEFİL:5:k|113:PATATES:375:k|114:MİNİ PATATES:6:k|167:KOKTEYL DOMATES:8:k|186:DOMATES ŞEKER 250 G PAKET:6:a|206:PANCAR:7.5:k|209:BRÜKSEL LAHANA PAKET:7:a|220:AMASYA ELMA:6:k|231:FUJİ ELMA:16:k|250:MANGO:12:a|264:KARMA ELMA:12:k|274:ALABAŞ TURP:6:k|284:KİVİ:6:k|300:DEMİRHİNDİ 225 GR PAKET:12:a|312:GALA ELMA:14:k|334:SIKMALIK PORTAKAL:14:k|386:MOR SOĞAN:10:k|387:GÜMÜŞ SOĞAN:15:k|397:FESLEĞEN 25 G:6:a|399:KEREVİZ SAPI:6:a|404:KIRMIZI MEKSİKA BİBERİ 250 G PAKET:6:a|405:BİBERİYE 25 G:6:a|410:MUŞMULA:6:k|420:ALTIN ÇİLEK 100 G:12:a|424:KUZU ISPANAK 500 G GREENADA:6:a|427:TATLI (TURUNCU) PATATES:6:k|444:SARIMSAK:5:k|448:ARPACIK SOĞAN:5:k|458:PORTAKAL FİLE:28:k|471:MAYDANOZ:30:a|472:ROKA:20:a|474:AVOKADO 4'LÜ:10:a|482:KÜLTÜR MANTAR 400 G:10:a|483:KESTANE MANTAR 350 G:10:a|484:MANTAR IZGARALIK 1000 G:5:a|485:İSTİRİDYE (KAYIN) MANTAR 200 G:6:a|493:ARONYA PAKET 100 GR:12:a|521:PATATES YEMEKLİK FİLE:18:k|522:PATATES KIZARTMALIK FİLE:16:k|523:SOĞAN YEMEKLİK:16:k|547:KARNABAHAR:11:k|550:KURU SOĞAN DÖKME:250:k|712:AKDENİZ SALATA 150 G PAKET:6:a|730:SATSUMA MANDALİNA:8:k|731:HAVUÇ PAKET:5:k|732:PIRASA PAKET:4:k|736:KIŞLIK KAVUN:15:k|766:SEMİZOTU PAKET 150 G:6:a|774:KARMA ARMUT:16:k|782:AVOKADO YEMEYE HAZIR:12:a|806:KAJUN PATATES 400G PATAMİNS:12:a|816:ÇEKİRDEKSİZ KIRMIZI ÜZÜM CRİMSON:6:k|817:LİMON ENTERDONAT:14:k|818:LİMON ENTERDONAT FİLE:18:k|821:KUZU KULAĞI PAKET 50 G:6:a|833:DİKENLİ SALATALIK:6:k|834:AYIKLANMIŞ ISPANAK 700 G PAKET:6:a|844:PORTAKAL NAR SUYU 750 ML HARRAS:6:a|845:PORTAKAL SUYU 750 ML HARRAS:6:a|846:PORTAKAL MANGO SUYU 750 ML HARRAS:6:a|847:PORTAKAL HAVUÇ SUYU 750 ML HARRAS:6:a|848:PADRON BİBER 150 G PAKET:6:a|853:TERE 50 G PAKET:4:a|856:PARMAK HAVUÇ PAKET 150 G:6:a".split('|'),out=[];
+ CAT.forEach(r=>{const a=r.split(':'),plu=a[0],ex=[...M.products.values()].find(o=>o.plu===plu);
+  out.push(Object.assign({},ex||{id:'plu'+plu,plu},{name:a[1],barcode:'411'+plu.padStart(5,'0'),kg:+a[2],u:a[3]==='a'?'adet':'kg'}))});
+ await bulk('products',out);await save('meta',{k:'cat_v26',v:1});render();renderP();renderShip();return out.length}
+(function w(){if(typeof M!=='undefined'&&M.meta&&M.products&&M.products.size){syncCat().then(n=>{if(n&&typeof toast==='function')toast(n+' ürün güncellendi')}).catch(()=>{})}else setTimeout(w,400)})();
+const SCALE_ALIASES = {
+  '41001': 'İTHAL MUZ',
+  '41013': 'MANDALİNA',
+  '41014': 'DEVECİ ARMUT',
+  '41048': 'KAPYA KIRMIZI BİBER',
+  '41049': 'SİVRİ BİBER',
+  '41073': 'KOKTEYL DOMATES'
+};
+
 function findP(c){
   if(!c) return null;
   c = String(c).trim();
@@ -3629,22 +3686,42 @@ function findP(c){
     if(p) return p;
   }
 
-  // 4. Scale prefix 41100 fragment (e.g. from 274110002000X) -> matches Amasya Elma 41100220
+  // 4. Scale barcode (12 or 13 digits starting with 2, e.g. 2841049007241)
+  if(/^2\d{11,12}$/.test(c)){
+    const cand5 = c.slice(2, 7);           // e.g. "41049", "41001"
+    const candNum5 = String(+cand5);
+    const cand4 = c.slice(3, 7);           // e.g. "1049"
+    const candNum4 = String(+cand4);
+    const cand3 = c.slice(4, 7);           // e.g. "049" -> "49"
+    const candNum3 = String(+cand3);
+    const cand6 = c.slice(1, 7);
+
+    // Exact match on 5-digit PLU or barcode
+    p = ps.find(x => x.plu === cand5 || x.plu === candNum5 || x.barcode === cand5 || x.barcode === c);
+    if(p) return p;
+
+    // Check SCALE_ALIASES (File Market / scale department 41)
+    if(SCALE_ALIASES[cand5]){
+      const targetName = SCALE_ALIASES[cand5].toLocaleUpperCase('tr');
+      p = ps.find(x => x.name.toLocaleUpperCase('tr') === targetName);
+      if(p) return p;
+      p = ps.find(x => x.name.toLocaleUpperCase('tr').startsWith(targetName) || targetName.startsWith(x.name.toLocaleUpperCase('tr')));
+      if(p) return p;
+      p = ps.find(x => x.name.toLocaleUpperCase('tr').includes(targetName) || targetName.includes(x.name.toLocaleUpperCase('tr')));
+      if(p) return p;
+    }
+
+    // Check 4-digit and 3-digit PLU exact matches
+    for(const cand of [cand4, candNum4, cand3, candNum3, cand6]){
+      p = ps.find(x => x.plu === cand || (x.barcode && x.barcode === cand));
+      if(p) return p;
+    }
+  }
+
+  // 5. Scale prefix 41100 fragment (e.g. from 274110002000X) -> matches Amasya Elma 41100220
   if(c === '41100' || (c.startsWith('41100') && c.length <= 8)){
     p = ps.find(x => x.barcode === '41100220' || (x.barcode && x.barcode.startsWith(c)));
     if(p) return p;
-  }
-
-  // 5. Scale barcode (12 or 13 digits starting with 2)
-  if(/^2\d{11,12}$/.test(c)){
-    const c1 = String(+c.slice(2, 7)); // e.g. "220"
-    const c2 = c.slice(2, 7);           // e.g. "41100"
-    const c3 = String(+c.slice(1, 7));
-    const c4 = String(+c.slice(2, 6));
-    for(const cand of [c1, c2, c3, c4]){
-      p = findP(cand);
-      if(p) return p;
-    }
   }
 
   return null;
@@ -3836,27 +3913,49 @@ function rep(){const v=$('#rk').value;if(!v)return null;const[t,k]=v.split('~');
  else{const s=M.ships.get(k);if(!s)return null;date=s.date;title='Sevkiyat Kabul'+(s.party?' · '+s.party:'');for(const id in s.lines){const p=M.products.get(id),l=s.lines[id];if(p)rows.push({p,c:l.c,a:l.p,l:l.l,kg:l.c*p.kg+l.l})}}
  rows.sort((a,b)=>a.p.name.localeCompare(b.p.name,'tr'));return{title,date,rows,tot:rows.reduce((a,r)=>({c:a.c+r.c,a:a.a+r.a,kg:a.kg+r.kg}),{c:0,a:0,kg:0})}}
 const fl=a=>({type:'pattern',pattern:'solid',fgColor:{argb:'FF'+a}});
-async function xlBlob(R){const z=new JSZip(),X=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),L='ABCDEFG';
- const ce=(r,c,v,st)=>{const a=L[c]+r;return typeof v==='number'?`<c r="${a}" s="${st}"><v>${v}</v></c>`:`<c r="${a}" s="${st}" t="inlineStr"><is><t>${X(v)}</t></is></c>`},n=R.rows.length+4;
- const rows=[['#','Ürün','PLU','Kasa','Adet','Ek kg','Toplam kg'].map((v,c)=>ce(3,c,v,1)),...R.rows.map((r,i)=>[i+1,r.p.name,r.p.plu,r.c,r.a,r.l,r.kg].map((v,c)=>ce(4+i,c,v,c==6?3:2))),['','TOPLAM','',R.tot.c,R.tot.a,'',R.tot.kg].map((v,c)=>ce(n,c,v,4))];
- const sh='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView showGridLines="0"><pane ySplit="3" topLeftCell="A4" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="6"/><col min="2" max="2" width="34"/><col min="3" max="7" width="12"/></cols><sheetData><row r="1" ht="30" customHeight="1"><c r="A1" s="5" t="inlineStr"><is><t>MANAV · '+X(R.title)+'</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>'+X(long(R.date)+' · '+R.rows.length+' çeşit · '+fmt(R.tot.kg)+' kg')+'</t></is></c></row>'+rows.map((r,i)=>'<row r="'+(i+3)+'">'+r.join('')+'</row>').join('')+'</sheetData></worksheet>';
- const al='<alignment horizontal="center"/>',st='<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FF0B9468"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F1320"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EF"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="6"><xf/><xf fontId="1" fillId="2" applyFont="1" applyFill="1" applyAlignment="1">'+al+'</xf><xf/><xf fontId="2" numFmtId="2" applyFont="1" applyNumberFormat="1"/><xf fontId="2" fillId="3" numFmtId="2" applyFont="1" applyFill="1" applyNumberFormat="1"/><xf fontId="3" applyFont="1"/></cellXfs></styleSheet>',H='<?xml version="1.0" encoding="UTF-8"?>',U='http://schemas.openxmlformats.org/',N='xmlns="'+U,RL=N+'package/2006/relationships"';
- z.file('[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
- z.file('_rels/.rels',H+'<Relationships '+RL+'><Relationship Id="r1" Type="'+U+'officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
- z.file('xl/workbook.xml',H+'<workbook '+N+'spreadsheetml/2006/main" xmlns:r="'+U+'officeDocument/2006/relationships"><sheets><sheet name="Rapor" sheetId="1" r:id="r1"/></sheets></workbook>');
- z.file('xl/_rels/workbook.xml.rels',H+'<Relationships '+RL+'><Relationship Id="r1" Type="'+U+'officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="r2" Type="'+U+'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+function qrM(t){const q=new QRC(-1,1);q.addData(String(t));q.make();return q}
+function qrPaint(x,t,px,py,S){const q=qrM(t),n=q.getModuleCount(),s=S/(n+2);x.fillStyle='#fff';x.fillRect(px,py,S,S);x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect(Math.round(px+(k+1)*s),Math.round(py+(r+1)*s),Math.ceil(s),Math.ceil(s))}
+function qrPng(t){const q=qrM(t),n=q.getModuleCount(),m=8,S=(n+4)*m,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,S,S);x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect((k+2)*m,(r+2)*m,m,m);return c.toDataURL('image/png').split(',')[1]}
+async function xlBlob(R,Q){const z=new JSZip(),X=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),L='ABCDEFGHI',H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS='http://schemas.openxmlformats.org/',SM=NS+'spreadsheetml/2006/main',RN=NS+'officeDocument/2006/relationships',PR=NS+'package/2006/relationships';
+ const ce=(r,c,v,s)=>{const a=L[c]+r;return v===''?`<c r="${a}" s="${s}"/>`:typeof v==='number'?`<c r="${a}" s="${s}"><v>${v}</v></c>`:`<c r="${a}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${X(v)}</t></is></c>`};
+ const rh=Q?64:20,n=R.rows.length+4,hd=['#','QR','Ürün','PLU','Barkod','Kasa','Adet','Ek kg','Toplam kg'];
+ const rows=['<row r="1" ht="30" customHeight="1"><c r="A1" s="5" t="inlineStr"><is><t>MANAV · '+X(R.title)+'</t></is></c></row>','<row r="2"><c r="A2" t="inlineStr"><is><t>'+X(long(R.date)+' · '+R.rows.length+' çeşit · '+fmt(R.tot.kg)+' kg')+'</t></is></c></row>','<row r="3" ht="24" customHeight="1">'+hd.map((v,c)=>ce(3,c,v,1)).join('')+'</row>'];
+ R.rows.forEach((r,i)=>rows.push('<row r="'+(4+i)+'" ht="'+rh+'" customHeight="1">'+[i+1,'',r.p.name,r.p.plu||'',bcOf(r.p),r.c,r.a,r.l,r.kg].map((v,c)=>ce(4+i,c,v,c==8?3:c==7?7:c==2?2:6)).join('')+'</row>'));
+ rows.push('<row r="'+n+'" ht="24" customHeight="1">'+['','','TOPLAM','','',R.tot.c,R.tot.a,'',R.tot.kg].map((v,c)=>ce(n,c,v,c==8?8:4)).join('')+'</row>');
+ const sh=H+'<worksheet xmlns="'+SM+'" xmlns:r="'+RN+'"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="13" customWidth="1"/><col min="3" max="3" width="34" customWidth="1"/><col min="4" max="4" width="9" customWidth="1"/><col min="5" max="5" width="18" customWidth="1"/><col min="6" max="9" width="11" customWidth="1"/></cols><sheetData>'+rows.join('')+'</sheetData><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'+(Q?'<drawing r:id="rId1"/>':'')+'</worksheet>';
+ const xf=(f,fi,b,nf,h)=>'<xf numFmtId="'+nf+'" fontId="'+f+'" fillId="'+fi+'" borderId="'+b+'" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="'+h+'" vertical="center"/></xf>';
+ const st=H+'<styleSheet xmlns="'+SM+'"><fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FF0B9468"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0F1320"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EF"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top/><bottom style="thin"><color rgb="FFE1E5EE"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="9">'+[xf(0,0,0,0,'left'),xf(1,2,0,0,'center'),xf(0,0,1,0,'left'),xf(2,0,1,2,'center'),xf(2,3,0,0,'center'),xf(3,0,0,0,'left'),xf(0,0,1,0,'center'),xf(0,0,1,2,'center'),xf(2,3,0,2,'center')].join('')+'</cellXfs></styleSheet>';
+ let ct='';
+ if(Q){let dr='',rl='',k=0;R.rows.forEach((r,i)=>{const bc=bcOf(r.p);if(!bc)return;k++;z.file('xl/media/qr'+k+'.png',qrPng(bc),{base64:true});rl+='<Relationship Id="rId'+k+'" Type="'+RN+'/image" Target="../media/qr'+k+'.png"/>';dr+='<xdr:oneCellAnchor><xdr:from><xdr:col>1</xdr:col><xdr:colOff>76200</xdr:colOff><xdr:row>'+(3+i)+'</xdr:row><xdr:rowOff>50800</xdr:rowOff></xdr:from><xdr:ext cx="720000" cy="720000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(k+1)+'" name="QR '+k+'"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId'+k+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="720000" cy="720000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'});
+  z.file('xl/drawings/drawing1.xml',H+'<xdr:wsDr xmlns:xdr="'+NS+'drawingml/2006/spreadsheetDrawing" xmlns:a="'+NS+'drawingml/2006/main" xmlns:r="'+RN+'">'+dr+'</xdr:wsDr>');
+  z.file('xl/drawings/_rels/drawing1.xml.rels',H+'<Relationships xmlns="'+PR+'">'+rl+'</Relationships>');
+  z.file('xl/worksheets/_rels/sheet1.xml.rels',H+'<Relationships xmlns="'+PR+'"><Relationship Id="rId1" Type="'+RN+'/drawing" Target="../drawings/drawing1.xml"/></Relationships>');
+  ct='<Default Extension="png" ContentType="image/png"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'}
+ z.file('[Content_Types].xml',H+'<Types xmlns="'+NS+'package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'+ct+'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+ z.file('_rels/.rels',H+'<Relationships xmlns="'+PR+'"><Relationship Id="r1" Type="'+RN+'/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+ z.file('xl/workbook.xml',H+'<workbook xmlns="'+SM+'" xmlns:r="'+RN+'"><bookViews><workbookView/></bookViews><sheets><sheet name="Rapor" sheetId="1" r:id="r1"/></sheets></workbook>');
+ z.file('xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="'+PR+'"><Relationship Id="r1" Type="'+RN+'/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="r2" Type="'+RN+'/styles" Target="styles.xml"/></Relationships>');
  z.file('xl/styles.xml',st);z.file('xl/worksheets/sheet1.xml',sh);
  return z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'})}
 let RH='';
-async function pdfBlob(R){const W=1240,H=1754,per=34,np=Math.max(1,Math.ceil(R.rows.length/per)),J=[],F='system-ui,sans-serif';
+async function pdfBlob(R,Q){const W=1240,H=1754,rh=Q?88:44,cap=h=>Math.max(1,Math.floor((H-130-(h+74))/rh)),J=[],F='system-ui,sans-serif',pgs=[];
+ for(let i=0;i<R.rows.length||!pgs.length;){const k=cap(pgs.length?110:330);pgs.push(R.rows.slice(i,i+k));i+=k}
+ const np=pgs.length;
  for(let pg=0;pg<np;pg++){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d'),T=(t,px,py,al,f,col)=>{x.textAlign=al||'left';x.font=f||'26px '+F;x.fillStyle=col||'#0f1320';x.fillText(t,px,py)};
   x.fillStyle='#fff';x.fillRect(0,0,W,H);const g=x.createLinearGradient(0,0,W,0);g.addColorStop(0,'#0b9468');g.addColorStop(1,'#2bd4b0');x.fillStyle=g;const hh=pg?110:330;x.fillRect(0,0,W,hh);
   T('MANAV · '+R.title,60,pg?68:100,'left','800 44px '+F,'#fff');
   if(!pg){T(long(R.date),60,150,'left','28px '+F,'#fff');[[fmt(R.tot.kg),'kg'],[R.tot.c,'kasa'],[R.tot.a,'adet'],[R.rows.length,'çeşit']].forEach((v,i)=>{x.fillStyle='rgba(255,255,255,.25)';x.fillRect(60+i*280,200,250,100);T(String(v[0]),80+i*280,250,'left','800 40px '+F,'#fff');T(v[1],80+i*280,285,'left','24px '+F,'#fff')})}
-  let y=hh+60;[['#',60],['Ürün',130],['PLU',640],['Kasa',860,1],['Adet',960,1],['Ek kg',1070,1],['Toplam kg',1180,1]].forEach(h=>T(h[0],h[1],y,h[2]?'right':'left','600 22px '+F,'#667088'));
-  R.rows.slice(pg*per,pg*per+per).forEach((r,i)=>{y+=44;if(i%2){x.fillStyle='#f4f6fb';x.fillRect(40,y-32,W-80,44)}const p=r.p.name.length>30?r.p.name.slice(0,29)+'…':r.p.name;T(String(pg*per+i+1),60,y);T(p,130,y,'left','600 26px '+F);T(r.p.plu,640,y);T(String(r.c),860,y,'right');T(String(r.a),960,y,'right');T(fmt(r.l),1070,y,'right');T(fmt(r.kg),1180,y,'right','800 26px '+F)});
-  if(pg===np-1){y+=56;x.fillStyle='#e3f6ef';x.fillRect(40,y-34,W-80,52);const cl='#0b9468',f='800 28px '+F;T('TOPLAM',130,y,'left',f,cl);T(String(R.tot.c),860,y,'right',f,cl);T(String(R.tot.a),960,y,'right',f,cl);T(fmt(R.tot.kg)+' kg',1180,y,'right',f,cl)}
+  const nx=Q?190:130,base=pgs.slice(0,pg).reduce((a,q)=>a+q.length,0);let y=hh+60;
+  [['#',60],...(Q?[['QR',96]]:[]),['Ürün',nx],...(Q?[]:[['PLU',640]]),['Kasa',860,1],['Adet',960,1],['Ek kg',1070,1],['Toplam kg',1180,1]].forEach(h=>T(h[0],h[1],y,h[2]?'right':'left','600 22px '+F,'#667088'));
+  const ry=y+14;
+  pgs[pg].forEach((r,i)=>{const top=ry+i*rh,b=top+rh/2+9,bc=bcOf(r.p),mx=Q?28:30;if(i%2){x.fillStyle='#f4f6fb';x.fillRect(40,top,W-80,rh)}
+   const p=r.p.name.length>mx?r.p.name.slice(0,mx-1)+'…':r.p.name;T(String(base+i+1),60,b);
+   if(Q){if(bc)qrPaint(x,bc,96,top+6,76);T(p,nx,top+38,'left','600 26px '+F);T((r.p.plu?'PLU '+r.p.plu+'  ·  ':'')+'Kod '+bc,nx,top+68,'left','20px '+F,'#667088')}
+   else{T(p,nx,b,'left','600 26px '+F);T(r.p.plu,640,b)}
+   T(String(r.c),860,b,'right');T(String(r.a),960,b,'right');T(fmt(r.l),1070,b,'right');T(fmt(r.kg),1180,b,'right','800 26px '+F)});
+  if(pg===np-1){y=ry+pgs[pg].length*rh+50;x.fillStyle='#e3f6ef';x.fillRect(40,y-34,W-80,52);const cl='#0b9468',f='800 28px '+F;T('TOPLAM',nx,y,'left',f,cl);T(String(R.tot.c),860,y,'right',f,cl);T(String(R.tot.a),960,y,'right',f,cl);T(fmt(R.tot.kg)+' kg',1180,y,'right',f,cl)}
   T((pg+1)+' / '+np,W/2,H-40,'center','22px '+F,'#667088');J.push(Uint8Array.from(atob(c.toDataURL('image/jpeg',.9).split(',')[1]),ch=>ch.charCodeAt(0)))}
+
  const en=new TextEncoder(),P=[],O=[];let len=0;const put=d=>{const u=typeof d==='string'?en.encode(d):d;P.push(u);len+=u.length},ob=(n,h,st)=>{O[n]=len;put(n+' 0 obj\n'+h+'\n');if(st){put('stream\n');put(st);put('\nendstream\n')}put('endobj\n')};
  put('%PDF-1.4\n');ob(1,'<</Type/Catalog/Pages 2 0 R>>');ob(2,'<</Type/Pages/Count '+np+'/Kids['+J.map((_,i)=>(5+3*i)+' 0 R').join(' ')+']>>');
  J.forEach((d,i)=>{const m=3+3*i,ct='q 595 0 0 842 0 0 cm /Im Do Q';ob(m,'<</Type/XObject/Subtype/Image/Width '+W+'/Height '+H+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+d.length+'>>',d);ob(m+1,'<</Length '+ct.length+'>>',ct);ob(m+2,'<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</XObject<</Im '+m+' 0 R>>>>/Contents '+(m+1)+' 0 R>>')});
@@ -3870,7 +3969,7 @@ const csvR=(R,nm)=>dl(new File(['\ufeff'+csvRows(R).join('\n')],nm+'.csv',{type:
 function prn(h){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);f.srcdoc='<meta charset=utf-8><style>@page{margin:0}body{margin:0;font:14px system-ui}</style>'+h;f.onload=()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>f.remove(),60000)}}
 async function out(k){const R=rep();if(!R||!R.rows.length)return toast('Rapor için veri yok');toast('Hazırlanıyor…');
  const nm='Manav-'+R.title.split(' ·')[0].replace(/ /g,'-')+'-'+R.date,xl=k==='x'||k==='wx',sh=k[0]==='w';
- try{const b=xl?await xlBlob(R):await pdfBlob(R),f=new File([b],nm+(xl?'.xlsx':'.pdf'),{type:b.type});if(!sh)return dl(f);
+ try{const Q=!!($('#rqr')&&$('#rqr').checked)&&typeof QRC!=='undefined',b=xl?await xlBlob(R,Q):await pdfBlob(R,Q),f=new File([b],nm+(xl?'.xlsx':'.pdf'),{type:b.type});if(!sh)return dl(f);
   if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:waTxt(R)});return}catch(e){if(e.name==='AbortError')return}}
   dl(f);toast('Dosya indirildi, WhatsApp sohbetinde ataç ile ekleyin');setTimeout(()=>open('https://wa.me/?text='+encodeURIComponent(waTxt(R)),'_blank'),900)}
  catch(e){if(xl){csvR(R,nm);toast('Excel oluşturulamadı, CSV indirildi')}else{if(sh)open('https://wa.me/?text='+encodeURIComponent(waTxt(R)),'_blank');toast('PDF oluşturulamadı')}}}
@@ -4572,7 +4671,7 @@ function lbl(c){
   const hasValidCheck = c.length === 13 ? +c[12] === expectedCheck : true;
 
   const p = findP(c);
-  const candPLU = String(+c.slice(2, 7)) || c.slice(2, 7);
+  const candPLU = c.slice(2, 7);
   return {
     p: p || null,
     candPLU: candPLU,
@@ -4584,14 +4683,16 @@ function lbl(c){
 }
 const refocus=()=>setTimeout(()=>{const i=$('#sc-fire');if(tab==='fire'&&i)try{i.focus({preventScroll:true})}catch(e){}},60);
 async function addFire(id,kg,why,src,lb,unit){const d=day(),a=WL(d).slice();const ad=unit?unit==='adet':M.products.get(id).u==='adet';a.push(ad?{id,kg:0,n:Math.max(1,Math.round(kg)),why,t:Date.now(),src,lbl:lb||''}:{id,kg:+kg.toFixed(3),why,t:Date.now(),src,lbl:lb||''});await XS('w|'+d,a);vib(18);beep(1);pulse();fireR();toast(M.products.get(id).name+' '+(ad?Math.max(1,Math.round(kg))+' adet':fmt(kg)+' kg')+' fire, '+why);refocus()}
-async function fireScan(code){
-  const L=lbl(code),p=L?L.p:findP(code);
+async function fireScan(code, parsed, preFoundP){
+  const p = preFoundP || findP(code);
+  const L = lbl(code);
   if(!p){
     beep(0);vib([60,40,60]);
-    toast(/^2\d{12}$/.test(code)?'PLU '+String(+code.slice(2,7))+' kayıtlı değil, Ürünler sekmesinden ekleyin':'Kayıtsız kod '+code);
+    const cand = L ? L.candPLU : (/^2\d{11,12}$/.test(code) ? code.slice(2,7) : code);
+    toast('PLU ' + cand + ' kayıtlı değil, Ürünler sekmesinden ekleyin');
     return;
   }
-  const detectedKg = L ? (p.u==='adet'?1:L.kg) : 1;
+  const detectedKg = (parsed && parsed.kg != null) ? parsed.kg : (L ? (p.u==='adet'?1:L.kg) : 1);
   pend = {
     id: p.id,
     lbl: code,
@@ -4603,7 +4704,7 @@ async function fireScan(code){
   vib(18);
   beep(1);
   fireR();
-  toast(p.name + ' fire onay bekliyor');
+  toast(p.name + ' ' + fmt(detectedKg) + ' ' + (p.u==='adet'?'adet':'kg') + ' fire hazır, onaylayın');
 }
 /* Toplu QR & Coklu Okuma Motoru (Sayim, Fire, Sevkiyat) */
 function parseBatchLines(raw) {
@@ -4816,9 +4917,25 @@ scan = async function(raw, t) {
 
   // Fire sekmesinde okutma
   if (t === 'fire') {
-    if (typeof fireScan === 'function') {
-      fireScan(raw, parsed, p);
+    if (p) {
+      if (u) u.classList.add('hide');
+      vib(18); beep(1); pulse();
+      const kg = (parsed && parsed.kg != null) ? parsed.kg : 1;
+      const why = FW || 'Çürük';
+      const unit = p.u === 'adet' ? 'adet' : 'kg';
+      if (parsed && parsed.kg != null) {
+        await addFire(p.id, kg, why, 'etiket', code, unit);
+        toast(p.name + ' ' + (unit === 'adet' ? Math.round(kg) + ' adet' : fmt(kg) + ' kg') + ' fire eklendi (' + why + ')');
+      } else {
+        if (typeof fireScan === 'function') fireScan(code, parsed, p);
+      }
+      if (typeof fireR === 'function') fireR();
       return;
+    } else {
+      if (typeof fireScan === 'function') {
+        fireScan(code, parsed, p);
+        return;
+      }
     }
   }
 
@@ -4829,18 +4946,33 @@ scan = async function(raw, t) {
     beep(1);
     pulse();
 
-    // 1. Kilo/Miktar varsa (Terazi barkodundan veya miktarlı QR'dan)
+    // 1. Kilo/Miktar varsa (Terazi barkodundan veya miktarlı QR'dan) - Birikimli Ekleme
     if (parsed.kg != null) {
       const kg = parsed.kg;
       if (t === 'say') {
         const curLoose = cnt(p.id).loose || 0;
-        setC(p.id, { loose: +(curLoose + kg).toFixed(3) }).then(() => flash(p.id, '#list'));
-        toast(p.name + ' +' + fmt(kg) + ' kg (Terazi/Miktar)');
+        const curCrates = cnt(p.id).crates || 0;
+        const isAdet = p.u === 'adet';
+        if (isAdet) {
+          const pieces = Math.round(kg) || 1;
+          const newLoose = curLoose + pieces;
+          await setC(p.id, { crates: curCrates, loose: newLoose });
+          flash(p.id, '#list');
+          toast(p.name + ' +' + pieces + ' adet eklendi (Toplam: ' + newLoose + ' adet)');
+        } else {
+          const newLoose = +(curLoose + kg).toFixed(3);
+          await setC(p.id, { crates: curCrates, loose: newLoose });
+          flash(p.id, '#list');
+          const totStr = curCrates ? curCrates + ' kasa + ' + fmt(newLoose) + ' kg' : fmt(newLoose) + ' kg';
+          toast(p.name + ' +' + fmt(kg) + ' kg eklendi (Toplam: ' + totStr + ')');
+        }
       } else if (t === 'ship') {
         const s = curShip();
         if (!s) { toast('Önce sevkiyatı başlatın'); return; }
         const l = s.lines[p.id] || { c: 0, p: 0, l: 0 };
-        setL(p.id, { l: +(l.l + kg).toFixed(3) }).then(() => flash(p.id, '#slist'));
+        const newL = +(l.l + kg).toFixed(3);
+        await setL(p.id, { c: l.c, l: newL });
+        flash(p.id, '#slist');
         toast(p.name + ' +' + fmt(kg) + ' kg (Tartım)');
       }
       return;
@@ -4850,13 +4982,17 @@ scan = async function(raw, t) {
     if (parsed.crates != null) {
       const cr = parsed.crates;
       if (t === 'say') {
-        setC(p.id, { crates: cnt(p.id).crates + cr }).then(() => flash(p.id, '#list'));
-        toast(p.name + ' +' + cr + ' kasa');
+        const curLoose = cnt(p.id).loose || 0;
+        const curCrates = cnt(p.id).crates || 0;
+        await setC(p.id, { crates: curCrates + cr, loose: curLoose });
+        flash(p.id, '#list');
+        toast(p.name + ' +' + cr + ' kasa (Toplam: ' + (curCrates + cr) + ' kasa)');
       } else if (t === 'ship') {
         const s = curShip();
         if (!s) { toast('Önce sevkiyatı başlatın'); return; }
         const l = s.lines[p.id] || { c: 0, p: 0, l: 0 };
-        setL(p.id, { c: l.c + cr }).then(() => flash(p.id, '#slist'));
+        await setL(p.id, { c: l.c + cr, l: l.l });
+        flash(p.id, '#slist');
         toast(p.name + ' +' + cr + ' kasa');
       }
       return;
@@ -4866,8 +5002,19 @@ scan = async function(raw, t) {
     if (t === 'say') {
       filt = 'all';
       $('#q').value = '';
-      setC(p.id, { crates: cnt(p.id).crates + 1 }).then(() => flash(p.id, '#list'));
-      toast(p.name + ', kasa ' + cnt(p.id).crates);
+      const curLoose = cnt(p.id).loose || 0;
+      const curCrates = cnt(p.id).crates || 0;
+      if (p.u === 'adet' && !p.kg) {
+        const newLoose = curLoose + 1;
+        await setC(p.id, { crates: curCrates, loose: newLoose });
+        flash(p.id, '#list');
+        toast(p.name + ' +1 adet (Toplam: ' + newLoose + ' adet)');
+      } else {
+        const newC = curCrates + 1;
+        await setC(p.id, { crates: newC, loose: curLoose });
+        flash(p.id, '#list');
+        toast(p.name + ', ' + newC + ' kasa' + (curLoose ? ' + ' + fmt(curLoose) + ' kg' : ''));
+      }
     } else if (t === 'ship') {
       const s = curShip();
       if (!s) { toast('Önce sevkiyatı başlatın'); return; }
@@ -4883,17 +5030,20 @@ scan = async function(raw, t) {
   vib([60, 40, 60]);
   beep(0);
 
-  const L = lbl(code);
-  if (L && L.candPLU) {
+  const L = (typeof lbl === 'function') ? lbl(code) : null;
+  const candPLU = (L && L.candPLU) ? L.candPLU : (/^2\d{11,12}$/.test(code) ? code.slice(2, 7) : code);
+  const candKg = (parsed && parsed.kg != null) ? parsed.kg : (L ? L.kg : null);
+
+  if (candPLU) {
     if (u) {
-      u.innerHTML = '<span>Terazi barkodu: PLU <b>' + esc(L.candPLU) + '</b>, <b>' + fmt(L.kg) + ' kg</b>. Bu ürün henüz ekli değil.</span>'
-        + '<button class="g" data-code="' + esc(L.candPLU) + '" data-type="plu">Bu PLU ile Ürün Ekle</button>';
+      u.innerHTML = '<span>Terazi barkodu: PLU <b>' + esc(candPLU) + '</b>' + (candKg ? ', <b>' + fmt(candKg) + ' kg</b>' : '') + '. Bu ürün henüz ekli değil.</span>'
+        + '<button class="g btn-quick-add" data-code="' + esc(candPLU) + '" data-kg="' + (candKg || '') + '" data-type="plu">Bu PLU ile Ürün Ekle</button>';
       u.classList.remove('hide');
     }
-    toast('PLU ' + L.candPLU + ' kayıtlı değil, ekleyin');
+    toast('PLU ' + candPLU + ' kayıtlı değil, ekleyin');
   } else {
     if (u) {
-      u.innerHTML = '<span>Kayıtsız kod: <b>' + esc(code) + '</b></span><button class="g" data-code="' + esc(code) + '" data-type="barcode">Ürün olarak ekle</button>';
+      u.innerHTML = '<span>Kayıtsız kod: <b>' + esc(code) + '</b></span><button class="g btn-quick-add" data-code="' + esc(code) + '" data-type="barcode">Ürün olarak ekle</button>';
       u.classList.remove('hide');
     }
     toast('Kayıtsız kod ' + code);
@@ -7797,5 +7947,43 @@ if (shipWaBtn) {
 })();
 
 </script>
+<script>
+/* v27: JSON sayım içe aktarma */
+(function(){
+const nrm=s=>String(s==null?'':s).toLocaleLowerCase('tr').replace(/[^a-z0-9çğıöşü]+/g,' ').trim(),r2=n=>Math.round(n*100)/100;let JR=null;$('#jd').value=today();
+function find(it){const ps=[...M.products.values()],id=it.id!=null?String(it.id):'';if(id&&M.products.has(id))return M.products.get(id);
+ for(const c of [it.plu,it.barcode,it.barkod,it.kod,it.code,it.ean].map(dg).filter(Boolean)){const p=ps.find(p=>p.plu===c||p.barcode===c||bcOf(p)===c);if(p)return p}
+ const nm=nrm(it.name||it.ad||it.urun||it['ürün']||it.isim);if(nm){const p=ps.find(p=>nrm(p.name)===nm);if(p)return p;const m=ps.filter(p=>{const a=nrm(p.name);return a.includes(nm)||nm.includes(a)});if(m.length===1)return m[0]}return null}
+function parse(t){t=t.trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();let d;try{d=JSON.parse(t)}catch(e){const a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf(']'),t.lastIndexOf('}'));d=JSON.parse(t.slice(a,b+1))}
+ let date=null,list=d;if(d&&!Array.isArray(d)&&typeof d==='object'){date=d.date||d.tarih||null;list=d.counts||d.sayim||d['sayım']||d.items||d.urunler||d.data||d.products;
+  if(!list)list=Object.entries(d).filter(([k,v])=>typeof v!=='object'&&!['date','tarih','app','tip','v'].includes(k)).map(([k,v])=>({code:k,kasa:v}))}
+ if(!Array.isArray(list))throw new Error('Sayım listesi bulunamadı. "counts" dizisi bekleniyor.');return{date,list}}
+function build(){const t=$('#jt').value;if(!t.trim())throw new Error('Önce JSON yapıştırın.');let P;try{P=parse(t)}catch(e){throw e instanceof SyntaxError?new Error('JSON okunamadı, biçimi kontrol edin.'):e}
+ if(isD(P.date))$('#jd').value=P.date;const dd=isD($('#jd').value)?$('#jd').value:today(),A=new Map(),miss=[];
+ P.list.forEach(it=>{if(!it||typeof it!=='object')return;const p=find(it);if(!p){miss.push(it);return}
+  const g=(...k)=>{for(const x of k)if(it[x]!=null&&it[x]!=='')return num(it[x]);return null};
+  let c=g('kasa','crates','c','qty'),l=g('ek','loose','l','ekkg'),tot=g('toplam','total','toplamkg');
+  if(c==null&&l==null&&tot!=null){if(p.kg>0){c=Math.floor(tot/p.kg+1e-9);l=r2(tot-c*p.kg)}else{c=0;l=tot}}
+  c=Math.floor(c||0);l=l||0;if(!c&&!l)return;const d=isD(it.date||it.tarih)?(it.date||it.tarih):dd,k=d+'|'+p.id,o=A.get(k)||{k,date:d,id:p.id,p,c:0,l:0};o.c+=c;o.l=r2(o.l+l);A.set(k,o)});
+ return{rows:[...A.values()].sort((a,b)=>a.p.name.localeCompare(b.p.name,'tr')),miss}}
+function show(){let R;try{R=build()}catch(e){JR=null;$('#jap').disabled=true;$('#jout').innerHTML='<p class="sub" style="color:#d1372f">'+esc(e.message||'JSON okunamadı.')+'</p>';return}
+ JR=R;const u=p=>p.u==='adet'?'adet':'kg',ln=(a,b,col)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(128,128,128,.25)'+(col?';color:'+col:'')+'"><span>'+a+'</span><b style="text-align:right">'+b+'</b></div>';
+ let h='<p class="sub"><b>'+R.rows.length+'</b> ürün eşleşti'+(R.miss.length?', <b style="color:#d1372f">'+R.miss.length+'</b> eşleşmedi (işlenmeyecek)':'')+' · '+[...new Set(R.rows.map(r=>r.date))].map(long).join(', ')+'</p>';
+ h+=R.rows.map(r=>ln(esc(r.p.name),r.c+' kasa'+(r.l?' + '+fmt(r.l):'')+' = '+fmt(r.c*r.p.kg+r.l)+' '+u(r.p))).join('');
+ h+=R.miss.map(it=>ln(esc(String(it.name||it.ad||it.plu||it.barcode||it.barkod||it.kod||it.code||JSON.stringify(it)).slice(0,40)),'eşleşmedi','#d1372f')).join('');
+ $('#jout').innerHTML=h;$('#jap').disabled=!R.rows.length}
+async function apply(){if(!JR||!JR.rows.length)return;const set=$('#jm').value==='set',ds=[...new Set(JR.rows.map(r=>r.date))];
+ if(set){const ex=[...M.counts.values()].filter(c=>ds.includes(c.date)).length;if(ex&&!await ask(ds.map(long).join(', ')+' için kayıtlı '+ex+' sayım silinip bu JSON ile değiştirilsin mi?','Değiştir'))return}
+ await snap('JSON sayım öncesi');if(set)for(const c of [...M.counts.values()])if(ds.includes(c.date))await remove('counts',c.k);
+ for(const r of JR.rows){const e=set?null:M.counts.get(r.k);await save('counts',{k:r.k,date:r.date,id:r.id,crates:r.c+(e?e.crates:0),loose:r2(r.l+(e?e.loose:0)),z:0})}
+ $('#date').value=ds[0];render();stats();$('#rk').value='c~'+ds[0];toast(JR.rows.length+' ürün sayıma işlendi');JR=null;$('#jap').disabled=true;$('#jout').innerHTML='<p class="sub">İşlendi. Raporlar sekmesinden PDF veya Excel alabilirsiniz.</p>'}
+$('#jpv').onclick=show;$('#jap').onclick=apply;$('#jfile').onclick=()=>$('#jff').click();
+$('#jff').onchange=async e=>{const f=e.target.files[0];if(f){$('#jt').value=await f.text();show()}};
+$('#jt').addEventListener('input',()=>{JR=null;$('#jap').disabled=true});
+$('#jpr').onclick=async()=>{const L=plist().map(p=>[p.plu||'-',p.barcode||'-',p.name,p.kg||0,p.u==='adet'?'adet':'kg'].join(' | ')).join('\n'),t='Terminal sayımını aşağıdaki biçimde SADECE JSON olarak döndür, açıklama ekleme:\n{"app":"manav-sayim","tip":"sayim","date":"YYYY-MM-DD","counts":[{"plu":"...","ad":"...","kasa":0,"ek":0}]}\nkasa: tam kasa sayısı. ek: kasa dışı fazla kg (adetle sayılan ürünlerde adet). Ürünü aşağıdaki listeden PLU veya barkodla eşleştir, bulamazsan yalnızca "ad" yaz. Sayımı sıfır olanları ekleme.\n\nÜrün listesi (PLU | Barkod | Ad | Kasa ağırlığı | Birim):\n'+L;
+ try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Talimat ve ürün listesi kopyalandı')};
+})();
+</script>
+
 </body>
 </html>

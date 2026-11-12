@@ -1,8 +1,8 @@
-const CACHE_NAME = 'manav-sayim-zebra-v25-v17-20261112';
+const CACHE_NAME = 'file-manav-sayim-v28-20261112';
 const ASSETS = [
   './',
   './index.html',
-  './Manav_Sayim_Zebra_v17.html',
+  './File_Manav_Sayım.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
