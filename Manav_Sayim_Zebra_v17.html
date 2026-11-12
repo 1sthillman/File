@@ -7010,20 +7010,9 @@ if (shipWaBtn) {
 
     /* ---- Gerçek Zamanlı Spektrum Dalgası (Web Audio Analyser) ---- */
     initAudioAnalyser() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        this.audioStream = stream;
-        const ctx = this.getAudioCtx();
-        if (!ctx) return;
-        const source = ctx.createMediaStreamSource(stream);
-        this.analyser = ctx.createAnalyser();
-        this.analyser.fftSize = 64;
-        source.connect(this.analyser);
-        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-        this.renderWaveBars();
-      }).catch(err => {
-        // Fallback: CSS keyframe animasyonu aktif kalır
-      });
+      // getUserMedia ile ayrı bir mikrofon stream'i açmıyoruz —
+      // Chrome SpeechRecognition ile çakışıp 'aborted' hatasına yol açıyor.
+      // Waveform için CSS keyframe animasyonu yeterli (renderWaveBars fallback'i çalışır).
     }
 
     renderWaveBars() {
