@@ -2387,37 +2387,38 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
  <div class="hero"><div class="ht"><span>Veri kasası</span><span id="dbs">IndexedDB</span></div><div class="big"><span id="aN">0</span><small>kayıt</small></div><div class="gl"><div><b id="aP">0</b>ürün</div><div><b id="aC">0</b>sayım</div><div><b id="aS">0</b>sevkiyat</div></div></div>
 
  
- <div class="seg" id="anv" style="margin-bottom:14px">
-  <button data-ag="qr" class="on">Toplu Zebra QR</button>
-  <button data-ag="rapor">Raporlar &amp; Paylaş</button>
-  <button data-ag="yedek">Yedekleme &amp; Dosya</button>
-  <button data-ag="ayar">Cihaz Ayarları</button>
+ 
+ <div class="seg" id="anv" style="margin-bottom:14px;display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <button data-ag="qr" class="on" style="flex:1;min-width:72px;padding:9px 6px;font-size:13px;font-weight:700;white-space:nowrap">Zebra QR</button>
+  <button data-ag="rapor" style="flex:1;min-width:72px;padding:9px 6px;font-size:13px;font-weight:700;white-space:nowrap">Raporlar</button>
+  <button data-ag="yedek" style="flex:1;min-width:72px;padding:9px 6px;font-size:13px;font-weight:700;white-space:nowrap">Yedekleme</button>
+  <button data-ag="ayar" style="flex:1;min-width:72px;padding:9px 6px;font-size:13px;font-weight:700;white-space:nowrap">Ayarlar</button>
  </div>
 
  <!-- ======================================================================
-      1. TOPLU ZEBRA QR (VARSAYILAN & BİRİNCİL SEKME)
+      1. TOPLU ZEBRA QR
       ====================================================================== -->
  <div class="card" data-ag="qr">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-   <h2 style="margin:0">Toplu Zebra Senkronizasyon QR</h2>
-   <span style="font-size:12px;font-weight:800;background:color-mix(in srgb,#0a5866 12%,var(--card));color:#0a5866;padding:4px 10px;border-radius:12px">İş Yeri Akışı</span>
+   <h2 style="margin:0;font-size:18px">Toplu Zebra Senkronizasyon QR</h2>
+   <span style="font-size:11px;font-weight:800;background:color-mix(in srgb,#0a5866 12%,var(--card));color:#0a5866;padding:3px 8px;border-radius:10px">İş Yeri Akışı</span>
   </div>
-  <p class="sub" style="margin-bottom:12px">Zebra el terminaline sayım, sevkiyat veya fire verilerini tek okutmada aktarır. Kilogramlı ürünlerde terazi formatı, adetli ürünlerde Tab tuşlaması ile kutular hatasız doldurulur.</p>
+  <p class="sub" style="margin-bottom:14px;font-size:13px;line-height:1.4">Zebra el terminaline sayım, sevkiyat veya fire verilerini tek seferde aktarır. Kilogramlı ürünlerde terazi formatı, adetli ürünlerde Tab tuşlaması ile kutular hatasız doldurulur.</p>
 
   <!-- Hızlı Aksiyon Butonları -->
-  <div class="row" style="gap:10px;margin-bottom:12px">
-   <button id="mk" style="flex:1.4;height:50px;font-size:16px;font-weight:900;background:#0a5866;color:#fff;border:none;border-radius:16px;box-shadow:0 4px 14px rgba(10,88,102,.28);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+   <button id="mk" style="min-height:48px;font-size:15px;font-weight:800;background:#0a5866;color:#fff;border:none;border-radius:14px;box-shadow:0 3px 12px rgba(10,88,102,.25);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:10px 16px">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
     QR Kod Oluştur
    </button>
-   <button class="g" id="mkt" style="flex:1;height:50px;font-weight:800;border-radius:16px">Test QR (3 Kod)</button>
+   <button class="g" id="mkt" style="min-height:40px;font-size:13px;font-weight:700;border-radius:12px;padding:8px 14px">Deneme QR (3 Kod ile Sına)</button>
   </div>
 
-  <!-- Ana Seçimler: Veri Kaynağı & Zebra Formatı -->
-  <div class="row" style="margin-bottom:10px">
+  <!-- Ana Seçimler: Dikey Stack ile Asla Taşmayan Seçim Kutuları -->
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:12px">
    <div>
-    <label for="scope" style="font-weight:700">Veri kaynağı</label>
-    <select id="scope" style="border-radius:12px;height:42px;font-weight:600">
+    <label for="scope" style="font-weight:700;font-size:13px;margin-bottom:4px;display:block">Veri kaynağı</label>
+    <select id="scope" style="width:100%;min-height:44px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;box-sizing:border-box">
      <option value="done" selected>Sayılan ürünler (Bugünün sayımı)</option>
      <option value="ship">Sevkiyat verileri (Açık/Son)</option>
      <option value="all">Tüm ürün kataloğu</option>
@@ -2425,8 +2426,8 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
     </select>
    </div>
    <div>
-    <label for="mode" style="font-weight:700">Zebra formatı</label>
-    <select id="mode" style="border-radius:12px;height:42px;font-weight:600">
+    <label for="mode" style="font-weight:700;font-size:13px;margin-bottom:4px;display:block">Zebra formatı</label>
+    <select id="mode" style="width:100%;min-height:44px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:600;box-sizing:border-box">
      <option value="zebra_flow" selected>Zebra Terminal Tam Akış (Barkod → Kg/Adet → Koli → Kaydet)</option>
      <option value="smart">Akıllı Zebra (Kg: Terazi 28... EAN-13, Adet: 411...)</option>
      <option value="ean13">Terazi Barkodları (EAN-13, 28+PLU+Gram)</option>
@@ -2441,55 +2442,52 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
    </div>
   </div>
 
-  <!-- Gelişmiş Ayarlar (Akordeon - Varsayılan Derli Toplu) -->
-  <details style="margin-top:10px;background:var(--chip,#f8fafc);border:1.5px solid var(--line,#e2e8f0);border-radius:14px;padding:8px 12px">
-   <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--mute,#64748b);user-select:none">
-    ⚙️ Gelişmiş Zebra &amp; Tuşlama Ayarları (Koli, Geçiş Tuşu, Kod Türü)
+  <!-- Gelişmiş Ayarlar (Akordeon - Sıfır Emoji, Derli Toplu) -->
+  <details style="margin-top:10px;background:var(--chip,#f8fafc);border:1.5px solid var(--line,#e2e8f0);border-radius:14px;padding:10px 12px">
+   <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--mute,#64748b);user-select:none;display:flex;align-items:center;gap:6px">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Zebra Detay Ayarları (Koli, Tuş, Yoğunluk)
    </summary>
-   <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px">
-    <div class="row">
-     <div>
-      <label for="zkoli">Zebra Koli alanı değeri</label>
-      <select id="zkoli" style="border-radius:10px">
-       <option value="auto" selected>Varsa koli sayısı, yoksa 0 (Önerilen)</option>
-       <option value="zero">Her zaman 0 yaz</option>
-       <option value="actual">Yalnızca gerçek koli sayısı (yoksa boş)</option>
-       <option value="empty">Koliye değer yazma (boş geç)</option>
-      </select>
-     </div>
-     <div>
-      <label for="zsave">Zebra Kaydet tuşu</label>
-      <select id="zsave" style="border-radius:10px">
-       <option value="enter" selected>Enter [LF] (Koli'de kaydet ve bitir)</option>
-       <option value="tab_enter">Tab + Enter (Kaydet butonuna tıkla)</option>
-       <option value="crlf">Enter [CRLF]</option>
-      </select>
-     </div>
-    </div>
-    <div class="row">
-     <div>
-      <label for="src">Hangi kod kullanılsın</label>
-      <select id="src" style="border-radius:10px">
-       <option value="auto" selected>PLU varsa PLU, yoksa barkod</option>
-       <option value="bar">Yalnızca barkod</option>
-       <option value="plu">Yalnızca PLU</option>
-      </select>
-     </div>
-     <div>
-      <label for="sep">Alanlar arası tuş</label>
-      <select id="sep" style="border-radius:10px">
-       <option value="t" selected>Tab [TAB] (Kutular arası geçiş - Önerilen)</option>
-       <option value="n">Enter [LF]</option>
-       <option value="r">Enter [CR]</option>
-       <option value="crlf">Enter [CRLF]</option>
-       <option value=";">Noktalı virgül (;)</option>
-       <option value=",">Virgül (,)</option>
-      </select>
-     </div>
+   <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+    <div>
+     <label for="zkoli" style="font-size:12px;font-weight:700">Zebra Koli alanı değeri</label>
+     <select id="zkoli" style="width:100%;min-height:40px;padding:8px 10px;border-radius:10px;font-size:13px;box-sizing:border-box">
+      <option value="auto" selected>Varsa koli sayısı, yoksa 0 (Önerilen)</option>
+      <option value="zero">Her zaman 0 yaz</option>
+      <option value="actual">Yalnızca gerçek koli sayısı (yoksa boş)</option>
+      <option value="empty">Koliye değer yazma (boş geç)</option>
+     </select>
     </div>
     <div>
-     <label for="dens">QR yoğunluğu (Parça boyutu)</label>
-     <select id="dens" style="border-radius:10px">
+     <label for="zsave" style="font-size:12px;font-weight:700">Zebra Kaydet tuşu</label>
+     <select id="zsave" style="width:100%;min-height:40px;padding:8px 10px;border-radius:10px;font-size:13px;box-sizing:border-box">
+      <option value="enter" selected>Enter [LF] (Koli'de kaydet ve bitir)</option>
+      <option value="tab_enter">Tab + Enter (Kaydet butonuna tıkla)</option>
+      <option value="crlf">Enter [CRLF]</option>
+     </select>
+    </div>
+    <div>
+     <label for="src" style="font-size:12px;font-weight:700">Hangi kod kullanılsın</label>
+     <select id="src" style="width:100%;min-height:40px;padding:8px 10px;border-radius:10px;font-size:13px;box-sizing:border-box">
+      <option value="auto" selected>PLU varsa PLU, yoksa barkod</option>
+      <option value="bar">Yalnızca barkod</option>
+      <option value="plu">Yalnızca PLU</option>
+     </select>
+    </div>
+    <div>
+     <label for="sep" style="font-size:12px;font-weight:700">Alanlar arası tuş</label>
+     <select id="sep" style="width:100%;min-height:40px;padding:8px 10px;border-radius:10px;font-size:13px;box-sizing:border-box">
+      <option value="t" selected>Tab [TAB] (Kutular arası geçiş - Önerilen)</option>
+      <option value="n">Enter [LF]</option>
+      <option value="r">Enter [CR]</option>
+      <option value="crlf">Enter [CRLF]</option>
+      <option value=";">Noktalı virgül (;)</option>
+      <option value=",">Virgül (,)</option>
+     </select>
+    </div>
+    <div>
+     <label for="dens" style="font-size:12px;font-weight:700">QR yoğunluğu (Parça boyutu)</label>
+     <select id="dens" style="width:100%;min-height:40px;padding:8px 10px;border-radius:10px;font-size:13px;box-sizing:border-box">
       <option value="450" selected>Önerilen: rahat okuma, parça başına 450 karakter</option>
       <option value="900">Dengeli, parça başına 900 karakter</option>
       <option value="2400">Tek QR'a sığdır, 2400 karakter</option>
@@ -2500,14 +2498,14 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 
   <!-- QR Görüntüleme & Çıktı -->
   <div id="qr" class="hide" style="margin:16px auto;text-align:center"></div>
-  <p class="sub" id="qinfo" style="text-align:center;font-weight:700"></p>
+  <p class="sub" id="qinfo" style="text-align:center;font-weight:700;font-size:13px"></p>
 
   <!-- Parça Navigasyonu -->
-  <div class="row hide" id="qnav" style="justify-content:center;gap:10px;margin:8px 0">
-   <button class="g" id="qp" style="border-radius:12px;padding:8px 16px;font-weight:700">Önceki parça</button>
-   <button class="g" id="qn" style="border-radius:12px;padding:8px 16px;font-weight:700">Sonraki parça</button>
+  <div class="row hide" id="qnav" style="justify-content:center;gap:10px;margin:10px 0">
+   <button class="g" id="qp" style="min-height:42px;border-radius:12px;padding:8px 16px;font-weight:700">Önceki parça</button>
+   <button class="g" id="qn" style="min-height:42px;border-radius:12px;padding:8px 16px;font-weight:700">Sonraki parça</button>
   </div>
-  <button class="g hide mt" style="width:100%;height:44px;border-radius:14px;font-weight:800" id="qfs">Tam ekran göster</button>
+  <button class="g hide mt" style="width:100%;min-height:44px;border-radius:12px;font-weight:800" id="qfs">Tam ekran göster</button>
 
   <!-- Tuşlama Önizlemesi -->
   <div id="ztab"></div>
@@ -2515,55 +2513,55 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <!-- Ham Kod Detayı -->
   <details style="margin-top:12px">
    <summary style="cursor:pointer;font-size:12px;color:var(--mute,#64748b)">Zebra'nın yazacağı tam ham metin</summary>
-   <pre id="prev" class="mt" style="max-height:140px;overflow:auto;font-size:12px;background:#f8fafc;padding:10px;border-radius:10px;border:1px solid #e2e8f0"></pre>
+   <pre id="prev" class="mt" style="max-height:140px;overflow:auto;font-size:12px;background:#f8fafc;padding:10px;border-radius:10px;border:1px solid #e2e8f0;box-sizing:border-box"></pre>
   </details>
  </div>
 
  <!-- Zebra Deneme & Test Alanı (Kompakt) -->
  <div class="card hide" data-ag="qr">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-   <h2 style="margin:0">Zebra Canlı Okutma Testi</h2>
-   <button class="g" id="ztclr" style="padding:6px 14px;border-radius:10px;font-weight:700">Temizle</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+   <h2 style="margin:0;font-size:17px">Zebra Canlı Okutma Testi</h2>
+   <button class="g" id="ztclr" style="min-height:36px;padding:6px 14px;border-radius:10px;font-weight:700;font-size:12px">Temizle</button>
   </div>
-  <p class="sub">DataWedge ayarını test etmek için aşağıdaki kutuya dokunup Zebra ile okutun.</p>
-  <input id="ztest" inputmode="none" autocomplete="off" placeholder="Buraya dokunun, sonra Zebra ile okutun" style="border-radius:14px;height:46px;font-size:15px;font-family:monospace;padding:0 14px">
-  <pre id="ztout" class="sub mt" style="background:#f8fafc;padding:10px;border-radius:12px;border:1px solid #e2e8f0;font-size:12px">Henüz okutma yok</pre>
+  <p class="sub" style="margin-bottom:10px;font-size:13px">DataWedge ayarını test etmek için aşağıdaki kutuya dokunup Zebra ile okutun.</p>
+  <input id="ztest" inputmode="none" autocomplete="off" placeholder="Buraya dokunun, sonra Zebra ile okutun" style="width:100%;min-height:46px;padding:10px 12px;border-radius:12px;font-size:14px;font-family:monospace;box-sizing:border-box">
+  <pre id="ztout" class="sub mt" style="background:#f8fafc;padding:10px;border-radius:12px;border:1px solid #e2e8f0;font-size:12px;box-sizing:border-box">Henüz okutma yok</pre>
  </div>
 
  <!-- ======================================================================
       2. RAPORLAR & PAYLAŞ
       ====================================================================== -->
  <div class="card hide" data-ag="rapor">
-  <h2>Haftalık sayım ve sevkiyat raporu</h2>
-  <p class="sub">Tarihe göre sayım veya sevkiyat kaydını seçip tek tıkla WhatsApp'tan paylaşın veya dosya olarak indirin.</p>
+  <h2 style="font-size:18px;margin-bottom:4px">Haftalık Sayım ve Sevkiyat Raporu</h2>
+  <p class="sub" style="margin-bottom:14px;font-size:13px">Tarihe göre sayım veya sevkiyat kaydını seçip tek tıkla WhatsApp'tan paylaşın veya dosya olarak indirin.</p>
   
   <div style="margin-bottom:12px">
-   <label for="rk" style="font-weight:700">Kayıt seçin</label>
-   <select id="rk" style="border-radius:12px;height:44px;font-weight:700"></select>
+   <label for="rk" style="font-weight:700;font-size:13px;margin-bottom:4px;display:block">Kayıt seçin</label>
+   <select id="rk" style="width:100%;min-height:44px;padding:10px 12px;border-radius:12px;font-size:14px;font-weight:700;box-sizing:border-box"></select>
   </div>
 
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13px">
     <input type="checkbox" id="rqr" style="width:18px;height:18px;border-radius:4px">
     PDF ve Excel raporuna ürün QR kodlarını ekle
    </label>
   </div>
 
-  <!-- 4 Büyük Rapor Butonu (Kompakt ve Şık) -->
+  <!-- 4 Büyük Rapor Butonu (2x2 Dengeli Grid, Sıfır Kırpılma) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-   <button id="rwx" style="height:48px;border-radius:14px;background:#25d366;color:#fff;border:none;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
+   <button id="rwx" style="min-height:48px;border-radius:14px;background:#25d366;color:#fff;border:none;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:8px 12px">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"/></svg>
-    WhatsApp Paylaş
+    WhatsApp
    </button>
-   <button class="g" id="rpdf" style="height:48px;border-radius:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px">
+   <button class="g" id="rpdf" style="min-height:48px;border-radius:14px;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     PDF İndir
    </button>
-   <button class="g" id="rxl" style="height:48px;border-radius:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px">
+   <button class="g" id="rxl" style="min-height:48px;border-radius:14px;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-    Excel (.xlsx)
+    Excel
    </button>
-   <button class="g" id="rcsv" style="height:48px;border-radius:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px">
+   <button class="g" id="rcsv" style="min-height:48px;border-radius:14px;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 10h16M10 4v16"/></svg>
     CSV İndir
    </button>
@@ -2573,16 +2571,16 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 
  <!-- Hareket ve Sipariş Kartı -->
  <div class="card hide" id="mvc" data-ag="rapor">
-  <h2>Hareket ve sipariş önerisi</h2>
-  <p class="sub">İki sayım arasında çıkan miktarı hesaplar (önceki sayım + sevkiyat − son sayım) ve sonraki dönem için kasa siparişi önerir.</p>
-  <div class="row">
-   <div><label for="mvb">Önceki sayım</label><select id="mvb" style="border-radius:12px"></select></div>
-   <div><label for="mve">Son sayım</label><select id="mve" style="border-radius:12px"></select></div>
+  <h2 style="font-size:18px;margin-bottom:4px">Hareket ve Sipariş Önerisi</h2>
+  <p class="sub" style="margin-bottom:12px;font-size:13px">İki sayım arasında çıkan miktarı hesaplar (önceki sayım + sevkiyat − son sayım) ve sonraki dönem için kasa siparişi önerir.</p>
+  <div style="display:flex;flex-direction:column;gap:10px">
+   <div><label for="mvb" style="font-size:12px;font-weight:700">Önceki sayım</label><select id="mvb" style="width:100%;min-height:42px;border-radius:12px;padding:8px 10px;box-sizing:border-box"></select></div>
+   <div><label for="mve" style="font-size:12px;font-weight:700">Son sayım</label><select id="mve" style="width:100%;min-height:42px;border-radius:12px;padding:8px 10px;box-sizing:border-box"></select></div>
   </div>
   <div id="mvs" class="mt"></div>
   <div class="row mt" style="gap:10px">
-   <button id="mvw" style="flex:1.4;height:46px;border-radius:14px;background:#0a5866;color:#fff;border:none;font-weight:800;cursor:pointer">Siparişi Gönder</button>
-   <button class="g" id="mvcsv" style="flex:1;height:46px;border-radius:14px;font-weight:700">CSV İndir</button>
+   <button id="mvw" style="flex:1.4;min-height:46px;border-radius:14px;background:#0a5866;color:#fff;border:none;font-weight:800;cursor:pointer;padding:10px 14px">Siparişi Gönder</button>
+   <button class="g" id="mvcsv" style="flex:1;min-height:46px;border-radius:14px;font-weight:700;padding:10px 14px">CSV İndir</button>
   </div>
  </div>
 
@@ -2590,67 +2588,77 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
       3. YEDEKLEME & DOSYA
       ====================================================================== -->
  <div class="card hide" data-ag="yedek">
-  <h2>Yedek ve veri aktarımı</h2>
-  <p class="sub">Tüm sayım, sevkiyat, fire ve ürün veritabanını tek tıkla cihazınıza indirin veya yeni cihaza aktarın.</p>
+  <h2 style="font-size:18px;margin-bottom:4px">Yedek ve Veri Aktarımı</h2>
+  <p class="sub" style="margin-bottom:14px;font-size:13px">Tüm sayım, sevkiyat, fire ve ürün veritabanını tek tıkla cihazınıza indirin veya yeni cihaza aktarın.</p>
 
   <!-- Hızlı Dışa Aktarma -->
   <div class="grp" style="margin-top:4px">Dışa Aktar (Yedek Al)</div>
-  <div class="row" style="gap:10px">
-   <button id="bdl" style="flex:1.4;height:46px;border-radius:14px;background:#0a5866;color:#fff;border:none;font-weight:800;cursor:pointer">💾 Yedeği İndir (.json)</button>
-   <button class="g" id="bcp" style="flex:1;height:46px;border-radius:14px;font-weight:700">Panoya Kopyala</button>
-   <button class="g" id="bsh" style="flex:1;height:46px;border-radius:14px;font-weight:700">Paylaş</button>
+  <button id="bdl" style="width:100%;min-height:48px;border-radius:14px;background:#0a5866;color:#fff;border:none;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:8px;padding:10px 14px">
+   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+   Yedek Dosyasını İndir (.json)
+  </button>
+  
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+   <button class="g" id="bcp" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Panoya Kopyala</button>
+   <button class="g" id="bsh" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Paylaş</button>
   </div>
-  <div class="row mt" style="gap:10px">
-   <button class="g" id="ccs" style="flex:1;height:42px;border-radius:12px;font-weight:700">Sayım CSV</button>
-   <button class="g" id="ccv" style="flex:1;height:42px;border-radius:12px;font-weight:700">Sevkiyat CSV</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+   <button class="g" id="ccs" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Sayım CSV</button>
+   <button class="g" id="ccv" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Sevkiyat CSV</button>
   </div>
   <button id="bmk" class="hide"></button>
 
   <!-- İçe Aktarma -->
-  <div class="grp" style="margin-top:16px">İçe Aktar (Geri Yükle)</div>
-  <div class="row" style="gap:10px">
-   <button id="bfile" style="flex:1.4;height:46px;border-radius:14px;background:#1a202c;color:#fff;border:none;font-weight:800;cursor:pointer">📁 Yedek Dosyası Seç (.json / .csv)</button>
-   <button class="g" id="bmg" style="flex:1;height:46px;border-radius:14px;font-weight:700">Birleştir</button>
-   <button class="g" id="brp" style="flex:1;height:46px;border-radius:14px;font-weight:700">Yedekle Değiştir</button>
+  <div class="grp" style="margin-top:18px">İçe Aktar (Geri Yükle)</div>
+  <button id="bfile" style="width:100%;min-height:48px;border-radius:14px;background:#1a202c;color:#fff;border:none;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin-bottom:8px;padding:10px 14px">
+   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+   Yedek Dosyası Seç (.json / .csv)
+  </button>
+  
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+   <button class="g" id="bmg" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Mevcutla Birleştir</button>
+   <button class="g" id="brp" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Yedekle Değiştir</button>
   </div>
   <input type="file" id="ff" accept=".json,.txt,.csv" class="hide">
   <p class="sub mt" id="msg"></p>
 
   <!-- Kurtarma Araçları -->
-  <div class="grp" style="margin-top:16px">Kurtarma &amp; Onarım</div>
-  <div class="row" style="gap:10px">
-   <button class="g" id="bun" style="flex:1;height:42px;border-radius:12px;font-weight:700">Son Anlık Görüntüye Dön</button>
-   <button class="g" id="bfix" style="flex:1;height:42px;border-radius:12px;font-weight:700">Veritabanını Onar</button>
+  <div class="grp" style="margin-top:18px">Kurtarma &amp; Onarım</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+   <button class="g" id="bun" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Son Anlık Görüntü</button>
+   <button class="g" id="bfix" style="min-height:42px;border-radius:12px;font-weight:700;font-size:13px;padding:8px 10px">Veritabanını Onar</button>
   </div>
 
   <!-- Manuel Metin / Ürün Listesi Yapıştırma (Derli Toplu Akordeon) -->
-  <details style="margin-top:16px;background:var(--chip,#f8fafc);border:1px solid var(--line,#e2e8f0);border-radius:14px;padding:8px 12px">
+  <details style="margin-top:16px;background:var(--chip,#f8fafc);border:1px solid var(--line,#e2e8f0);border-radius:14px;padding:10px 12px">
    <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--mute,#64748b)">Manuel Metin / Toplu Ürün Listesi Yapıştır</summary>
-   <p class="sub" style="margin:8px 0">Her satıra: <code>ad;PLU;barkod;kasa kg</code> formatında yazıp yapıştırabilirsiniz.</p>
-   <textarea id="bk" aria-label="Yedek metni" placeholder="Yedek veya ürün listesi" style="height:120px;border-radius:10px;font-family:monospace;font-size:12px"></textarea>
+   <p class="sub" style="margin:8px 0;font-size:12px">Her satıra: <code>ad;PLU;barkod;kasa kg</code> formatında yazıp yapıştırabilirsiniz.</p>
+   <textarea id="bk" aria-label="Yedek metni" placeholder="Yedek veya ürün listesi" style="width:100%;height:110px;border-radius:10px;font-family:monospace;font-size:12px;box-sizing:border-box"></textarea>
   </details>
  </div>
 
  <!-- Terminal Sayımı JSON Kartı (Derli Toplu) -->
  <div class="card hide" data-ag="yedek" id="jic">
-  <h2>Terminal sayımı (JSON)</h2>
-  <p class="sub">Terminalden veya yapay zekâdan gelen sayım JSON'unu inceleyip doğrudan sayıma işleyin.</p>
-  <div class="row">
-   <div><label for="jd">Sayım tarihi</label><input type="date" id="jd" style="border-radius:10px"></div>
+  <h2 style="font-size:18px;margin-bottom:4px">Terminal Sayımı (JSON)</h2>
+  <p class="sub" style="margin-bottom:12px;font-size:13px">Terminalden veya yapay zekâdan gelen sayım JSON'unu inceleyip doğrudan sayıma işleyin.</p>
+  <div style="display:flex;flex-direction:column;gap:10px">
+   <div><label for="jd" style="font-size:12px;font-weight:700">Sayım tarihi</label><input type="date" id="jd" style="width:100%;min-height:42px;border-radius:10px;padding:8px 10px;box-sizing:border-box"></div>
    <div>
-    <label for="jm">İşleme modu</label>
-    <select id="jm" style="border-radius:10px">
+    <label for="jm" style="font-size:12px;font-weight:700">İşleme modu</label>
+    <select id="jm" style="width:100%;min-height:42px;border-radius:10px;padding:8px 10px;box-sizing:border-box">
      <option value="add">Var olan sayımın üstüne ekle</option>
      <option value="set">O günün sayımını silip bununla değiştir</option>
     </select>
    </div>
   </div>
-  <textarea id="jt" class="mt" placeholder='{"app":"manav-sayim","date":"...","counts":[...]}' style="height:100px;font-family:monospace;font-size:12px;border-radius:10px"></textarea>
-  <div class="row mt" style="gap:8px">
-   <button class="g" id="jfile" style="border-radius:10px">Dosyadan yükle</button>
-   <button class="g" id="jpr">Talimatı kopyala</button>
-   <button class="g" id="jpv">Önizle</button>
-   <button id="jap" disabled style="border-radius:10px">Sayıma işle</button>
+  <textarea id="jt" class="mt" placeholder='{"app":"manav-sayim","date":"...","counts":[...]}' style="width:100%;height:90px;font-family:monospace;font-size:12px;border-radius:10px;box-sizing:border-box"></textarea>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+   <button class="g" id="jfile" style="min-height:40px;border-radius:10px;font-size:13px">Dosyadan yükle</button>
+   <button class="g" id="jpr" style="min-height:40px;border-radius:10px;font-size:13px">Talimatı kopyala</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+   <button class="g" id="jpv" style="min-height:40px;border-radius:10px;font-size:13px">Önizle</button>
+   <button id="jap" disabled style="min-height:40px;border-radius:10px;font-size:13px">Sayıma işle</button>
   </div>
   <input type="file" id="jff" accept=".json,.txt" class="hide">
   <div id="jout" class="mt"></div>
@@ -2660,26 +2668,26 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
       4. CİHAZ AYARLARI
       ====================================================================== -->
  <div class="card hide" data-ag="ayar">
-  <h2>Okutma ve bildirim ayarları</h2>
-  <p class="sub">Ses hem kamerada hem Zebra klavye okumasında çalar. Okutma flaşı kamera açıkken ışık verir.</p>
-  <div class="seg" id="optb" style="margin-bottom:12px">
-   <button data-o="snd">Ses</button>
-   <button data-o="fl">Okutma flaşı</button>
+  <h2 style="font-size:18px;margin-bottom:4px">Okutma ve Bildirim Ayarları</h2>
+  <p class="sub" style="margin-bottom:12px;font-size:13px">Ses hem kamerada hem Zebra klavye okumasında çalar. Okutma flaşı kamera açıkken ışık verir.</p>
+  <div class="seg" id="optb" style="margin-bottom:12px;display:flex;gap:4px">
+   <button data-o="snd" style="flex:1;min-height:40px;font-weight:700">Ses</button>
+   <button data-o="fl" style="flex:1;min-height:40px;font-weight:700">Okutma flaşı</button>
   </div>
-  <button class="g" style="width:100%;height:44px;border-radius:12px;font-weight:700" id="tsnd">Sesi dene</button>
+  <button class="g" style="width:100%;min-height:44px;border-radius:12px;font-weight:700" id="tsnd">Sesi dene</button>
  </div>
 
  <div class="card hide" data-ag="ayar">
-  <h2>Zebra DataWedge hızlı ayar kılavuzu</h2>
-  <p class="sub">Zebra el terminalinde DataWedge profilinin (com.android.chrome) düzgün çalışması için gerekli adımlar:</p>
+  <h2 style="font-size:18px;margin-bottom:4px">Zebra DataWedge Hızlı Ayar Kılavuzu</h2>
+  <p class="sub" style="margin-bottom:12px;font-size:13px">Zebra el terminalinde DataWedge profilinin (com.android.chrome) düzgün çalışması için adımlar:</p>
   <div class="chk mt"><b><i class="k"></i>1. Profil &amp; Çıkış</b><p>DataWedge'de Barcode input ve Keystroke output açık, Intent output kapalı olmalı.</p></div>
   <div class="chk mt"><b><i class="k"></i>2. Key Event Ayarları</b><p>"Send Characters as Events" açık olsun. Sayfa her karakteri tuş olayı olarak alır.</p></div>
   <div class="chk mt"><b><i class="k"></i>3. Basic Data Formatting</b><p>Enable, Send data ve Send ENTER key açık olsun.</p></div>
   <div class="chk mt"><b><i class="k"></i>4. Terazi Etiketi Desteği</b><p>28 ile başlayan 13 haneli etiketler okutulunca ürün PLU'dan bulunur, gramaj küsurat kg olarak eklenir.</p></div>
 
   <div class="grp" style="margin-top:14px">Canlı Okutma Hızı</div>
-  <div id="wzs" style="font-family:monospace;font-size:12px;background:#f8fafc;padding:10px;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px">Henüz okutma yok.</div>
-  <button class="g mt" id="wzc" style="width:100%;height:40px;border-radius:12px;font-weight:700">Tanılamayı sıfırla</button>
+  <div id="wzs" style="font-family:monospace;font-size:12px;background:#f8fafc;padding:10px;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;box-sizing:border-box">Henüz okutma yok.</div>
+  <button class="g mt" id="wzc" style="width:100%;min-height:40px;border-radius:12px;font-weight:700">Tanılamayı sıfırla</button>
  </div>
 
 </section>
