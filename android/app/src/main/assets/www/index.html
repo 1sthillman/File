@@ -6303,27 +6303,42 @@ if (shipWaBtn) {
      AKILLI MANAV ÜRÜN EŞLEYİCİ (MODIFIER CEZASI + STAPLE ÖNCELİĞİ)
      ========================================================================= */
   const STAPLE_SYNONYMS = {
-    'sogan':     ['kuru sogan','sogan','sogan yemeklik'],
-    'patates':   ['patates','kuru patates','patates dokme','patates yemeklik'],
-    'lahana':    ['lahana','beyaz lahana'],
-    'domates':   ['domates'],
-    'salatalik': ['salatalik','hiyar'],
-    'biber':     ['biber','sivri biber','koy biberi'],
-    'muz':       ['ithal muz','muz','yerli muz'],
-    'elma':      ['amasya elma','elma'],
-    'portakal':  ['portakal'],
-    'mandalina': ['mandalina','izmir mandalina'],
-    'limon':     ['limon enter','limon'],
-    'karpuz':    ['karpuz'],
-    'kavun':     ['kavun','kirkagac kavun'],
-    'uzum':      ['uzum'],
-    'cilek':     ['cilek tarla','cilek'],
+    'sogan':     ['kuru sogan','sogan','sogan yemeklik','arpacik sogan','kirmizi sogan','mor sogan'],
+    'patates':   ['patates','kuru patates','patates dokme','patates yemeklik','patates ciplik'],
+    'lahana':    ['lahana','beyaz lahana','kirmizi lahana','mor lahana'],
+    'domates':   ['domates','salkım domates','salkim domates','koktey domates','kokteyl domates','cherry domates'],
+    'salatalik': ['salatalik','hiyar','mini salatalik'],
+    'biber':     ['biber','sivri biber','koy biberi','kapya biber','dolma biber','kirmizi biber','yesil biber'],
+    'muz':       ['ithal muz','muz','yerli muz','baby muz'],
+    'elma':      ['amasya elma','elma','golden elma','granny elma'],
+    'portakal':  ['portakal','sıkmalık portakal','sikmalik portakal'],
+    'mandalina': ['mandalina','izmir mandalina','klementin'],
+    'limon':     ['limon enter','limon','meyer limon'],
+    'karpuz':    ['karpuz','cicek karpuz'],
+    'kavun':     ['kavun','kirkagac kavun','cantaloup kavun'],
+    'uzum':      ['uzum','siyah uzum','yesil uzum','salkim uzum'],
+    'cilek':     ['cilek tarla','cilek','sera cilegi'],
     'visne':     ['visne'],
-    'armut':     ['ankara armut','armut','deveci armut'],
-    'seftali':   ['seftali'],
+    'armut':     ['ankara armut','armut','deveci armut','santa maria armut'],
+    'seftali':   ['seftali','beyaz seftali','sari seftali'],
     'kayisi':    ['kayisi'],
-    'erik':      ['kirmizi erik','erik'],
-    'marul':     ['marul','gobek marul']
+    'erik':      ['kirmizi erik','erik','can erigi'],
+    'marul':     ['marul','gobek marul','kıvırcık marul','kivircik marul'],
+    'ispanak':   ['ispanak','taze ispanak'],
+    'roka':      ['roka','taze roka'],
+    'maydanoz':  ['maydanoz','taze maydanoz'],
+    'dereotu':   ['dereotu','taze dereotu'],
+    'nane':      ['nane','taze nane'],
+    'kıvırcık':  ['kivircik marul','kivircik'],
+    'pırasa':    ['pirasa','taze pirasa'],
+    'kereviz':   ['kereviz','kereviz sapi'],
+    'brokoli':   ['brokoli'],
+    'karnabahar':['karnabahar'],
+    'patlıcan':  ['patlican','siyah patlican','mor patlican'],
+    'kabak':     ['kabak','saksa kabagi','yesil kabak'],
+    'havuc':     ['havuc','taze havuc'],
+    'turp':      ['turp','kirmizi turp'],
+    'nar':       ['nar','sıkmalık nar','sikmalik nar']
   };
 
   const MODIFIER_WORDS = new Set([
@@ -6353,12 +6368,20 @@ if (shipWaBtn) {
         score = 2.4;
       }
 
-      // 3. Kelime eşleşmesi
+      // 3. Kelime eşleşmesi (sıra bağımsız — "salkım domates" = "domates salkım")
       let matchedWords = 0;
       for (const qw of qWords) {
         if (pWords.some(pw => pw === qw ||
             (pw.length > 3 && qw.length > 3 && (pw.startsWith(qw) || qw.startsWith(pw))))) {
           matchedWords++;
+        }
+      }
+      // Ürün kelimelerinin sorgu içinde aranması (ters sıra desteği)
+      let reverseMatchedWords = 0;
+      for (const pw of pWords) {
+        if (qWords.some(qw => pw === qw ||
+            (pw.length > 3 && qw.length > 3 && (pw.startsWith(qw) || qw.startsWith(pw))))) {
+          reverseMatchedWords++;
         }
       }
 
@@ -6371,6 +6394,15 @@ if (shipWaBtn) {
           if (!qWords.includes(pw) && MODIFIER_WORDS.has(pw)) {
             penalty += 0.85; // Mor Soğan, Salkım Domates, Baby Muz cezalandırılır
           }
+        }
+        score = Math.max(score, baseScore - penalty);
+      }
+      // Ters sıra eşleşmesi — "salkım domates" ürün listesinde "domates salkım" ile eşleşsin
+      if (reverseMatchedWords === pWords.length && pWords.length > 0 && matchedWords < qWords.length) {
+        const baseScore = 0.9 + (reverseMatchedWords / Math.max(qWords.length, pWords.length)) * 0.5;
+        let penalty = (qWords.length - reverseMatchedWords) * 0.1;
+        for (const pw of pWords) {
+          if (!qWords.includes(pw) && MODIFIER_WORDS.has(pw)) penalty += 0.85;
         }
         score = Math.max(score, baseScore - penalty);
       }
@@ -6411,40 +6443,40 @@ if (shipWaBtn) {
   const INTENT_PATTERNS = {
     DEV_INFO:      [/yazilimci/i, /gelistirici/i, /bunu kim yapti/i, /kim kodladi/i, /programci/i, /sedat/i],
     STATUS_SUMMARY:[/sayim durumu/i, /durum nedir/i, /kac urun/i, /sayim nasil/i, /kaci kaldi/i, /kalanlar/i, /sayim ozeti/i, /genel durum/i],
-    FIRE_SUMMARY:  [/bugunku fire/i, /fire durumu/i, /toplam fire/i, /fire ne kadar/i, /fire ozeti/i],
-    SHIP_SUMMARY:  [/sevkiyat durumu/i, /sevkiyatta ne var/i, /sevkiyat nasil/i, /sevkiyatta kac/i, /sevkiyat ozeti/i],
-    TIME_QUERY:    [/saat kac/i, /su an saat/i, /hangi saat/i, /saati soyle/i, /zamani soyle/i],
-    DATE_QUERY:    [/bugun ayin kaci/i, /tarih ne/i, /tarih nedir/i, /hangi gun/i, /bugun gunlerden/i, /tarihi soyle/i],
-    THEME_DARK:    [/karanlik mod/i, /koyu tema/i, /gece modu/i, /karanlik tema/i, /siyah mod/i, /siyah tema/i],
-    THEME_LIGHT:   [/aydinlik mod/i, /acik tema/i, /gunduz modu/i, /aydinlik tema/i, /beyaz mod/i, /beyaz tema/i],
-    THEME_AUTO:    [/otomatik tema/i, /sistem temasi/i],
-    SOUND_ON:      [/sesi ac/i, /sesli yaniti ac/i, /ses ac/i],
-    SOUND_OFF:     [/sesi kapat/i, /sesli yaniti kapat/i, /sessiz mod/i, /sustur/i, /ses kapat/i],
-    HANDSFREE_ON:  [/surekli dinleme(yi)? ac/i, /eller serbest(i)? ac/i, /otomatik dinleme ac/i],
-    HANDSFREE_OFF: [/surekli dinleme(yi)? kapat/i, /eller serbest(i)? kapat/i, /otomatik dinleme kapat/i],
-    APP_CLOSE:     [/asistani kapat/i, /sesli komutu kapat/i, /dinlemeyi bitir/i, /kapat asistan/i, /uykuya gec/i, /^kapat$/i],
-    SEARCH_CLEAR:  [/aramayi temizle/i, /aramayi sil/i, /aramayi kapat/i, /aramadan cik/i, /filtreyi temizle/i, /filtreyi kaldir/i],
-    BACKUP_JSON:   [/yedek al/i, /yedek indir/i, /verileri yedekle/i, /json indir/i],
-    EXPORT_EXCEL:  [/excel indir/i, /excel raporu/i, /csv indir/i, /tablo indir/i],
-    PANO_SIPARIS:  [/pano siparis/i, /siparis listesi/i, /onerilen siparis/i, /siparisler/i],
-    PANO_ANALIZ:   [/pano analiz/i, /satis analizi/i, /grafikler/i, /istatistikler/i, /trend analizi/i],
-    SAYIM_SAVE:    [/sayimi kaydet/i, /sayimi bitir/i, /sayim bitti/i, /sayimi tamamla/i],
-    NAV_SAY:       [/sayim(i|a)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^sayim$/i],
-    NAV_SHIP:      [/sevkiyat(i|a)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^sevkiyat$/i, /teslimat/i],
-    NAV_FIRE:      [/fire(ye|yi|ya)?\s*(ac|gec|ekrani|sekmesi|sayfasi)?$/i, /^fire$/i, /curukler/i, /zayiat/i],
-    NAV_PANO:      [/pano(yu|ya)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^pano$/i, /panel/i, /grafik/i, /istatistik/i, /analiz/i],
-    NAV_URUN:      [/urun(ler|leri|lere)?\s*(ac|gec|ekrani|yonet|sayfasi)?$/i, /^urunler$/i],
-    NAV_AKTAR:     [/aktar(im|imi|ima)?\s*(ac|gec|ekrani|sayfasi)?$/i, /^aktar$/i, /yedek/i, /disa aktar/i, /ice aktar/i],
-    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/i, /hepsi/i, /tum urunler/i],
-    FILTER_DONE:   [/sayilan(lar)?\s*(goster|ac)?$/i, /tamamlananlar/i, /bitti/i],
-    FILTER_TODO:   [/sayilmayan(lar)?\s*(goster|ac)?$/i, /bekleyenler/i, /kalanlar/i, /eksikler/i],
-    CAM_START:     [/kamera(yi)?\s*(ac|baslat)/i, /barkod\s*(ac|tara|oku)/i, /qr oku/i, /^tara$/i],
-    CAM_STOP:      [/kamera(yi)?\s*kapat/i, /kapat kamera/i],
-    WHATSAPP:      [/whatsapp/i, /wp\s*(rapor)?/i, /raporu paylas/i],
-    SHIP_START:    [/sevkiyat(i)?\s*(baslat|ac|yeni)/i, /yeni sevkiyat/i, /sevkiyata basla/i],
-    SHIP_CLOSE:    [/sevkiyat(i)?\s*(kapat|bitir|tamam)/i, /sevkiyat bitti/i],
-    PROD_NEW:      [/yeni urun\s*(ekle|olustur|kaydet)?/i, /urun ekle/i, /yeni urun/i],
-    UNDO:          [/geri al/i, /^iptal$/i, /yanlis oldu/i, /sil son/i],
+    FIRE_SUMMARY:  [/bugunku fire/i, /fire durumu/i, /toplam fire/i, /fire ne kadar/i, /fire ozeti/i, /bugune kadar fire/i, /ne kadar fire/i],
+    SHIP_SUMMARY:  [/sevkiyat durumu/i, /sevkiyatta ne var/i, /sevkiyat nasil/i, /sevkiyatta kac/i, /sevkiyat ozeti/i, /sevkiyat listesi/i],
+    TIME_QUERY:    [/saat kac/i, /su an saat/i, /hangi saat/i, /saati soyle/i, /zamani soyle/i, /saat nedir/i, /saati nedir/i],
+    DATE_QUERY:    [/bugun ayin kaci/i, /tarih ne/i, /tarih nedir/i, /hangi gun/i, /bugun gunlerden/i, /tarihi soyle/i, /bugun ne/i, /gun ne/i],
+    THEME_DARK:    [/karanlik mod/i, /koyu tema/i, /gece modu/i, /karanlik tema/i, /siyah mod/i, /siyah tema/i, /karanliga gec/i],
+    THEME_LIGHT:   [/aydinlik mod/i, /acik tema/i, /gunduz modu/i, /aydinlik tema/i, /beyaz mod/i, /beyaz tema/i, /aydinliga gec/i],
+    THEME_AUTO:    [/otomatik tema/i, /sistem temasi/i, /otomatik mod/i],
+    SOUND_ON:      [/sesi ac/i, /sesli yaniti ac/i, /ses ac/i, /sesi aç/i, /sesi aktif/i, /sesli mod/i],
+    SOUND_OFF:     [/sesi kapat/i, /sesli yaniti kapat/i, /sessiz mod/i, /sustur/i, /ses kapat/i, /sessizlestir/i, /sesi kis/i],
+    HANDSFREE_ON:  [/surekli dinleme(yi)? ac/i, /eller serbest(i)? ac/i, /otomatik dinleme ac/i, /surekli mod/i, /hep dinle/i, /her zaman dinle/i],
+    HANDSFREE_OFF: [/surekli dinleme(yi)? kapat/i, /eller serbest(i)? kapat/i, /otomatik dinleme kapat/i, /surekli modu kapat/i],
+    APP_CLOSE:     [/asistani kapat/i, /sesli komutu kapat/i, /dinlemeyi bitir/i, /kapat asistan/i, /uykuya gec/i, /^kapat$/i, /asistan kapat/i, /dinlemeyi durdur/i],
+    SEARCH_CLEAR:  [/aramayi temizle/i, /aramayi sil/i, /aramayi kapat/i, /aramadan cik/i, /filtreyi temizle/i, /filtreyi kaldir/i, /aramaya son ver/i],
+    BACKUP_JSON:   [/yedek al/i, /yedek indir/i, /verileri yedekle/i, /json indir/i, /veriyi yedekle/i, /yedek olustur/i, /json dosyasi/i],
+    EXPORT_EXCEL:  [/excel indir/i, /excel raporu/i, /csv indir/i, /tablo indir/i, /excel al/i, /excel cikti/i, /tablo al/i, /xlsx/i],
+    PANO_SIPARIS:  [/pano siparis/i, /siparis listesi/i, /onerilen siparis/i, /siparisler/i, /siparis onerisi/i, /ne siparis edilmeli/i],
+    PANO_ANALIZ:   [/pano analiz/i, /satis analizi/i, /grafikler/i, /istatistikler/i, /trend analizi/i, /analiz goster/i, /grafik goster/i],
+    SAYIM_SAVE:    [/sayimi kaydet/i, /sayimi bitir/i, /sayim bitti/i, /sayimi tamamla/i, /sayimi onayla/i, /sayimi tamam/i, /sayim kaydet/i],
+    NAV_SAY:       [/sayim(a|i|im)?\s*(gec|git|ac|ekrani?|sayfasi?)?/i, /^say$/i, /sayima\s*don/i],
+    NAV_SHIP:      [/sevkiyat(a|i|im)?\s*(gec|git|ac|ekrani?|sekmesi?|sayfasi?)?/i, /^sevkiyat$/i, /teslimat(a)?\s*(gec|git)/i, /irsaliye/i],
+    NAV_FIRE:      [/fire(ye|yi|ya|den)?\s*(gec|git|ac|ekrani?|sekmesi?|sayfasi?)?/i, /^fire$/i, /curukler(e)?\s*(gec|git)/i, /zayiat/i, /iskarta/i],
+    NAV_PANO:      [/pano(ya|yu)?\s*(gec|git|ac|ekrani?|sayfasi?)?/i, /^pano$/i, /panel/i, /grafik(e|lere)?\s*(gec|git|bak)/i, /istatistik/i, /analiz/i, /ozet/i],
+    NAV_URUN:      [/urun(ler|leri|lere|e)?\s*(gec|git|ac|ekrani?|yonet|sayfasi?)?/i, /^urunler?$/i, /katalog/i, /stok\s*listesi/i],
+    NAV_AKTAR:     [/aktar(im|imi|ima)?\s*(gec|git|ac|ekrani?|sayfasi?)?/i, /^aktar$/i, /yedek(e)?\s*(gec|git)/i, /disa\s*aktar/i, /ice\s*aktar/i, /rapor\s*al/i],
+    FILTER_ALL:    [/tumu(nu)?\s*(goster|ac)?$/i, /hepsi/i, /tum\s*urunler/i, /hepsini\s*goster/i, /filtreyi\s*kaldir/i],
+    FILTER_DONE:   [/sayilan(lar)?\s*(goster|ac)?$/i, /tamamlananlar/i, /sayilmis(ler)?/i, /biten(ler)?/i],
+    FILTER_TODO:   [/sayilmayan(lar)?\s*(goster|ac)?$/i, /bekleyenler/i, /kalanlar/i, /eksikler/i, /sayilmamis(lar)?/i, /henuz\s*sayilmayan/i],
+    CAM_START:     [/kamera(yi)?\s*(ac|baslat|calistir)/i, /barkod\s*(ac|tara|oku|okut)/i, /qr\s*(oku|okut|tara)/i, /^tara$/i, /kamerayi\s*ac/i, /barkod\s*okuyucu/i],
+    CAM_STOP:      [/kamera(yi)?\s*kapat/i, /kapat\s*kamera/i, /kamerayi\s*kapat/i],
+    WHATSAPP:      [/whatsapp/i, /wp\s*(rapor)?/i, /raporu\s*paylas/i, /whatsappa\s*gonder/i, /watsap/i],
+    SHIP_START:    [/sevkiyat(i)?\s*(baslat|ac|yeni|olustur)/i, /yeni\s*sevkiyat/i, /sevkiyata\s*basla/i, /sevkiyat\s*baslat/i],
+    SHIP_CLOSE:    [/sevkiyat(i)?\s*(kapat|bitir|tamam|tamamla)/i, /sevkiyat\s*bitti/i, /sevkiyati\s*bitir/i],
+    PROD_NEW:      [/yeni\s*urun\s*(ekle|olustur|kaydet|ac)?/i, /urun\s*ekle/i, /yeni\s*urun/i, /urun\s*olustur/i, /urun\s*kaydet/i],
+    UNDO:          [/geri\s*al/i, /^iptal$/i, /yanlis\s*oldu/i, /sil\s*son/i, /son\s*islemi\s*geri\s*al/i, /hata\s*yaptim/i, /yanlislikla/i, /oncekine\s*don/i],
   };
 
   function buildSystemIntent(type, nText, rawText) {
@@ -6495,41 +6527,47 @@ if (shipWaBtn) {
      MODAL İÇİ SESLİ DÜZENLEME
      ========================================================================= */
   function classifyModal(nText) {
-    // PLU Kodu
-    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|kod)\s*[:#]?\s*(\d+)/i) ||
-                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kod)\b/i);
+    // PLU / Terazi Kodu — geniş varyasyon desteği
+    // "plu 85", "kod 85", "terazi kodu 85", "kasa kodu 85", "85 nolu plu", "85 kod" vs.
+    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|terazi\s*(?:kodu?|no|numarasi?)?|kod)\s*[:#]?\s*(\d+)/i) ||
+                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kasa?\s*kodu?|terazi\s*kodu?|urun\s*kodu?|kodu?)\b/i);
     if (mPLU) {
       const code = mPLU[1] || mPLU[2];
       return { type: 'MODAL_SET_PLU', plu: code, label: 'PLU: ' + code };
     }
 
+    // Sadece rakam girilirse ve modal açıksa PLU olarak yorumla
+    if (/^\d{1,6}$/.test(nText.trim())) {
+      return { type: 'MODAL_SET_PLU', plu: nText.trim(), label: 'PLU: ' + nText.trim() };
+    }
+
     // Barkod
-    const mBC = nText.match(/\bbarkod(?:u)?\s*(?:kodu?)?\s*(\d+)/i) ||
+    const mBC = nText.match(/\bbarkod(?:u|un|unu)?\s*(?:kodu?)?\s*(\d+)/i) ||
                 nText.match(/\b(\d{7,14})\s*(?:nolu\s+)?barkod\b/i);
     if (mBC) {
       const bcode = mBC[1];
       return { type: 'MODAL_SET_BARCODE', barcode: bcode, label: 'BARKOD: ' + bcode };
     }
 
-    // Kasa ağırlığı
-    if (/kasa\s*(agirlig\w*|kilos\w*|kilo)?\s*(\d+([.,]\d+)?)|(\d+([.,]\d+)?)\s*(kilo|kg)\s*kasa/i.test(nText)) {
-      const m = nText.match(/\d+([.,]\d+)?/);
-      if (m) return { type: 'MODAL_SET_CRATE_KG', kg: parseFloat(m[0].replace(',','.')), label: 'KASA AĞIRLIĞI' };
+    // Kasa ağırlığı — "20 kilo", "kasa 20", "20 kg", "ağırlık 20" vs.
+    const mKasa = nText.match(/\b(?:kasa\s*(?:agirlig\w*|kilos?\w*|kilo)?|agirlik(?:i)?)\s*[:#]?\s*(\d+([.,]\d+)?)/i) ||
+                  nText.match(/\b(\d+([.,]\d+)?)\s*(?:kilo|kg)\s*(?:kasa|agirlik)?/i);
+    if (mKasa) {
+      const kg = parseFloat((mKasa[1] || mKasa[0]).replace(',','.'));
+      if (!isNaN(kg) && kg > 0 && kg < 1000) return { type: 'MODAL_SET_CRATE_KG', kg, label: 'KASA AĞIRLIĞI: ' + kg + ' kg' };
     }
 
     // Birim
-    if (/birim\w*\s*adet|^adet\s*(yap|olsun)$/i.test(nText))  return { type: 'MODAL_SET_UNIT', unit: 'adet', label: 'BİRİM: ADET' };
-    if (/birim\w*\s*(kilo|kg)|^kilo\s*(yap|olsun)$/i.test(nText)) return { type: 'MODAL_SET_UNIT', unit: 'kg', label: 'BİRİM: KG' };
+    if (/birim\w*\s*(adet|tane|adet\s*yap)|^adet(\s*(yap|olsun|sec))?$/i.test(nText))  return { type: 'MODAL_SET_UNIT', unit: 'adet', label: 'BİRİM: ADET' };
+    if (/birim\w*\s*(kilo|kg|kilogram)|^(kilo|kg)(\s*(yap|olsun|sec))?$/i.test(nText)) return { type: 'MODAL_SET_UNIT', unit: 'kg', label: 'BİRİM: KG' };
 
-    // Ürün adı
-    if (/urun\s*(adi|ismi|name)?\s*(.+)/i.test(nText)) {
-      const m = nText.match(/urun\s*(adi|ismi|name)?\s*(.+)/i);
-      if (m && m[2] && m[2].length > 1) return { type: 'MODAL_SET_NAME', name: m[2].trim(), label: 'AD: ' + m[2].trim().toUpperCase() };
-    }
+    // Ürün adı — "ad domates", "isim kırmızı biber", "ürün adı elma" vs.
+    const mAd = nText.match(/(?:urun\s*)?(?:adi?|ismi?|name)\s+(.+)/i);
+    if (mAd && mAd[1] && mAd[1].length > 1) return { type: 'MODAL_SET_NAME', name: mAd[1].trim(), label: 'AD: ' + mAd[1].trim().toUpperCase() };
 
     // Kaydet / İptal
-    if (/kaydet|tamam|bitti\s*urun|urun\s*kaydet/i.test(nText)) return { type: 'MODAL_SAVE', label: 'KAYDET' };
-    if (/vazgec|iptal|kapat\s*(modal|pencere)?/i.test(nText))   return { type: 'MODAL_CANCEL', label: 'İPTAL' };
+    if (/kaydet|tamam|onayla|bitti|tamamla|kaydedelim/i.test(nText)) return { type: 'MODAL_SAVE', label: 'KAYDET' };
+    if (/vazgec|iptal|kapat|cikis|hayir/i.test(nText))               return { type: 'MODAL_CANCEL', label: 'İPTAL' };
 
     return null;
   }
@@ -6542,12 +6580,14 @@ if (shipWaBtn) {
     const { crates, kg, pieces } = extractQuantities(tokens);
     const hasQty = crates !== null || kg !== null || pieces !== null;
 
-    const hasFireKw   = /\b(fire|kayip|curuk|zayi|atik|bozuk|ezik|hasar|kurtlu|bayat)\b/.test(nText);
-    const hasShipKw   = /\b(sevkiyata|sevkiyat ekle|sevk et|yukle|gonder|sevkiyat icin)\b/.test(nText);
-    const hasShipDel  = /\b(sevkiyattan cikar|sevkiyattan sil|sevkiyattan dus|sevkiyattan kaldir)\b/.test(nText);
-    const hasClearKw  = /\b(sayimdan cikar|sayimdan sil|sayimini sifirla|sifirla|temizle)\b/.test(nText);
-    const hasDeltaAdd = /\b(ekle|arttir|daha|ilave|ekleyiver)\b/.test(nText);
-    const hasDeltaSub = /\b(dus|azalt|eksilt|cikar)\b/.test(nText) && !hasShipDel;
+    // Geniş fire/sevkiyat keyword tespiti — sıraya bağımsız, sinonim destekli
+    const hasFireKw   = /\b(fire|kayip|curuk|zayi|atik|bozuk|ezik|hasar|kurtlu|bayat|fireye|fireyaz|fıre|firee|ziyan|iskarta|dusuk)\b/.test(nText) ||
+                        /\b(fire(ye|yi|ya|den|dan)?(\s*(yaz|ekle|gir|kaydet|al))?)\b/.test(nText);
+    const hasShipKw   = /\b(sevkiyata|sevkiyat(\s*)(ekle|icin|gonder)|sevk\s*et|yukle|gonder|irsaliye|teslimat(\s*)(icin|ekle))\b/.test(nText);
+    const hasShipDel  = /\b(sevkiyattan\s*(cikar|sil|dus|kaldir|cikart))\b/.test(nText);
+    const hasClearKw  = /\b(sayimdan\s*(cikar|sil)|sayimini\s*sifirla|sifirla|temizle|kaldir|sil)\b/.test(nText);
+    const hasDeltaAdd = /\b(ekle|arttir|daha|ilave|ekleyiver|ilave\s*et|daha\s*ekle|bir\s*de\s*ekle)\b/.test(nText);
+    const hasDeltaSub = /\b(dus|azalt|eksilt|cikar|cikart)\b/.test(nText) && !hasShipDel;
 
     // Soru & Akıllı Bilgi Sorgulama Niyetleri
     const hasCountQuery = /\b(kac kasa|kac kilo|ne kadar sayildi|sayim durumu|kac adet|ne kadar var|kalan ne|stok|durum ne|durumu ne|sayimi ne|kac sayildi)\b/.test(nText);
@@ -6656,9 +6696,9 @@ if (shipWaBtn) {
       if (modalIntent) return modalIntent;
     }
 
-    // 2. PLU / Kasa Kodu Tespiti (örn: "kasa plu kodu 72", "plu 72", "kod 72", "72 nolu plu")
-    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|kod)\s*[:#]?\s*(\d+)/i) ||
-                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kasa\s*kodu|urun\s*kodu|kodu|kod)\b/i);
+    // 2. PLU / Terazi Kodu Tespiti — tüm varyasyonlar: "plu 72", "kod 72", "terazi kodu 72", "72 nolu plu", "72 kod" vs.
+    const mPLU = nText.match(/\b(?:(?:kasa\s+)?plu(?:\s*kodu?)?|(?:kasa\s+|urun\s+)?kodu?|(?:plu\s*no)|terazi\s*(?:kodu?|no|numarasi?)?|kod)\s*[:#]?\s*(\d+)/i) ||
+                 nText.match(/\b(\d+)\s*(?:nolu\s+|no\s+|numarali\s+)?(?:plu|kasa?\s*kodu?|terazi\s*kodu?|urun\s*kodu?|kodu?|kod)\b/i);
     if (mPLU) {
       const code = mPLU[1] || mPLU[2];
       if (isModalOpen) {
@@ -6724,8 +6764,8 @@ if (shipWaBtn) {
     }
 
     // 6. Ürün Düzenleme (örn: "domates düzenle", "biberi ayarla")
-    if (/duzenle|duzenlet|ayarla|guncelle|degistir/i.test(nText)) {
-      const editClean = nText.replace(/duzenle|duzenlet|ayarla|guncelle|degistir|urunu|urununu/g, '').trim();
+    if (/duzenle|duzenlet|ayarla|guncelle|degistir|duzenlemek|duzenleyeyim|duzelt/i.test(nText)) {
+      const editClean = nText.replace(/duzenle\w*|ayarla\w*|guncelle\w*|degistir\w*|duzelt\w*|urunu|urununu|urunde|urunu/g, '').trim();
       const match = matchProductSmart(editClean, products);
       if (match) return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
@@ -6742,10 +6782,29 @@ if (shipWaBtn) {
     barcode:'barkod', barkot:'barkod', barkodu:'barkod', barkodun:'barkod', kilogram:'kilo', kilosu:'kilo', kilosunu:'kilo', kg:'kilo', kilo:'kilo',
     gramaj:'agirlik', agirligi:'agirlik', agirligini:'agirlik', agirliginin:'agirlik', agirlikta:'agirlik', tane:'adet',
     kodu:'kod', koda:'kod', kodunu:'kod', numarasi:'no', nolu:'no', numara:'no', adi:'ad', ismi:'ad', isim:'ad', ismini:'ad', adini:'ad',
-    kaza:'kasa', kasasi:'kasa', kasanin:'kasa', kasada:'kasa', birimi:'birim', birimini:'birim', kaydedin:'kaydet', kaydeder:'kaydet', kaydedelim:'kaydet' };
+    kaza:'kasa', kasasi:'kasa', kasanin:'kasa', kasada:'kasa', birimi:'birim', birimini:'birim', kaydedin:'kaydet', kaydeder:'kaydet', kaydedelim:'kaydet',
+    // Vosk Türkçe ASR düzeltmeleri — sık karışan kelimeler
+    terazi:'plu', terazı:'plu', terazide:'plu', terazinin:'plu', terazikodu:'plu',
+    'terazi kodu':'plu', 'terazi no':'plu', 'terazi numarasi':'plu',
+    firee:'fire', fıre:'fire', fireye:'fire', fireyi:'fire', fireyaz:'fire',
+    sevkıyat:'sevkiyat', sevkıyata:'sevkiyata', irsaliye:'sevkiyat',
+    sayım:'sayim', sayıma:'sayima', sayımi:'sayimi',
+    kılo:'kilo', kılogram:'kilo', grm:'gram',
+    adeti:'adet', adede:'adet', adedi:'adet',
+    kasaya:'kasa', kasadan:'kasa', kasayi:'kasa',
+    yazdir:'kaydet', yazdir:'kaydet', ekleyiver:'ekle', giriver:'gir',
+    sifirlayin:'sifirla', temizleyin:'temizle', kaldir:'sil',
+    duzenleyin:'duzenle', guncelle:'duzenle', degistir:'duzenle',
+    yazar:'yaz', yazalim:'yaz', yazsin:'yaz', 'yaz da':'yaz',
+    ekleyin:'ekle', ekleyim:'ekle', ekleyelim:'ekle', 'ekle de':'ekle',
+    'sayima ekle':'sayim', 'sayıma ekle':'sayim', 'sayıma yaz':'sayim',
+    'fireye yaz':'fire', 'fıreye yaz':'fire', 'fire yaz':'fire',
+    'sevkiyata ekle':'sevkiyat', 'sevke ekle':'sevkiyat' };
   const VOCAB = ['sayim','sevkiyat','fire','urun','urunler','barkod','plu','agirlik','kilo','adet','birim','kaydet','vazgec','iptal',
-    'duzenle','pano','aktar','kamera','whatsapp','sifirla','temizle','goster','sayilmayanlar','sayilanlar','baslat','kapat','kasa','ekle','sil','yeni'];
-  const KW = { plu:'plu', kod:'plu', barkod:'bc', agirlik:'kg', birim:'unit', ad:'name' };
+    'duzenle','pano','aktar','kamera','whatsapp','sifirla','temizle','goster','sayilmayanlar','sayilanlar','baslat','kapat','kasa','ekle','sil','yeni',
+    'yaz','ekleyiver','giriver','yazdir','kod','terazi','numara','no','miktar','toplam','rapor','analiz','ozet','durum','fiyat','stok'];
+  const KW = { plu:'plu', kod:'plu', barkod:'bc', agirlik:'kg', birim:'unit', ad:'name',
+    terazi:'plu', 'terazi kodu':'plu', 'terazi no':'plu', 'kasa kodu':'plu', 'urun kodu':'plu' };
   const FILL = new Set(['olsun','yap','yaz','gir','ayarla','olarak','degistir','guncelle','no','ve','ile','de','da','yapin','lutfen','su','bu',
     'kaydet','kod','plu','barkod','agirlik','birim','ad','kasa','urun','nin','nun','kilo','adet','gram','bucuk','yarim','icin','bir','olsunda']);
   const NAVV = new Set([
@@ -6996,6 +7055,35 @@ if (shipWaBtn) {
       return { type: 'UNDO', label: 'GERİ AL' };
     }
 
+    // Sayım kaydet
+    if (/sayim(i)?\s*(kaydet|bitir|tamam|tamamla|onayla)|sayim\s*bitti/.test(n)) {
+      return { type: 'SAYIM_SAVE', label: 'SAYIM KAYDET' };
+    }
+
+    // Raporlar — PDF, Excel, CSV kısa söyleyişler
+    if (/^pdf$|rapor\s*(al|indir|olustur)|pdf\s*rapor|pdf\s*indir/.test(n)) {
+      const el = document.getElementById('bpdf') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('PDF'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'PDF İNDİR' };
+    }
+    if (/^excel$|^xlsx$|excel\s*(al|indir|rapor)|tablo\s*(indir|al)/.test(n)) {
+      const el = document.getElementById('bxls') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('Excel'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'EXCEL İNDİR' };
+    }
+    if (/^csv$|csv\s*(al|indir)/.test(n)) {
+      const el = document.getElementById('bcsv') || [...document.querySelectorAll('button')].find(b => b.textContent.includes('CSV'));
+      return { type: 'DOM_CLICK', el, tab: 'aktar', label: 'CSV İNDİR' };
+    }
+
+    // Durum sorguları
+    if (/^durum$|nasil\s*gidiyor|ne\s*kadar\s*kaldi|sayim\s*ne\s*durumda/.test(n)) {
+      return { type: 'STATUS_SUMMARY', label: 'DURUM' };
+    }
+
+    // Yardım
+    if (/yardim|ne\s*(diyebilirim|yapabilirim)|komutlar|nasil\s*kullan/.test(n)) {
+      return { type: 'HELP', label: 'YARDIM' };
+    }
+
     return null;
   }
 
@@ -7037,9 +7125,12 @@ if (shipWaBtn) {
     if (fp.any) {
       const fl = Object.entries(fp.f).map(([k, v]) => ({ plu: 'PLU', barcode: 'BARKOD', kg: 'KASA KG', unit: 'BİRİM', name: 'AD' }[k] + ' ' + v)).join(' · ');
       if (modalOpen) return { type: 'MODAL_MULTI', f: fp.f, save: fp.save, label: fl };
-      const p = resolveProduct(fp.rest, products) || (!fp.rest.length && ctx && ctx.product && Date.now() - ctx.t < 120000 ? ctx.product : null);
-      if (p) return { type: 'PROD_FIELDS', product: p, f: fp.f, save: fp.save, label: p.name + ': ' + fl };
-      if (fp.rest.length && (fp.f.kg || fp.f.unit || fp.f.name)) return { type: 'ASK', msg: '"' + fp.rest.join(' ') + '" ürünü bulunamadı', label: 'ÜRÜN YOK' };
+      // Fire/sayım/sevkiyat sekmelerindeyken PROD_FIELDS'a düşme — classifyLegacy'e bırak
+      if (!['fire','say','ship'].includes(tab)) {
+        const p = resolveProduct(fp.rest, products) || (!fp.rest.length && ctx && ctx.product && Date.now() - ctx.t < 120000 ? ctx.product : null);
+        if (p) return { type: 'PROD_FIELDS', product: p, f: fp.f, save: fp.save, label: p.name + ': ' + fl };
+        if (fp.rest.length && (fp.f.kg || fp.f.unit || fp.f.name)) return { type: 'ASK', msg: '"' + fp.rest.join(' ') + '" ürünü bulunamadı', label: 'ÜRÜN YOK' };
+      }
     }
     if (modalOpen && /^(kaydet|tamam|bitti|onayla)$/.test(tk.join(' '))) return { type: 'MODAL_SAVE', label: 'KAYDET' };
     if (tk.some(t => ['yardim','komutlar'].includes(t)) || /neler yap|ne diyebil|nasil kullan/.test(n)) return { type: 'HELP', label: 'YARDIM' };
@@ -7269,7 +7360,7 @@ if (shipWaBtn) {
       if (!finalClean) return;
 
       const nIn = norm(finalClean);
-      // Echo Filter: Asistanın vault seslerindeki veya geribildirimlerindeki kelimeleri yok say
+      // Echo Filter
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
           nIn.includes('sayim kaydedildi') || nIn.includes('yazilimcisi sedat daglidir') ||
           nIn.includes('urun bulundu') || nIn.includes('fire kaydedildi') ||
@@ -7286,7 +7377,50 @@ if (shipWaBtn) {
       this._lastCommittedTime = now;
 
       this.showTranscript('"' + finalClean + '"', false);
-      this.processCommand(finalClean, alts);
+
+      // Çoklu komut tespiti: "domates 5 kilo sayıma ekle biber 4 kilo fire'ye yaz"
+      // Bölücü kelimeler: ve, sonra, de/da, ayrıca
+      const parts = this._splitMultiCommand(finalClean);
+      if (parts.length > 1) {
+        // Her komut 600ms arayla sırayla işle
+        parts.forEach((part, i) => {
+          setTimeout(() => { this.processCommand(part, i === 0 ? alts : []); }, i * 600);
+        });
+      } else {
+        this.processCommand(finalClean, alts);
+      }
+    }
+
+    // Cümleyi mantıklı parçalara böler — ürün+miktar bloklarını saptar
+    _splitMultiCommand(text) {
+      // "biber 4 kilo fire'ye yaz" ve "domates 5 kilo sayıma ekle" gibi parçalar
+      // Ayırıcılar: "ayrıca", "bir de", "sonra", ürün adlarından önce gelen sayı+birim bloğu
+      const separators = /\b(ayrica|bir de|sonra da|ondan sonra|ve ayni zamanda)\b/i;
+      let parts = text.split(separators).map(s => s.trim()).filter(s => s.length > 2 && !/^(ayrica|bir de|sonra da|ondan sonra|ve ayni zamanda)$/i.test(s));
+      if (parts.length > 1) return parts;
+
+      // Daha akıllı bölme: "domates X kilo ... biber Y kilo" kalıbı
+      // Ürün bloklarını tanı: rakam/sayı + birim içeren ardışık kısımlar
+      const products = this.getProducts();
+      const pNames = products.map(p => norm(p.name));
+      const nText = norm(text);
+      const tokens = nText.split(' ');
+      const blocks = [];
+      let start = 0;
+      for (let i = 1; i < tokens.length; i++) {
+        // Yeni bir ürün adı başlıyor ve önceki blokta miktar var mı?
+        const prevBlock = tokens.slice(start, i).join(' ');
+        const { crates, kg, pieces } = extractQuantities(tokens.slice(start, i));
+        const hasQty = crates !== null || kg !== null || pieces !== null;
+        const curToken = tokens[i];
+        const isNewProd = pNames.some(pn => pn.startsWith(curToken) || curToken.length > 3 && pn.includes(curToken));
+        if (hasQty && isNewProd && i > start + 1) {
+          blocks.push(tokens.slice(start, i).join(' '));
+          start = i;
+        }
+      }
+      if (start < tokens.length) blocks.push(tokens.slice(start).join(' '));
+      return blocks.length > 1 ? blocks : [text];
     }
 
     resetWatchdog() {
@@ -8094,7 +8228,17 @@ if (shipWaBtn) {
           }
           case 'HELP': {
             this.playTone(800, 'sine', 0.1);
-            this.showFeedback('Örnekler: "domates 3 kasa" · "domates kaç kasa" · "muz fiyatı" · "karanlık mod" · "yedek al" · "saat kaç" · "elma ara" · "elma fire 2 kilo" · "geri al"', false, false);
+            this.showFeedback(
+              '📌 Sayım: "domates 3 kasa" · "elma 5 kilo" · "2 kasa daha ekle"\n' +
+              '🔥 Fire: "domates 2 kilo fire" · "5 kilo domates fire" · "fire domates 3 kasa"\n' +
+              '🚚 Sevkiyat: "domates sevkiyata ekle" · "muz 2 kasa sevkiyat"\n' +
+              '✏️ Düzenle: "domates düzenle" · "terazi kodu 85" · "kasa ağırlığı 20 kilo"\n' +
+              '🔍 Ara: "domates ara" · "tümünü göster" · "sayılmayanlar"\n' +
+              '📊 Rapor: "PDF indir" · "Excel al" · "yedek al" · "sayım durumu"\n' +
+              '🧭 Geziş: "fire sayfası" · "ürünler" · "pano" · "sevkiyat"\n' +
+              '🔧 Diğer: "karanlık mod" · "sesi kapat" · "geri al" · "saat kaç"',
+              false, false
+            );
             break;
           }
           case 'SCROLL': { window.scrollBy({ top: intent.dy, behavior: 'smooth' }); this.playTone(700, 'sine', 0.08); this.showFeedback('Kaydırıldı', false, false); break; }
@@ -8321,9 +8465,17 @@ if (shipWaBtn) {
         }
       };
 
-      // Android: AudioRecord tamamen kapansın diye 400ms bekle
+      // Android: Vosk'un "stopped" eventi gelince çal, yoksa hemen çal
       if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
-        setTimeout(doPlay, 400);
+        window.__pendingAudioPlay = doPlay;
+        // Güvenlik: 600ms içinde stopped eventi gelmezse yine de çal
+        setTimeout(() => {
+          if (typeof window.__pendingAudioPlay === 'function') {
+            const fn = window.__pendingAudioPlay;
+            window.__pendingAudioPlay = null;
+            fn();
+          }
+        }, 600);
       } else {
         doPlay();
       }
@@ -8619,11 +8771,17 @@ if (shipWaBtn) {
           eng.isRecognizing = true;
           eng.updateUIStatus('Dinleniyor', 'listening');
           eng.setListeningVisuals(true);
+        } else if (ev === 'stopped') {
+          // Vosk AudioRecord tamamen kapandı — bekleyen ses dosyasını şimdi çal
+          if (typeof window.__pendingAudioPlay === 'function') {
+            const fn = window.__pendingAudioPlay;
+            window.__pendingAudioPlay = null;
+            fn();
+          }
         } else if (ev === 'end' || ev === 'error') {
           eng.isRecognizing = false;
           eng.setListeningVisuals(false);
           eng.updateUIStatus(ev === 'error' ? ('Hata: ' + msg) : 'Bekleniyor', ev === 'error' ? 'error' : 'idle');
-          // Hata değilse kısa süre sonra yeniden başlat
           if (ev !== 'error' && eng.shouldKeepListening()) {
             setTimeout(() => { if (eng.shouldKeepListening()) eng.startListening(); }, 300);
           }

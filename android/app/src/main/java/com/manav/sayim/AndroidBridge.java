@@ -192,8 +192,9 @@ public class AndroidBridge {
     // =====================================================================
 
     // true: dinleme sırasında müzik kanalı da susturulur (bip bazı cihazlarda bu kanaldan çalar).
-    // Uygulama sesli geri bildirim (TTS) kullanıyorsa ve duyulması gerekiyorsa false yap.
-    private static final boolean MUTE_MUSIC_STREAM = true;
+    // Vosk AudioRecord kullandığı için bip sesi zaten yok — müzik kanalını kapatma!
+    // Ses dosyaları (STREAM_MUSIC) üzerinden çalıyor, kapatırsak ses duyulmaz.
+    private static final boolean MUTE_MUSIC_STREAM = false;
 
     private static final int[] BEEP_STREAMS = MUTE_MUSIC_STREAM
             ? new int[]{AudioManager.STREAM_NOTIFICATION, AudioManager.STREAM_SYSTEM, AudioManager.STREAM_MUSIC}
@@ -218,6 +219,7 @@ public class AndroidBridge {
     private volatile boolean voskActive = false;
     private boolean pendingVoskStart = false;
     private Thread voskThread;
+    private volatile AudioRecord currentAudioRecord = null; // stopVosk anında durdursun diye
     
     // Kesintisiz konuşma için ek parametreler
     private static final long WORD_MERGE_TIMEOUT_MS = 1200; // kelimeler arası sessizlik toleransı
@@ -270,7 +272,11 @@ public class AndroidBridge {
 
     private void stopVosk() {
         voskActive = false;
-        
+        // AudioRecord'u anında durdur — ses çalmaya engel olmasın
+        AudioRecord recToStop = currentAudioRecord;
+        if (recToStop != null) {
+            try { recToStop.stop(); } catch (Exception ignored) {}
+        }
         // Buffer'daki son veriyi gönder
         synchronized (speechBufferLock) {
             if (speechBuffer.length() > 0) {
@@ -278,14 +284,16 @@ public class AndroidBridge {
                 speechBuffer.setLength(0);
             }
         }
-        
         Thread t = voskThread;
         voskThread = null;
         if (t != null && t != Thread.currentThread()) {
-            // join yerine interrupt ile anında serbest bırak — ses çalmaya engel olmasın
             t.interrupt();
             try { t.join(300); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
         }
+        // Ses kanallarını kesinlikle aç — ses dosyaları çalabilsin
+        muteBeeps(false);
+        // JS'e Vosk'un tamamen durduğunu bildir — ses çalma bu eventi bekliyor
+        sendSpeechEvent("stopped", "");
     }
 
     private void voskLoop() {
@@ -301,6 +309,7 @@ public class AndroidBridge {
             if (rec.getState() != AudioRecord.STATE_INITIALIZED) {
                 throw new IllegalStateException("Mikrofon başlatılamadı");
             }
+            currentAudioRecord = rec; // stopVosk() anında durdurabilsin
             recognizer = new Recognizer(voskModel, rate);
             rec.startRecording();
             sendSpeechEvent("ready", "");
@@ -415,6 +424,7 @@ public class AndroidBridge {
                 sendSpeechEvent("end", "");
             }
         } finally {
+            currentAudioRecord = null;
             if (rec != null) {
                 try { rec.stop(); } catch (Exception ignored) {}
                 rec.release();
