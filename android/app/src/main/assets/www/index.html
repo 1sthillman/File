@@ -6864,29 +6864,8 @@ if (shipWaBtn) {
       return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
 
-    // Belirsizlik tespiti — sadece ÇOK YAKIN eşleşmeler için
-    // "muz" → ithal muz (0.85) ve baby muz (0.82) → fark 0.03 < 0.1 → SOR
-    if (productQuery.length > 1) {
-      const allMatches = matchProductSmartAll(productQuery, products);
-      if (allMatches.length >= 2) {
-        const topScore = allMatches[0].score;
-        const secondScore = allMatches[1].score;
-        const diff = topScore - secondScore;
-        // Sadece ikisi de yüksek skorluysa VE aralarındaki fark çok küçükse sor
-        // Örnek: muz → ithal muz 0.88, baby muz 0.84 → diff 0.04 → SOR
-        // Örnek: domates → domates 1.0, kokteyl domates 0.65 → diff 0.35 → SORMA
-        if (topScore > 0.7 && secondScore > 0.7 && diff < 0.12) {
-          return {
-            type: 'ASK_AMBIGUOUS',
-            candidates: allMatches.slice(0, Math.min(3, allMatches.length)).map(m => m.p),
-            pendingQty: { crates, kg, pieces },
-            pendingFireKw: hasFireKw,
-            pendingShipKw: hasShipKw,
-            label: 'HANGİSİ?'
-          };
-        }
-      }
-    }
+    // BELİRSİZLİK KONTROLÜ KALDIRILDI — Vosk zaten hatalı tanıyor
+    // Direk ilk eşleşmeyi kullan
 
     if (!match) return null;
     const p = match.p;
