@@ -3,3 +3,11 @@
 Thumbs.db
 .vscode/
 .idea/
+
+# Android Build & Cache
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml

@@ -1,37 +1,36 @@
-# Manav Sayım Zebra (PWA)
+# Manav Sayım Zebra (Android & PWA)
 
-Bu proje Zebra el terminalleri, iPhone (Safari) ve Android (Chrome/Edge) cihazlar için optimize edilmiş, **çevrimdışı (offline)** çalışabilen **Progressive Web App (PWA)** sayım uygulamasıdır.
-
-## 🌐 Canlı Uygulama Adresi
-👉 **[https://1sthillman.github.io/File/](https://1sthillman.github.io/File/)**
+Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize edilmiş, **%100 çevrimdışı (offline)** çalışan yerel Android uygulaması ve Progressive Web App (PWA).
 
 ---
 
-## 📱 Telefona Uygulama Olarak İndirme / Yükleme Rehberi (APK Gerektirmez)
+## 1. Doğrudan Android APK İndir (Tamamen Çevrimdışı Çalışır)
 
-Bu uygulama modern **PWA (Progressive Web App)** teknolojisini kullanır. Herhangi bir APK dosyası indirmeye veya mağazaya gerek kalmadan telefonunuza yerel bir uygulama gibi yüklenir:
+İnternet bağlantısına hiç ihtiyaç duymadan, depoda veya manavda kesintisiz çalışabilen yerel Android APK paketi:
 
-### 🍎 iPhone / iPad (Safari)
-1. Safari tarayıcısında **[https://1sthillman.github.io/File/](https://1sthillman.github.io/File/)** adresini açın.
-2. Alttaki **Paylaş (⎙ / ⎋)** simgesine dokunun.
-3. Menüden aşağı kaydırıp **"Ana Ekrana Ekle" (Add to Home Screen)** seçeneğini seçin.
-4. Sağ üstteki **"Ekle"** butonuna dokunun.
-5. Uygulama artık ana ekranınızda özel logosuyla bir mobil uygulama gibi yer alır; tarayıcı çubuğu olmadan tam ekran çalışır.
+- **Doğrudan İndirme Bağlantısı:** [Manav_Sayim.apk](https://raw.githubusercontent.com/1sthillman/File/main/Manav_Sayim.apk)
 
-### 🤖 Android & Zebra El Terminalleri (Chrome / Edge)
-1. Chrome veya tarayıcınızda bağlantıyı açın.
-2. Ekranda çıkan **"Telefona Yükle"** butonuna dokunun veya sağ üstteki **üç nokta (⋮)** menüsünden **"Uygulamayı Yükle"** ya da **"Ana Ekrana Ekle"** seçeneğini seçin.
-3. Onayladıktan sonra uygulama cihazınıza yüklenir.
+### Android APK Kurulum Adımları
+1. Yukarıdaki bağlantıdan `Manav_Sayim.apk` dosyasını telefonunuza indirin.
+2. İndirilen dosyaya dokunup **Yükle** seçeneğini seçin (Bilinmeyen kaynak izni istenirse izin verin).
+3. Uygulama açıldığında Kamera ve Mikrofon izinleri otomatik olarak istenir ve onaylanır.
+4. Artık internet bağlantısı olmasa dahi hiçbir uyarı vermeden doğrudan açılır ve çalışır.
 
 ---
 
-## ⚡ Çevrimdışı (Offline) Çalışma Özelliği
-- Uygulamada **Service Worker (`sw.js`)** entegrasyonu mevcuttur.
-- İlk kez açıldığında tüm dosyalar, arayüz ve kütüphaneler telefonun hafızasına önbelleğe alınır.
-- İnternet bağlantınız kopsa veya depoda/manavda hiç internet çekmese bile uygulama kesintisiz çalışmaya, barkod okumaya ve sayım yapmaya devam eder.
-- Yapılan sayımlar cihazınızın yerel hafızasında (LocalStorage / IndexedDB) güvenle saklanır.
+## 2. Canlı Web / PWA Uygulama Adresi
+
+- **Web Adresi:** [https://1sthillman.github.io/File/](https://1sthillman.github.io/File/)
+
+### PWA Olarak Telefona Ekleme (Safari / Chrome)
+- **iPhone / Safari:** Paylaş menüsünden "Ana Ekrana Ekle" seçeneğini kullanın.
+- **Android / Chrome:** Menüden "Uygulamayı Yükle" veya "Ana Ekrana Ekle" seçeneğini kullanın.
 
 ---
 
-## 🛠️ GitHub Actions Dağıtımı
-Deponun `main` dalına her kod gönderildiğinde `.github/workflows/deploy.yml` otomatik çalışır ve sayfayı günceller.
+## 3. Öne Çıkan Özellikler
+- **Tamamen Çevrimdışı (Offline-First):** APK yerel varlıkları cihazın içinden yükler (`file:///android_asset/`). İnternet bağlantısı olmasa bile asla "internete bağlanın" hatası vermez.
+- **Android Share & Dosya Kaydetme:** PDF, Excel (.xlsx), CSV ve Yedek dosyaları tek tıkla cihazın İndirilenler (Downloads) klasörüne kaydedilir ve Android Native Paylaşım ekranı açılarak WhatsApp, Dosyalar veya Drive üzerinden gönderilebilir.
+- **Kamera & Barkod Desteği:** El terminali lazer okuyucusu ve telefon kamerası ile anında barkod ve QR kod okuma.
+- **Sesli Komut Asistanı:** Gelişmiş gürültü ve yankı korumalı stüdyo ses motoru.
+- **Zebra El Terminali Senkronizasyonu:** Toplu QR ve klavye tuşlama simülasyonu.

@@ -2385,6 +2385,10 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
 
 <section id="t-aktar" class="hide">
  <div class="hero"><div class="ht"><span>Veri kasası</span><span id="dbs">IndexedDB</span></div><div class="big"><span id="aN">0</span><small>kayıt</small></div><div class="gl"><div><b id="aP">0</b>ürün</div><div><b id="aC">0</b>sayım</div><div><b id="aS">0</b>sevkiyat</div></div></div>
+ <div style="margin:10px 0;padding:12px 14px;border-radius:14px;background:rgba(15,118,110,0.12);border:1px solid rgba(15,118,110,0.3);display:flex;align-items:center;justify-content:space-between;gap:10px">
+  <div style="font-size:13px;line-height:1.4"><strong style="color:var(--brand, #0f766e)">Android Çevrimdışı APK</strong><br><span style="opacity:0.8;font-size:12px">İnternetsiz kesintisiz kullanım</span></div>
+  <a href="Manav_Sayim.apk" download="Manav_Sayim.apk" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#0f766e;color:#fff;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(15,118,110,0.35)">APK İndir</a>
+ </div>
 
  
  
@@ -4322,7 +4326,7 @@ $('#cpb').addEventListener('input', async e => {
 });
 /* rapor */
 const COL='0B9468';
-function rep(){const v=$('#rk').value;if(!v)return null;const[t,k]=v.split('~');let title,date,rows=[];
+function rep(){let v=$('#rk').value;if(!v){const firstOpt=$('#rk option:not([value=""])');if(firstOpt){v=firstOpt.value;$('#rk').value=v;}}if(!v)return null;const[t,k]=v.split('~');let title,date,rows=[];
  if(t==='c'){date=k;title='Haftalık Sayım';[...M.counts.values()].filter(c=>c.date===k).forEach(c=>{const p=M.products.get(c.id);if(p)rows.push({p,c:c.crates,a:0,l:c.loose,kg:c.crates*p.kg+c.loose})})}
  else{const s=M.ships.get(k);if(!s)return null;date=s.date;title='Sevkiyat Kabul'+(s.party?' · '+s.party:'');for(const id in s.lines){const p=M.products.get(id),l=s.lines[id];if(p)rows.push({p,c:l.c,a:l.p,l:l.l,kg:l.c*p.kg+l.l})}}
  rows.sort((a,b)=>a.p.name.localeCompare(b.p.name,'tr'));return{title,date,rows,tot:rows.reduce((a,r)=>({c:a.c+r.c,a:a.a+r.a,kg:a.kg+r.kg}),{c:0,a:0,kg:0})}}
@@ -4402,7 +4406,40 @@ async function pdfBlob(R,Q){const W=1240,H=1754,rh=94,cap=h=>Math.max(1,Math.flo
  const xo=len,N=3+3*np;put('xref\n0 '+N+'\n0000000000 65535 f \n'+O.slice(1).map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<</Size '+N+'/Root 1 0 R>>\nstartxref\n'+xo+'\n%%EOF');
  return new Blob(P,{type:'application/pdf'})}
 function ask(m,ok){return new Promise(r=>{const d=$('#dlg');$('#dm').textContent=m;$('#dy').textContent=ok||'Evet';d.classList.remove('hide');const f=v=>{d.classList.add('hide');$('#dy').onclick=$('#dn').onclick=d.onclick=null;r(v)};$('#dy').onclick=()=>f(true);$('#dn').onclick=()=>f(false);d.onclick=e=>{if(e.target===d)f(false)}})}
-const dl=f=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove()};
+const dl = f => {
+  if (!f) return;
+  // Android Native Köprüsü: Doğrudan Cihaza Kaydet ve Android Paylaşım Ekranını Aç
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveAndShareFile === 'function') {
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = String(reader.result || '');
+        window.AndroidBridge.saveAndShareFile(base64, f.name, f.type || 'application/octet-stream');
+      };
+      reader.readAsDataURL(f);
+      return;
+    } catch(err) {
+      console.warn('[AndroidBridge dl]', err);
+    }
+  }
+
+  // Web Share API Desteği (Mobil Tarayıcılar)
+  if (navigator.canShare && navigator.canShare({ files: [f] })) {
+    navigator.share({ files: [f], title: f.name }).catch(() => {});
+  }
+
+  // Standart Tarayıcı İndirme
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(f);
+    a.download = f.name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); try { URL.revokeObjectURL(a.href); } catch(e){} }, 2500);
+  } catch(e) {
+    console.error('[Download error]', e);
+  }
+};
 const waTxt=R=>'*Manav · '+R.title+'*\n'+long(R.date)+'\nToplam: *'+fmt(R.tot.kg)+' kg* · '+R.tot.c+' kasa · '+R.tot.a+' adet · '+R.rows.length+' çeşit\n\n'+R.rows.map(r=>'• '+r.p.name+': '+(r.c?r.c+' kasa ':'')+(r.a?r.a+' adet ':'')+'— '+fmt(r.kg)+' kg').join('\n');
 const csvRows=R=>['Ürün;PLU;Barkod;Kasa;Adet;Ek kg;Toplam kg',...R.rows.map(x=>[x.p.name,x.p.plu,x.p.barcode,x.c,x.a,x.l,x.kg].join(';'))];
 const csvR=(R,nm)=>dl(new File(['\ufeff'+csvRows(R).join('\n')],nm+'.csv',{type:'text/csv'}));
@@ -7173,22 +7210,9 @@ if (shipWaBtn) {
             }
 
             if (!this.isSpeaking) {
-              const products = this.getProducts();
-              const currentTab = this.getCurrentTab();
-              const pmodal = document.getElementById('pmodal');
-              const isModalOpen = pmodal && !pmodal.classList.contains('hide');
-
-              const fastTest = this.understand(candidate, [candidate], products, currentTab, isModalOpen);
-              // Tanınan bir komutsa 380ms sonra, değilse 700ms sonra işlet
-              const delay = fastTest ? 380 : 700;
-
-              this._interimTimer = setTimeout(() => {
-                this._interimTimer = null;
-                if (!this.isSpeaking && candidate && candidate !== this._lastCommittedText) {
-                  console.log('[VC Auto-Commit]', candidate);
-                  this.handleSpeechResult(candidate, [candidate]);
-                }
-              }, delay);
+              // Yalnızca kullanıcı konuşmayı bitirince (isFinal) işlem yap.
+              // Yarım konuşmaları erken kesip auto-commit ETME!
+              // Böylece kullanıcı tam konuşurken mikrofon pat diye kapanmaz!
             }
           }
         } catch(err) {
@@ -7224,8 +7248,13 @@ if (shipWaBtn) {
       r.onend = () => {
         this.isRecognizing = false;
         this.clearWatchdog();
+        // Asistan konuşurken veya echo suppress aktifken restart yapma
+        if (this.isSpeaking || Date.now() < (this._echoSuppressUntil || 0)) {
+          return;
+        }
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          this.scheduleRestart(120);
+          // Android ve mobilde mikrofonun sürekli açılıp kapanıp konuşmayı bölmesini önlemek için makul bekleme (400ms)
+          this.scheduleRestart(400);
         } else {
           this.updateUIStatus('Hazır', 'idle');
           this.setListeningVisuals(false);
@@ -7376,7 +7405,7 @@ if (shipWaBtn) {
         const ps = document.getElementById('psave'); if (ps) ps.click();
         await this.delay(300);
         const er = document.getElementById('perr');
-        if (er && er.textContent.trim()) { this.playTone(320, 'sine', 0.15); this.showFeedback((done.join(' · ') || 'Kayıt') + ' — ' + er.textContent.trim(), true, false); this.playVoiceResponse('NOT_UNDERSTOOD'); }
+        if (er && er.textContent.trim()) { this.playTone(320, 'sine', 0.15); this.showFeedback((done.join(' · ') || 'Kayıt') + ' — ' + er.textContent.trim(), true, false); /* silent on not understood — no voice loopback */ }
         else { this.playTone(900, 'sine', 0.14); this.showFeedback((done.join(' · ') || 'Ürün') + ' — kaydedildi', false, false); this.playVoiceResponse('PROD_SAVED'); }
         return;
       }
@@ -7404,7 +7433,7 @@ if (shipWaBtn) {
         const now = Date.now();
         if (rawText.length >= 4 && (now - this._lastNotUnderstoodTime > 3000)) {
           this._lastNotUnderstoodTime = now;
-          this.playVoiceResponse('NOT_UNDERSTOOD');
+          /* silent on not understood — no voice loopback */
         }
         return;
       }
@@ -8040,7 +8069,7 @@ if (shipWaBtn) {
           }
 
           case 'ASK': {
-            this.playTone(320, 'sine', 0.12); this.showFeedback(intent.msg, true, false); this.playVoiceResponse('NOT_UNDERSTOOD'); break;
+            this.playTone(320, 'sine', 0.12); this.showFeedback(intent.msg, true, false); /* silent on not understood — no voice loopback */ break;
           }
           case 'MODAL_MULTI': { await this.applyFields(intent); break; }
           case 'PROD_NEW_FIELDS': {
@@ -8091,12 +8120,12 @@ if (shipWaBtn) {
 
           default:
             this.showFeedback('İşlem tanımlı değil: ' + intent.type, true, false);
-            this.playVoiceResponse('NOT_UNDERSTOOD');
+            /* silent on not understood — no voice loopback */
         }
       } catch(err) {
         console.error('[VC] Komut yürütme hatası:', err);
         this.showFeedback('Hata oluştu: ' + (err.message || 'Bilinmiyor'), true, false);
-        this.playVoiceResponse('NOT_UNDERSTOOD');
+        /* silent on not understood — no voice loopback */
       }
     }
 
@@ -8552,6 +8581,21 @@ if (shipWaBtn) {
       const engine = new VoiceCommanderEngine();
       engine.init();
       window.__voiceEngine = engine;
+      // Android Native Ses Tanıma Köprüsü
+      window.onNativeSpeechResult = function(text) {
+        if (window.__voiceEngine) {
+          console.log('[NativeSpeech Result]', text);
+          window.__voiceEngine.handleSpeechResult(text, [text]);
+        }
+      };
+      window.onNativeSpeechPartial = function(text) {
+        if (window.__voiceEngine) {
+          window.__voiceEngine.showTranscript(text, true);
+        }
+      };
+      window.onNativeSpeechEvent = function(ev, msg) {
+        console.log('[NativeSpeech Event]', ev, msg);
+      };
     } catch(err) {
       console.error('[VC v8] Başlatma hatası:', err);
     }
