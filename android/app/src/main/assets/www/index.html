@@ -6099,101 +6099,45 @@ if (shipWaBtn) {
      Tanımlı anahtar varsa Audio() ile çalar, yoksa kadın TTS devreye girer.
      ========================================================================= */
   /* =========================================================================
-     ÜRÜN SES SİSTEMİ — tek mp3, her ürün için doğru zaman damgasından çal
+     ÜRÜN SES SİSTEMİ — 85 ayrı MP3 dosyası, index tabanlı eşleştirme
      ========================================================================= */
   const URUN_SES_MAP = {
-    "ALABAŞ TURP": [0.0, 0.91],
-    "ARPACIK SOĞAN": [1.16, 1.05],
-    "BALKABAĞI": [2.47, 0.81],
-    "BROKOLİ": [3.53, 0.69],
-    "ÇALI FASULYE": [4.48, 0.95],
-    "ÇARLİSTON BİBER": [5.67, 1.13],
-    "ÇENGELKÖY SALATALIK": [7.05, 1.28],
-    "DİKENLİ SALATALIK": [8.58, 1.15],
-    "DOLMA BİBER": [9.98, 0.92],
-    "DOMATES": [11.15, 0.65],
-    "GÜMÜŞ SOĞAN": [12.03, 0.87],
-    "HAVUÇ": [13.15, 0.5],
-    "HAVUÇ PAKET KG": [13.87, 0.79],
-    "ISPANAK": [14.91, 0.97],
-    "KARNABAHAR": [16.13, 0.7],
-    "KALİFORNİA BİBER": [17.06, 1.0],
-    "KAPYA BİBER": [18.24, 0.47],
-    "KEMER PATLICAN": [18.9, 0.89],
-    "KEREVİZ": [20.04, 0.92],
-    "KIRMIZI LAHANA": [21.21, 0.59],
-    "KOKTEYL DOMATES": [22.01, 0.66],
-    "KÖY BİBER": [22.89, 0.54],
-    "KURU SOĞAN": [23.65, 0.78],
-    "LAHANA": [24.66, 0.77],
-    "MİNİ PATATES": [25.66, 0.53],
-    "MOR SOĞAN": [26.4, 0.49],
-    "PANCAR": [27.1, 0.81],
-    "PATATES (DÖKME)": [28.14, 0.49],
-    "PATATES KIZARTMA": [28.84, 0.69],
-    "PATATES YEMEKLİK": [29.73, 0.51],
-    "PEMBE DOMATES": [30.46, 0.9],
-    "PIRASA": [31.58, 0.55],
-    "PIRASA PAKET KG": [32.36, 0.72],
-    "SAKIZ KABAK": [33.33, 0.48],
-    "SALATALIK": [34.05, 0.68],
-    "SALKIM DOMATES": [34.95, 0.96],
-    "SARIMSAK": [36.14, 0.83],
-    "SİVRİ BİBER": [37.22, 0.25],
-    "SOĞAN YEMEKLİK": [37.66, 0.66],
-    "TARLA KABAK": [38.55, 0.95],
-    "TARLA PATLICAN": [39.74, 0.86],
-    "TATLI PATATES": [40.83, 0.5],
-    "TURP": [41.56, 1.04],
-    "ZENCEFİL": [42.84, 0.65],
-    "AMASYA ELMA": [43.7, 0.42],
-    "ANKARA ARMUT": [44.3, 0.39],
-    "AYVA": [44.87, 0.87],
-    "BABY AVOKADO": [45.95, 0.73],
-    "BABY MUZ": [46.91, 0.78],
-    "CEVİZ KABUKLU": [47.88, 0.89],
-    "ÇİLEK TARLA": [49.02, 1.16],
-    "ÇEKİRDEKSİZ KIRMIZI ÜZÜM": [50.38, 0.53],
-    "ÇEKİRDEKSİZ SULTANİ ÜZÜM": [51.12, 0.67],
-    "DEVECİ ARMUT": [52.03, 1.07],
-    "FUJİ ELMA": [53.31, 0.8],
-    "GALA ELMA": [54.34, 0.71],
-    "GOLDEN ELMA": [55.27, 0.69],
-    "GRANNY SMITH ELMA": [56.16, 0.34],
-    "GREYFURT": [56.7, 0.52],
-    "İTHAL MUZ": [57.4, 0.73],
-    "İZMİR MANDALİNA": [58.34, 0.64],
-    "KARMA ARMUT": [59.19, 0.45],
-    "KARMA ELMA": [59.83, 0.64],
-    "KESTANE": [60.66, 0.56],
-    "KIRKAĞAÇ KAVUN": [61.43, 0.45],
-    "KIRMIZI ERİK": [62.06, 0.48],
-    "KIŞLIK KAVUN KG": [62.74, 1.16],
-    "KİVİ": [64.1, 0.74],
-    "LİMON ENTER": [65.05, 0.9],
-    "LİMON ENTER FİLE": [66.13, 1.02],
-    "LİMON MAYER FİLE": [67.35, 0.53],
-    "MANDALİNA": [68.05, 0.48],
-    "MUŞMULA": [68.74, 0.59],
-    "NAR": [69.5, 0.5],
-    "PORTAKAL": [70.18, 0.69],
-    "PORTAKAL FİLE": [71.04, 0.81],
-    "RED GLOBE ÜZÜM": [72.01, 0.72],
-    "SANTA MARIA ARMUT": [72.92, 0.45],
-    "SİYAH ÜZÜM": [73.56, 0.85],
-    "STARKING ELMA": [74.6, 0.64],
-    "TRABZON HURMASI": [75.43, 0.68],
-    "SEMİZOTU": [76.3, 0.91],
-    "ROKA": [77.4, 0.37],
-    "NANE": [77.97, 1.1],
-    "DEREOTU": [79.2, 0.7]
+    "ALABAŞ TURP": 0, "ARPACIK SOĞAN": 1, "BALKABAĞI": 2, "BROKOLİ": 3,
+    "ÇALI FASULYE": 4, "ÇARLİSTON BİBER": 5, "ÇENGELKÖY SALATALIK": 6,
+    "DİKENLİ SALATALIK": 7, "DOLMA BİBER": 8, "DOMATES": 9, "GÜMÜŞ SOĞAN": 10,
+    "HAVUÇ": 11, "ISPANAK": 12, "KARNABAHAR": 13, "KALİFORNİA BİBER": 14,
+    "KAPYA BİBER": 15, "KEMER PATLICAN": 16, "KEREVİZ": 17, "KIRMIZI LAHANA": 18,
+    "KOKTEYL DOMATES": 19, "KÖY BİBER": 20, "KURU SOĞAN": 21, "LAHANA": 22,
+    "MİNİ PATATES": 23, "MOR SOĞAN": 24, "PANCAR": 25, "PATATES": 26,
+    "PEMBE DOMATES": 27, "PIRASA": 28, "SAKIZ KABAK": 29, "SALATALIK": 30,
+    "SALKIM DOMATES": 31, "SARIMSAK": 32, "SİVRİ BİBER": 33, "SOĞAN": 34,
+    "TARLA KABAK": 35, "TARLA PATLICAN": 36, "TATLI PATATES": 37, "TURP": 38,
+    "ZENCEFİL": 39, "AMASYA ELMA": 40, "ANKARA ARMUT": 41, "AYVA": 42,
+    "BABY AVOKADO": 43, "BABY MUZ": 44, "CEVİZ": 45, "ÇİLEK": 46,
+    "DEVECİ ARMUT": 47, "FUJİ ELMA": 48, "GALA ELMA": 49, "GOLDEN ELMA": 50,
+    "GRANNY SMITH ELMA": 51, "GREYFURT": 52, "İTHAL MUZ": 53, "İZMİR MANDALİNA": 54,
+    "KARMA ELMA": 55, "KESTANE": 56, "KIRMIZI ERİK": 57, "KİVİ": 58, "LİMON": 59,
+    "MANDALİNA": 60, "MUŞMULA": 61, "NAR": 62, "PORTAKAL": 63, "KARPUZ": 64,
+    "KAVUN": 65, "ÜZÜM": 66, "SANTA MARIA ARMUT": 67, "SİYAH ÜZÜM": 68,
+    "STARKING ELMA": 69, "TRABZON HURMASI": 70, "SEMİZOTU": 71, "ROKA": 72,
+    "NANE": 73, "DEREOTU": 74, "MAYDANOZ": 75, "TAZE SOĞAN": 76, "GÖBEK MARUL": 77,
+    "MARUL": 78, "KIVIRCIK MARUL": 79, "BİBERİYE": 80, "FESLEĞEN": 81,
+    "KÜLTÜR MANTARI": 82, "TERE": 83, "İSTİRİDYE MANTAR": 84,
+    // Alias'lar — varyasyonlar ve eski adlar
+    "CEVIZ KABUKLU": 45, "ÇILEK TARLA": 46, "PATATES (DÖKME)": 26,
+    "PATATES KIZARTMA": 26, "PATATES YEMEKLİK": 26, "HAVUÇ PAKET KG": 11,
+    "PIRASA PAKET KG": 28, "SOĞAN YEMEKLİK": 34, "KARMA ARMUT": 67,
+    "LİMON ENTER": 59, "LİMON ENTER FİLE": 59, "LİMON MAYER FİLE": 59,
+    "PORTAKAL FİLE": 63, "ÇEKİRDEKSİZ KIRMIZI ÜZÜM": 66, "ÇEKİRDEKSİZ SULTANİ ÜZÜM": 66,
+    "RED GLOBE ÜZÜM": 66, "KIRKAĞAÇ KAVUN": 65, "KIŞLIK KAVUN KG": 65,
+    "KÜLTÜR MANTAR": 82, "ISTIRDYE MANTAR": 84
   };
 
-  // Ürün adını normalize ederek haritada ara
+  // Ürün adını normalize ederek haritada ara — index döndür
   function findUrunSes(productName) {
     if (!productName) return null;
     const upper = productName.toLocaleUpperCase('tr').trim();
-    if (URUN_SES_MAP[upper]) return URUN_SES_MAP[upper];
+    if (URUN_SES_MAP[upper] !== undefined) return URUN_SES_MAP[upper];
     // Kısmi eşleşme — haritadaki en uzun örtüşen adı bul
     let best = null, bestLen = 0;
     for (const key of Object.keys(URUN_SES_MAP)) {
@@ -6201,38 +6145,22 @@ if (shipWaBtn) {
         if (key.length > bestLen) { bestLen = key.length; best = key; }
       }
     }
-    return best ? URUN_SES_MAP[best] : null;
+    return best !== null ? URUN_SES_MAP[best] : null;
   }
 
-  // Ürün adını sesli söyle — tek mp3'ten doğru segmenti çal
-  let _urunAudio = null;
+  // Ürün adını sesli söyle — ayrı MP3 dosyasından çal
   function playUrunSes(productName, onDone) {
-    const seg = findUrunSes(productName);
-    if (!seg) { 
+    const idx = findUrunSes(productName);
+    if (idx === null || idx === undefined) { 
       // Ses bulunamadı — sessizce atla
       if (onDone) setTimeout(onDone, 50);
       return;
     }
-    const [start, dur] = seg;
-    if (!_urunAudio) {
-      _urunAudio = new Audio('urun_sesleri.mp3');
-      _urunAudio.preload = 'auto';
-    }
-    _urunAudio.pause();
-    _urunAudio.currentTime = start;
-    const stopAt = start + dur + 0.15;
-    const onTimeUpdate = () => {
-      if (_urunAudio.currentTime >= stopAt) {
-        _urunAudio.pause();
-        _urunAudio.removeEventListener('timeupdate', onTimeUpdate);
-        if (onDone) onDone();
-      }
-    };
-    _urunAudio.addEventListener('timeupdate', onTimeUpdate);
-    _urunAudio.play().catch(() => { 
-      _urunAudio.removeEventListener('timeupdate', onTimeUpdate);
-      if (onDone) onDone(); 
-    });
+    const fileName = String(idx).padStart(3, '0') + '.mp3';
+    const audio = new Audio('urun_ses/' + fileName);
+    audio.addEventListener('ended', () => { if (onDone) onDone(); });
+    audio.addEventListener('error', () => { if (onDone) onDone(); });
+    audio.play().catch(() => { if (onDone) onDone(); });
   }
 
   /**
