@@ -6427,6 +6427,54 @@ if (shipWaBtn) {
     return bestScore >= 0.52 ? { p: best, score: bestScore } : null;
   }
 
+  /**
+   * Birden fazla ürün eşleşmesi döndürür — belirsizlik tespiti için.
+   * Örnek: "muz" → [{p: ithal muz, score:1.1}, {p: yerli muz, score:0.9}]
+   */
+  function matchProductSmartAll(text, products) {
+    if (!products || !products.length) return [];
+    const q = norm(text);
+    if (!q || q.length < 2) return [];
+    const qWords = q.split(' ').filter(Boolean);
+    const results = [];
+
+    for (const p of products) {
+      const pn = norm(p.name);
+      const pWords = pn.split(' ').filter(Boolean);
+      if (q === pn) return [{ p, score: 3.0 }]; // Birebir eşleşme — tek sonuç yeter
+
+      let score = 0;
+      if (STAPLE_SYNONYMS[q] && STAPLE_SYNONYMS[q].includes(pn)) score = 2.4;
+
+      let matchedWords = 0;
+      for (const qw of qWords) {
+        if (pWords.some(pw => pw === qw || (pw.length > 3 && qw.length > 3 && (pw.startsWith(qw) || qw.startsWith(pw))))) matchedWords++;
+      }
+
+      if (matchedWords === qWords.length && qWords.length > 0) {
+        const baseScore = 1.0 + (matchedWords / pWords.length) * 0.6;
+        let penalty = (pWords.length - matchedWords) * 0.15;
+        for (const pw of pWords) { if (!qWords.includes(pw) && MODIFIER_WORDS.has(pw)) penalty += 0.85; }
+        score = Math.max(score, baseScore - penalty);
+      }
+
+      let simScore = 0;
+      for (const qw of qWords) {
+        if (qw.length < 2) continue;
+        for (const pw of pWords) {
+          if (pw.length < 2) continue;
+          if (qw === pw) { simScore += 0.8; continue; }
+          const sim = 1.0 - lev(qw, pw) / Math.max(qw.length, pw.length);
+          if (sim > 0.72) simScore = Math.max(simScore, sim * 0.7);
+        }
+      }
+      score = Math.max(score, simScore);
+      if (score >= 0.52) results.push({ p, score });
+    }
+
+    return results.sort((a, b) => b.score - a.score);
+  }
+
   /* =========================================================================
      DOLGU / SAÇMA KELİME FİLTRESİ
      ========================================================================= */
@@ -6627,8 +6675,27 @@ if (shipWaBtn) {
       return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
 
+    // Belirsizlik tespiti: birden fazla yakın eşleşme varsa kullanıcıya sor
+    if (!match && productQuery.length > 1) {
+      const allMatches = matchProductSmartAll(productQuery, products);
+      // İlk iki sonuç arası skor farkı küçükse belirsiz
+      if (allMatches.length >= 2 && (allMatches[0].score - allMatches[1].score) < 0.3) {
+        return {
+          type: 'ASK_AMBIGUOUS',
+          candidates: allMatches.slice(0, 4).map(m => m.p),
+          pendingQty: { crates, kg, pieces },
+          pendingFireKw: hasFireKw,
+          pendingShipKw: hasShipKw,
+          label: 'HANGİSİ?'
+        };
+      }
+      // Tek yakın eşleşme var, onu kullan
+      if (allMatches.length === 1) return null; // matchProductSmart halleder
+    }
+
     if (!match) return null;
     const p = match.p;
+
 
     // Akıllı Soru & Bilgi Yanıtları
     if (hasPriceQuery) return { type: 'PROD_QUERY_PRICE', product: p, label: 'FİYAT: ' + p.name };
@@ -7378,49 +7445,118 @@ if (shipWaBtn) {
 
       this.showTranscript('"' + finalClean + '"', false);
 
-      // Çoklu komut tespiti: "domates 5 kilo sayıma ekle biber 4 kilo fire'ye yaz"
-      // Bölücü kelimeler: ve, sonra, de/da, ayrıca
+      // Çoklu komut tespiti
       const parts = this._splitMultiCommand(finalClean);
       if (parts.length > 1) {
-        // Her komut 600ms arayla sırayla işle
-        parts.forEach((part, i) => {
-          setTimeout(() => { this.processCommand(part, i === 0 ? alts : []); }, i * 600);
-        });
+        console.log('[VC Multi]', parts);
+        const runNext = (idx) => {
+          if (idx >= parts.length) return;
+          Promise.resolve(this.processCommand(parts[idx], idx === 0 ? alts : []))
+            .finally(() => setTimeout(() => runNext(idx + 1), 600));
+        };
+        runNext(0);
       } else {
         this.processCommand(finalClean, alts);
       }
     }
 
-    // Cümleyi mantıklı parçalara böler — ürün+miktar bloklarını saptar
+    /**
+     * Cümleyi bağımsız komut bloklarına böler.
+     * Örnek:
+     *   "domates 5 kilo sayıma ekle ayrıca biber 4 kilo fire yaz"
+     *   → ["domates 5 kilo sayıma ekle", "biber 4 kilo fire yaz"]
+     *
+     *   "domates 5 kilo sayım çarliston biber 4 kilo fire"
+     *   → ["domates 5 kilo sayım", "çarliston biber 4 kilo fire"]
+     */
     _splitMultiCommand(text) {
-      // "biber 4 kilo fire'ye yaz" ve "domates 5 kilo sayıma ekle" gibi parçalar
-      // Ayırıcılar: "ayrıca", "bir de", "sonra", ürün adlarından önce gelen sayı+birim bloğu
-      const separators = /\b(ayrica|bir de|sonra da|ondan sonra|ve ayni zamanda)\b/i;
-      let parts = text.split(separators).map(s => s.trim()).filter(s => s.length > 2 && !/^(ayrica|bir de|sonra da|ondan sonra|ve ayni zamanda)$/i.test(s));
-      if (parts.length > 1) return parts;
-
-      // Daha akıllı bölme: "domates X kilo ... biber Y kilo" kalıbı
-      // Ürün bloklarını tanı: rakam/sayı + birim içeren ardışık kısımlar
       const products = this.getProducts();
-      const pNames = products.map(p => norm(p.name));
+
+      // --- Adım 1: Açık ayırıcı kelimeler ---
+      const SEP_RE = /\s*\b(ayrica|bir\s*de|sonra\s*da?|ondan\s*sonra|ve\s*ayni\s*zamanda|bunun\s*yani\s*sira|bir\s*de\s*ki)\b\s*/i;
+      const sepParts = text.split(SEP_RE)
+        .map(s => s.trim())
+        .filter(s => s.length > 2 && !SEP_RE.test(s));
+      if (sepParts.length > 1) {
+        console.log('[VC Multi] sep split:', sepParts);
+        return sepParts;
+      }
+
+      // --- Adım 2: Normalize üzerinde dinamik blok tespiti ---
       const nText = norm(text);
-      const tokens = nText.split(' ');
-      const blocks = [];
-      let start = 0;
-      for (let i = 1; i < tokens.length; i++) {
-        // Yeni bir ürün adı başlıyor ve önceki blokta miktar var mı?
-        const prevBlock = tokens.slice(start, i).join(' ');
-        const { crates, kg, pieces } = extractQuantities(tokens.slice(start, i));
-        const hasQty = crates !== null || kg !== null || pieces !== null;
-        const curToken = tokens[i];
-        const isNewProd = pNames.some(pn => pn.startsWith(curToken) || curToken.length > 3 && pn.includes(curToken));
-        if (hasQty && isNewProd && i > start + 1) {
-          blocks.push(tokens.slice(start, i).join(' '));
-          start = i;
+      const tokens = nText.split(' ').filter(Boolean);
+      if (tokens.length < 4) return [text]; // Çok kısa — bölme
+
+      // Ürün tokenı mı?
+      const pWords = new Set();
+      products.forEach(p => norm(p.name).split(' ').forEach(w => { if (w.length > 2) pWords.add(w); }));
+      const isProdTok = t => pWords.has(t) || (t.length > 3 && [...pWords].some(w => w.startsWith(t) || t.startsWith(w)));
+
+      // Eylem tokenları — blok sonu işareti
+      const ACTION = new Set(['sayim','sayima','ekle','yaz','gir','kaydet','fire','fireye','sevkiyat','sevkiyata','sevket','sil','cikar','sifirla']);
+
+      // Token dizisini tara — blok sınırlarını bul
+      const cutPoints = []; // kesim noktası: bu token YENİ bloğun başıdır
+      let blockHasQty = false;
+      let blockHasProd = false;
+      let blockHasAction = false;
+
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        const qty = extractQuantities(tokens.slice(Math.max(0, i-3), i+1));
+        if (qty.crates !== null || qty.kg !== null || qty.pieces !== null) blockHasQty = true;
+        if (isProdTok(t)) blockHasProd = true;
+        if (ACTION.has(t)) blockHasAction = true;
+
+        // Yeni blok başlar: önceki blokta ürün+miktar var, şu an yeni bir ürün tokenına gelindi
+        if (i > 0 && blockHasProd && blockHasQty && isProdTok(t)) {
+          // Ama önceki token zaten ürün tokenıysa bölme (çok kelimeli ürün adı)
+          const prevIsProd = isProdTok(tokens[i-1]);
+          if (!prevIsProd) {
+            cutPoints.push(i);
+            blockHasQty = false;
+            blockHasProd = false;
+            blockHasAction = false;
+          }
         }
       }
-      if (start < tokens.length) blocks.push(tokens.slice(start).join(' '));
-      return blocks.length > 1 ? blocks : [text];
+
+      if (cutPoints.length === 0) return [text];
+
+      // Blokları kes
+      const normBlocks = [];
+      let prev = 0;
+      for (const cp of cutPoints) {
+        normBlocks.push(tokens.slice(prev, cp).join(' '));
+        prev = cp;
+      }
+      normBlocks.push(tokens.slice(prev).join(' '));
+
+      // Orijinal metne geri eşle
+      const result = this._remapToOriginal(text, normBlocks);
+      console.log('[VC Multi] dynamic split:', result);
+      return result.length > 1 ? result : [text];
+    }
+
+    // Normalize blokları orijinal ham metne geri eşle
+    _remapToOriginal(original, normBlocks) {
+      const nOrig = norm(original);
+      const result = [];
+      let pos = 0;
+      for (let i = 0; i < normBlocks.length; i++) {
+        const nb = normBlocks[i].trim();
+        if (!nb) continue;
+        const idx = nOrig.indexOf(nb, pos);
+        if (idx >= 0) {
+          // Orijinal metinde bu normalize bloğa karşılık gelen kısım
+          const end = idx + nb.length;
+          result.push(original.substring(idx, end).trim());
+          pos = end;
+        } else {
+          result.push(nb); // Fallback
+        }
+      }
+      return result.filter(s => s.trim().length > 1);
     }
 
     resetWatchdog() {
@@ -8254,6 +8390,41 @@ if (shipWaBtn) {
             el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
             this.playTone(850, 'sine', 0.12); this.showFeedback('Alan dolduruldu: ' + intent.value, false, false); this.playVoiceResponse('MODAL_NAME_SET'); break;
           }
+          case 'ASK_AMBIGUOUS': {
+            // Birden fazla ürün eşleşti — kullanıcıya sor
+            const cands = intent.candidates || [];
+            const chips = cands.map(p => p.name);
+            this.playTone(600, 'sine', 0.1);
+            this.showFeedback('Hangisini kastediyorsunuz?', true, false);
+            this.showIntent('HANGİSİ?');
+            // Chip'lere tıklayınca seçilen ürünle işlemi tamamla
+            if (!this.feedbackCard) break;
+            let c = document.getElementById('voice-sugg');
+            if (!c) { c = document.createElement('div'); c.id = 'voice-sugg'; c.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px'; this.feedbackCard.parentNode.insertBefore(c, this.feedbackCard.nextSibling); }
+            c.innerHTML = '';
+            cands.forEach(p => {
+              const btn = document.createElement('button');
+              btn.type = 'button'; btn.className = 'voice-hint-chip';
+              btn.textContent = p.name;
+              btn.onclick = () => {
+                this.renderSuggestions([]);
+                // Bekleyen işlemi bu ürünle çalıştır
+                const qty = intent.pendingQty || {};
+                const fakeIntent = intent.pendingFireKw
+                  ? { type: 'FIRE_ADD', product: p, amount: qty.kg || qty.crates || 1, unit: qty.kg ? 'kg' : 'kasa', why: 'diğer', label: 'FİRE: ' + p.name }
+                  : intent.pendingShipKw
+                    ? { type: 'SHIP_ADD_AUTO', product: p, crates: qty.crates, pieces: qty.pieces, loose: qty.kg, label: 'SEVKİYAT: ' + p.name }
+                    : { type: 'SAYIM_SET', product: p, crates: qty.crates, kg: qty.kg, pieces: qty.pieces, label: 'SAYIM: ' + p.name };
+                this.showIntent(fakeIntent.label);
+                this.ctx = { product: p, t: Date.now() };
+                // processCommand'ı bypass et, direkt switch'e gönder
+                Promise.resolve(this.processCommand(p.name + (qty.kg ? ' ' + qty.kg + ' kilo' : qty.crates ? ' ' + qty.crates + ' kasa' : ''), []));
+              };
+              c.appendChild(btn);
+            });
+            break;
+          }
+
           case 'DOM_CLICK': {
             if (!intent.el) {
               if (intent.selector) {
