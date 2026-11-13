@@ -6208,7 +6208,11 @@ if (shipWaBtn) {
   let _urunAudio = null;
   function playUrunSes(productName, onDone) {
     const seg = findUrunSes(productName);
-    if (!seg) { if (onDone) onDone(); return; }
+    if (!seg) { 
+      // Ses bulunamadı — sessizce atla
+      if (onDone) setTimeout(onDone, 50);
+      return;
+    }
     const [start, dur] = seg;
     if (!_urunAudio) {
       _urunAudio = new Audio('urun_sesleri.mp3');
@@ -6216,7 +6220,7 @@ if (shipWaBtn) {
     }
     _urunAudio.pause();
     _urunAudio.currentTime = start;
-    const stopAt = start + dur + 0.1;
+    const stopAt = start + dur + 0.15;
     const onTimeUpdate = () => {
       if (_urunAudio.currentTime >= stopAt) {
         _urunAudio.pause();
@@ -6225,49 +6229,59 @@ if (shipWaBtn) {
       }
     };
     _urunAudio.addEventListener('timeupdate', onTimeUpdate);
-    _urunAudio.play().catch(() => { if (onDone) onDone(); });
+    _urunAudio.play().catch(() => { 
+      _urunAudio.removeEventListener('timeupdate', onTimeUpdate);
+      if (onDone) onDone(); 
+    });
   }
 
   /**
    * Belirsiz ürün sorgusu için sesli soru çal.
-   * Örnek: "Hangisi? İthal muz VE yerli muz"
-   * adımlar: HANGISI_1 → ürün1 → VE_BAGLACI → ürün2 → HANGISI_2
+   * Örnek: "Hangisi? İthal muz VE baby muz"
    */
   function playAmbiguousSoru(candidates, onDone) {
     if (!candidates || candidates.length === 0) { if (onDone) onDone(); return; }
 
-    // Sıralı ses zinciri oluştur
+    let currentStep = 0;
     const steps = [];
 
-    // "Hangisi?" sorusu — 2 varyasyondan birini rastgele seç
-    steps.push(() => new Promise(res => {
-      const key = Math.random() < 0.5 ? 'HANGISI_1' : 'HANGISI_2';
-      const dataUri = (typeof VOICE_AUDIO_VAULT !== 'undefined') ? VOICE_AUDIO_VAULT[key] : null;
-      if (!dataUri) { res(); return; }
-      const a = new Audio(dataUri);
-      a.onended = res; a.onerror = res;
-      a.play().catch(res);
-    }));
+    // 1. "Hangisi?" sorusu
+    const hangisiKey = Math.random() < 0.5 ? 'HANGISI_1' : 'HANGISI_2';
+    const hangisiUri = (typeof VOICE_AUDIO_VAULT !== 'undefined') ? VOICE_AUDIO_VAULT[hangisiKey] : null;
+    if (hangisiUri) {
+      steps.push({ type: 'vault', uri: hangisiUri });
+    }
 
-    // Her ürün için: ürün adı sesi + "ve" bağlacı (son ürün hariç)
+    // 2. Her ürün + "ve" (son ürün hariç)
     candidates.forEach((p, i) => {
-      steps.push(() => new Promise(res => {
-        playUrunSes(p.name, res);
-      }));
+      steps.push({ type: 'product', name: p.name });
       if (i < candidates.length - 1) {
-        steps.push(() => new Promise(res => {
-          const dataUri = (typeof VOICE_AUDIO_VAULT !== 'undefined') ? VOICE_AUDIO_VAULT['VE_BAGLACI'] : null;
-          if (!dataUri) { res(); return; }
-          const a = new Audio(dataUri);
-          a.onended = res; a.onerror = res;
-          a.play().catch(res);
-        }));
+        const veUri = (typeof VOICE_AUDIO_VAULT !== 'undefined') ? VOICE_AUDIO_VAULT['VE_BAGLACI'] : null;
+        if (veUri) steps.push({ type: 'vault', uri: veUri });
       }
     });
 
-    // Zinciri çalıştır
-    steps.reduce((chain, step) => chain.then(step), Promise.resolve())
-      .then(() => { if (onDone) onDone(); });
+    function playNext() {
+      if (currentStep >= steps.length) {
+        if (onDone) onDone();
+        return;
+      }
+
+      const step = steps[currentStep++];
+      
+      if (step.type === 'vault') {
+        const a = new Audio(step.uri);
+        a.onended = () => setTimeout(playNext, 100);
+        a.onerror = playNext;
+        a.play().catch(playNext);
+      } else if (step.type === 'product') {
+        playUrunSes(step.name, () => setTimeout(playNext, 100));
+      } else {
+        playNext();
+      }
+    }
+
+    playNext();
   }
 
   const VOICE_AUDIO_VAULT = {
@@ -6850,20 +6864,21 @@ if (shipWaBtn) {
       return { type: 'PROD_EDIT_OPEN', product: match.p, label: 'DÜZENLE: ' + match.p.name };
     }
 
-    // Belirsizlik tespiti — HER ZAMAN çalışır, eşleşme olsa bile
-    // "muz" → ithal muz (0.72) ve baby muz (0.65) → fark 0.07 < 0.3 → SOR
+    // Belirsizlik tespiti — sadece ÇOK YAKIN eşleşmeler için
+    // "muz" → ithal muz (0.85) ve baby muz (0.82) → fark 0.03 < 0.1 → SOR
     if (productQuery.length > 1) {
       const allMatches = matchProductSmartAll(productQuery, products);
-      if (allMatches.length >= 2 && (allMatches[0].score - allMatches[1].score) < 0.3) {
-        // Aynı ürünü tekrar sorma — eğer tek bir sonuç döndüyse sorma
-        const topNames = allMatches.slice(0, 4).map(m => m.p.name);
-        // Eğer ilk sonuç çok güçlüyse (score > 1.5) ve diğerleri zayıfsa, sorma
-        if (allMatches[0].score > 1.5 && (allMatches[0].score - allMatches[1].score) > 0.15) {
-          // Güçlü eşleşme — sormaya gerek yok
-        } else {
+      if (allMatches.length >= 2) {
+        const topScore = allMatches[0].score;
+        const secondScore = allMatches[1].score;
+        const diff = topScore - secondScore;
+        // Sadece ikisi de yüksek skorluysa VE aralarındaki fark çok küçükse sor
+        // Örnek: muz → ithal muz 0.88, baby muz 0.84 → diff 0.04 → SOR
+        // Örnek: domates → domates 1.0, kokteyl domates 0.65 → diff 0.35 → SORMA
+        if (topScore > 0.7 && secondScore > 0.7 && diff < 0.12) {
           return {
             type: 'ASK_AMBIGUOUS',
-            candidates: allMatches.slice(0, 4).map(m => m.p),
+            candidates: allMatches.slice(0, Math.min(3, allMatches.length)).map(m => m.p),
             pendingQty: { crates, kg, pieces },
             pendingFireKw: hasFireKw,
             pendingShipKw: hasShipKw,
