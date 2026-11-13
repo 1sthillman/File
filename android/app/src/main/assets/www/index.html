@@ -7314,6 +7314,16 @@ if (shipWaBtn) {
       if (this.isRecognizing || this._starting) return;
       this._starting = true;
       try {
+        // Android Native: Vosk kullan (bip sesi yok, kesintisiz, çevrimdışı)
+        if (window.AndroidBridge && typeof window.AndroidBridge.startNativeSpeech === 'function') {
+          window.AndroidBridge.startNativeSpeech();
+          this.isRecognizing = true;
+          this.manuallyPaused = false;
+          this.updateUIStatus('Dinleniyor', 'listening');
+          this.setListeningVisuals(true);
+          return;
+        }
+        // Web (tarayıcı) yolu — Android dışı
         if (!(await this.ensureMic())) return;
         if (!this.recognition) this.initSpeechRecognition();
         if (!this.recognition) return;
@@ -7334,7 +7344,10 @@ if (shipWaBtn) {
       this.clearWatchdog();
       if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.restartTimer) { clearTimeout(this.restartTimer); this.restartTimer = null; }
-      if (this.recognition) {
+      // Android Native
+      if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
+        window.AndroidBridge.stopNativeSpeech();
+      } else if (this.recognition) {
         try { this.recognition.stop(); } catch(e) {}
       }
       this.isRecognizing = false;
@@ -8261,27 +8274,24 @@ if (shipWaBtn) {
       const dataUri = VOICE_AUDIO_VAULT[key];
       if (!dataUri) return;
 
-      // Echo / Loopback Önlemi 1: Ses başlamadan önce mikrofonu tamamen durdur
-      if (this.recognition && this.isRecognizing) {
+      // Mikrofonu durdur
+      this.isRecognizing = false;
+      if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
+        window.AndroidBridge.stopNativeSpeech();
+      } else if (this.recognition) {
         try { this.recognition.abort(); } catch(e) {}
-        this.isRecognizing = false;
       }
-      if (this._interimTimer) {
-        clearTimeout(this._interimTimer);
-        this._interimTimer = null;
-      }
-
+      if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.currentAudio) {
         try { this.currentAudio.pause(); this.currentAudio = null; } catch(e) {}
       }
 
       this.isSpeaking = true;
+
       const resumeListeningAfterAudio = () => {
         this.currentAudio = null;
-        // Hoparlör ve oda yankısının tamamen sönümlenmesi için 480ms bekle
         setTimeout(() => {
           this.isSpeaking = false;
-          // Yankı filtresi: mikrofon açıldıktan sonraki 400ms boyunca yankıyı yoksay
           this._echoSuppressUntil = Date.now() + 400;
           if (this.shouldKeepListening() && !this.manuallyPaused) {
             this.startListening();
@@ -8289,27 +8299,35 @@ if (shipWaBtn) {
         }, 480);
       };
 
-      try {
-        const audio = new Audio(dataUri);
-        this.currentAudio = audio;
-        audio.onended = resumeListeningAfterAudio;
-        audio.onerror = () => {
+      const doPlay = () => {
+        try {
+          const audio = new Audio(dataUri);
+          this.currentAudio = audio;
+          audio.onended = resumeListeningAfterAudio;
+          audio.onerror = () => {
+            this.currentAudio = null;
+            this.isSpeaking = false;
+            if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
+          };
+          audio.play().catch((err) => {
+            console.error('[VoiceAudio] play() hatası:', err && err.message ? err.message : err);
+            this.currentAudio = null;
+            this.isSpeaking = false;
+            if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
+          });
+        } catch(e) {
           this.currentAudio = null;
           this.isSpeaking = false;
-          if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
-        };
-        audio.play().catch(() => {
-          this.currentAudio = null;
-          this.isSpeaking = false;
-          if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
-        });
-      } catch(e) {
-        this.currentAudio = null;
-        this.isSpeaking = false;
+        }
+      };
+
+      // Android: AudioRecord tamamen kapansın diye 400ms bekle
+      if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
+        setTimeout(doPlay, 400);
+      } else {
+        doPlay();
       }
     }
-
-    /* ---- Ses Efektleri ---- */
     getAudioCtx() {
       /* Chrome otomatik oynatma politikası: kullanıcı hareketinden önce AudioContext oluşturulmaz (developer.chrome.com/blog/autoplay) */
       if (!this._gesture) return null;
@@ -8595,6 +8613,21 @@ if (shipWaBtn) {
       };
       window.onNativeSpeechEvent = function(ev, msg) {
         console.log('[NativeSpeech Event]', ev, msg);
+        const eng = window.__voiceEngine;
+        if (!eng) return;
+        if (ev === 'ready') {
+          eng.isRecognizing = true;
+          eng.updateUIStatus('Dinleniyor', 'listening');
+          eng.setListeningVisuals(true);
+        } else if (ev === 'end' || ev === 'error') {
+          eng.isRecognizing = false;
+          eng.setListeningVisuals(false);
+          eng.updateUIStatus(ev === 'error' ? ('Hata: ' + msg) : 'Bekleniyor', ev === 'error' ? 'error' : 'idle');
+          // Hata değilse kısa süre sonra yeniden başlat
+          if (ev !== 'error' && eng.shouldKeepListening()) {
+            setTimeout(() => { if (eng.shouldKeepListening()) eng.startListening(); }, 300);
+          }
+        }
       };
     } catch(err) {
       console.error('[VC v8] Başlatma hatası:', err);

@@ -230,7 +230,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (androidBridge != null) {
-            androidBridge.stopNativeSpeech();
+            // release() taniyiciyi destroy eder ve ses kanallarini geri acar
+            androidBridge.release();
         }
         if (webView != null) {
             webView.destroy();
