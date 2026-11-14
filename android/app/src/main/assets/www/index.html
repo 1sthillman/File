@@ -8274,58 +8274,43 @@ if (shipWaBtn) {
       const dataUri = VOICE_AUDIO_VAULT[key];
       if (!dataUri) return;
 
-      // Mikrofonu durdur
-      this.isRecognizing = false;
-      if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
-        window.AndroidBridge.stopNativeSpeech();
-      } else if (this.recognition) {
-        try { this.recognition.abort(); } catch(e) {}
-      }
+      // VOSK: Mikrofonu DURDURMA! Sadece isSpeaking flag'i aç
+      // Echo suppress ile ses girişi engellenir
+      this.isSpeaking = true;
+      this._echoSuppressUntil = Date.now() + 5000; // 5 saniye echo suppress
+      
       if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.currentAudio) {
         try { this.currentAudio.pause(); this.currentAudio = null; } catch(e) {}
       }
 
-      this.isSpeaking = true;
-
       const resumeListeningAfterAudio = () => {
         this.currentAudio = null;
         setTimeout(() => {
           this.isSpeaking = false;
-          this._echoSuppressUntil = Date.now() + 400;
-          if (this.shouldKeepListening() && !this.manuallyPaused) {
-            this.startListening();
-          }
-        }, 480);
+          this._echoSuppressUntil = Date.now() + 800; // Ses bittikten 800ms sonra tekrar dinle
+        }, 200);
       };
 
-      const doPlay = () => {
-        try {
-          const audio = new Audio(dataUri);
-          this.currentAudio = audio;
-          audio.onended = resumeListeningAfterAudio;
-          audio.onerror = () => {
-            this.currentAudio = null;
-            this.isSpeaking = false;
-            if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
-          };
-          audio.play().catch((err) => {
-            console.error('[VoiceAudio] play() hatası:', err && err.message ? err.message : err);
-            this.currentAudio = null;
-            this.isSpeaking = false;
-            if (this.shouldKeepListening() && !this.manuallyPaused) this.startListening();
-          });
-        } catch(e) {
+      try {
+        const audio = new Audio(dataUri);
+        this.currentAudio = audio;
+        audio.onended = resumeListeningAfterAudio;
+        audio.onerror = () => {
           this.currentAudio = null;
           this.isSpeaking = false;
-        }
-      };
-
-      // Android: AudioRecord tamamen kapansın diye 400ms bekle
-      if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
-        setTimeout(doPlay, 400);
-      } else {
-        doPlay();
+          this._echoSuppressUntil = 0;
+        };
+        audio.play().catch((err) => {
+          console.error('[VoiceAudio] play() hatası:', err && err.message ? err.message : err);
+          this.currentAudio = null;
+          this.isSpeaking = false;
+          this._echoSuppressUntil = 0;
+        });
+      } catch(e) {
+        this.currentAudio = null;
+        this.isSpeaking = false;
+        this._echoSuppressUntil = 0;
       }
     }
     getAudioCtx() {
