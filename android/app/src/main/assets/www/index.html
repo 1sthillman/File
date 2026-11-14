@@ -8033,21 +8033,6 @@ if (shipWaBtn) {
         return;
       }
 
-      if (!intent) {
-        this.playTone(320, 'sine', 0.12);
-        this.showIntent('?');
-        this._pendingLearn = norm(rawText);
-        const sg = suggest(norm(rawText), products, currentTab, isModalOpen);
-        this.showFeedback(sg.length ? 'Tam anlayamadım — şunlardan biri mi?' : 'Anlayamadım. Örnek: "domates PLU 85", "kasa ağırlığı 5 kilo"', true, false);
-        this.renderSuggestions(sg);
-        const now = Date.now();
-        if (rawText.length >= 4 && (now - this._lastNotUnderstoodTime > 3000)) {
-          this._lastNotUnderstoodTime = now;
-          /* silent on not understood — no voice loopback */
-        }
-        return;
-      }
-
       this.showIntent(intent.label);
       if (intent.type !== 'ASK') this.renderSuggestions([]);
       if (intent.product) this.ctx = { product: intent.product, t: Date.now() };
