@@ -7074,6 +7074,7 @@ if (shipWaBtn) {
       this.manuallyPaused = false;
       this.isSpeaking     = false;
       this.currentAudio   = null;
+      this._echoSuppressUntil = 0;
       this.undoStack      = [];
       this.restartTimer   = null;
       this.watchdogTimer  = null;
@@ -7085,6 +7086,8 @@ if (shipWaBtn) {
       this.lastProcessedTimestamp = 0;
       this._lastFabClick  = 0;
       this._lastNotUnderstoodTime = 0;
+      this._lastCommittedText = '';
+      this._lastCommittedTime = 0;
       this.ctx = null; this._pendingLearn = null;
 
       // DOM Refs
@@ -8274,10 +8277,8 @@ if (shipWaBtn) {
       const dataUri = VOICE_AUDIO_VAULT[key];
       if (!dataUri) return;
 
-      // VOSK: Mikrofonu DURDURMA! Sadece isSpeaking flag'i aç
-      // Echo suppress ile ses girişi engellenir
+      // VOSK: Ses çalarken sadece isSpeaking flag + kısa echo suppress
       this.isSpeaking = true;
-      this._echoSuppressUntil = Date.now() + 5000; // 5 saniye echo suppress
       
       if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.currentAudio) {
@@ -8286,15 +8287,22 @@ if (shipWaBtn) {
 
       const resumeListeningAfterAudio = () => {
         this.currentAudio = null;
-        setTimeout(() => {
-          this.isSpeaking = false;
-          this._echoSuppressUntil = Date.now() + 800; // Ses bittikten 800ms sonra tekrar dinle
-        }, 200);
+        this.isSpeaking = false;
+        // Ses bittikten sadece 300ms sonra tekrar dinlemeye başla
+        this._echoSuppressUntil = Date.now() + 300;
       };
 
       try {
         const audio = new Audio(dataUri);
         this.currentAudio = audio;
+        
+        // Ses çalmaya başlayınca echo suppress başlat
+        audio.onloadedmetadata = () => {
+          // Ses süresi + 500ms echo suppress
+          const duration = (audio.duration || 2) * 1000;
+          this._echoSuppressUntil = Date.now() + duration + 500;
+        };
+        
         audio.onended = resumeListeningAfterAudio;
         audio.onerror = () => {
           this.currentAudio = null;
