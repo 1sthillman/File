@@ -8,13 +8,30 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 
 İnternet bağlantısına hiç ihtiyaç duymadan, depoda veya manavda kesintisiz çalışabilen yerel Android APK paketi:
 
-- **Doğrudan İndirme Bağlantısı:** [Manav_Sayim.apk](https://raw.githubusercontent.com/1sthillman/File/main/Manav_Sayim.apk)
+### 🆕 EN YENİ - Smart Voice Sistemi v2.0 (Önerilen)
+- **Doğrudan İndirme:** [manav-sayim-v2.0-smart-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.0-smart-voice.apk) (86.48 MB)
+- **Özellikler:**
+  - ✅ **Çoklu Komut Desteği**: "domates 5 kilo sayım patates 4 kilo fire"
+  - ✅ **Ürün Varyasyon Seçimi**: Muz → İthal/Baby, Domates → Salkım/Pembe/Kokteyl
+  - ✅ **128 Ses Dosyası**: Ürün isimleri + Sayfa geçişleri + Sistem sesleri
+  - ✅ **Akıllı Doğal Dil İşleme**: Farklı söyleyişleri anlayabilir
+
+### Eski Versiyon - Native Voice v1.0
+- **Doğrudan İndirme:** [manav-sayim-v1.0-native-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v1.0-native-voice.apk) (85.75 MB)
 
 ### Android APK Kurulum Adımları
-1. Yukarıdaki bağlantıdan `Manav_Sayim.apk` dosyasını telefonunuza indirin.
-2. İndirilen dosyaya dokunup **Yükle** seçeneğini seçin (Bilinmeyen kaynak izni istenirse izin verin).
-3. Uygulama açıldığında Kamera ve Mikrofon izinleri otomatik olarak istenir ve onaylanır.
-4. Artık internet bağlantısı olmasa dahi hiçbir uyarı vermeden doğrudan açılır ve çalışır.
+1. Yukarıdaki **v2.0** bağlantısından APK'yı telefonunuza indirin
+2. İndirilen dosyaya dokunup **Yükle** seçeneğini seçin (Bilinmeyen kaynak izni istenirse izin verin)
+3. Uygulama açıldığında Kamera ve Mikrofon izinleri otomatik olarak istenir ve onaylanır
+4. Artık internet bağlantısı olmasa dahi hiçbir uyarı vermeden doğrudan açılır ve çalışır
+
+### 🎙️ Hızlı Test (v2.0)
+İlk açılışta mikrofonu aç ve dene:
+```
+✓ "domates 5 kilo"          → Basit sayım
+✓ "muz 3 kasa"              → Varyasyon seçimi (İthal/Baby)
+✓ "domates 5 kilo sayım patates 4 kilo fire"  → Çoklu komut
+```
 
 ---
 
@@ -29,8 +46,17 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 ---
 
 ## 3. Öne Çıkan Özellikler
+
+### 🎙️ Akıllı Ses Komut Sistemi (v2.0)
+- **Çoklu Komut**: Tek seferde birden fazla işlem ("domates 5 kilo sayım patates 4 kilo fire")
+- **Ürün Varyasyonları**: Otomatik tespit ve seçim (Muz → İthal/Baby, Elma → Fuji/Gala/Golden vs.)
+- **128 Ses Dosyası**: Her ürün, sayfa geçişi ve işlem için özel ses
+- **Doğal Dil İşleme**: Farklı söyleyişleri anlayabilir
+
+### 📱 Offline-First Mimari
 - **Tamamen Çevrimdışı (Offline-First):** APK yerel varlıkları cihazın içinden yükler (`file:///android_asset/`). İnternet bağlantısı olmasa bile asla "internete bağlanın" hatası vermez.
 - **Android Share & Dosya Kaydetme:** PDF, Excel (.xlsx), CSV ve Yedek dosyaları tek tıkla cihazın İndirilenler (Downloads) klasörüne kaydedilir ve Android Native Paylaşım ekranı açılarak WhatsApp, Dosyalar veya Drive üzerinden gönderilebilir.
+
+### 🔍 Barkod & Kamera
 - **Kamera & Barkod Desteği:** El terminali lazer okuyucusu ve telefon kamerası ile anında barkod ve QR kod okuma.
-- **Sesli Komut Asistanı:** Gelişmiş gürültü ve yankı korumalı stüdyo ses motoru.
 - **Zebra El Terminali Senkronizasyonu:** Toplu QR ve klavye tuşlama simülasyonu.
