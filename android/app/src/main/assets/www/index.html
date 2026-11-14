@@ -7266,28 +7266,32 @@ if (shipWaBtn) {
     }
 
     handleSpeechResult(rawText, alts) {
-      if (this.isSpeaking || Date.now() < (this._echoSuppressUntil || 0)) return;
-
+      // SES ÇALARKEN MİKROFON KAPANMASIN! Sadece asistanın kendi sesini filtrele
       const finalClean = String(rawText || '').trim();
       if (!finalClean) return;
 
       const nIn = norm(finalClean);
-      // Echo Filter: Asistanın vault seslerindeki veya geribildirimlerindeki kelimeleri yok say
+      
+      // Echo Filter: Asistanın kendi ses dosyalarındaki kelimeleri filtrele
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
           nIn.includes('sayim kaydedildi') || nIn.includes('yazilimcisi sedat daglidir') ||
           nIn.includes('urun bulundu') || nIn.includes('fire kaydedildi') ||
           nIn.includes('sevkiyat eklendi') || nIn.includes('sekme acildi') ||
-          nIn.includes('filtre uygulandi') || nIn.includes('calistirildi')) {
+          nIn.includes('filtre uygulandi') || nIn.includes('calistirildi') ||
+          nIn.includes('bulundu') || nIn.includes('secildi') || nIn.includes('kaydedildi')) {
+        console.log('[VC Echo Filter] Asistan sesi filtrelendi:', finalClean);
         return;
       }
 
       const now = Date.now();
       if (finalClean === this._lastCommittedText && (now - (this._lastCommittedTime || 0) < 1200)) {
+        console.log('[VC Duplicate] Tekrar komut:', finalClean);
         return;
       }
       this._lastCommittedText = finalClean;
       this._lastCommittedTime = now;
 
+      console.log('[VC ✅ İŞLENİYOR]', finalClean);
       this.showTranscript('"' + finalClean + '"', false);
       this.processCommand(finalClean, alts);
     }
