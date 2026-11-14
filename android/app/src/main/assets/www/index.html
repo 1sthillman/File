@@ -6123,22 +6123,50 @@ if (shipWaBtn) {
     "NANE": 73, "DEREOTU": 74, "MAYDANOZ": 75, "TAZE SOĞAN": 76, "GÖBEK MARUL": 77,
     "MARUL": 78, "KIVIRCIK MARUL": 79, "BİBERİYE": 80, "FESLEĞEN": 81,
     "KÜLTÜR MANTARI": 82, "TERE": 83, "İSTİRİDYE MANTAR": 84,
-    // Alias'lar — varyasyonlar ve eski adlar
+    // Yeni eksik sesler (086-102)
+    "KABAK": 86, "FASULYE": 87, "TURŞULUK BİBER": 88, "TATLI BİBER": 89,
+    "MANGO": 90, "DEMİRHİNDİ 225 GR PAKET": 91, "SIKMALIK PORTAKAL": 92,
+    "FESLEĞEN 25 G": 93, "KEREVİZ SAPI": 94, "KIRMIZI MEKSİKA BİBERİ": 95,
+    "SARI DOMATES": 96, "JALAPENO BİBER": 97, "AVOKADO": 98,
+    "HİNDİSTAN CEVİZİ": 99, "ELMA": 100, "BİBER": 101, "PATLICAN": 102,
+    // Alias'lar
     "CEVIZ KABUKLU": 45, "ÇILEK TARLA": 46, "PATATES (DÖKME)": 26,
     "PATATES KIZARTMA": 26, "PATATES YEMEKLİK": 26, "HAVUÇ PAKET KG": 11,
     "PIRASA PAKET KG": 28, "SOĞAN YEMEKLİK": 34, "KARMA ARMUT": 67,
     "LİMON ENTER": 59, "LİMON ENTER FİLE": 59, "LİMON MAYER FİLE": 59,
     "PORTAKAL FİLE": 63, "ÇEKİRDEKSİZ KIRMIZI ÜZÜM": 66, "ÇEKİRDEKSİZ SULTANİ ÜZÜM": 66,
     "RED GLOBE ÜZÜM": 66, "KIRKAĞAÇ KAVUN": 65, "KIŞLIK KAVUN KG": 65,
-    "KÜLTÜR MANTAR": 82, "ISTIRDYE MANTAR": 84,
-    // Kasa ürünleri ek eşleştirmeleri
-    "AVOKADO": 43, "HİNDİSTAN CEVİZİ": 45, "ELMA": 55, "KARPUZ": 64,
-    "BİBER": 33, "PATLICAN": 16, "KABAK": 29, "FASULYE": 4,
-    "KURU SOĞAN": 21, "TURŞULUK BİBER": 5, "TATLI BİBER": 8,
-    "SIKMALIK PORTAKAL": 63, "FESLEĞEN 25 G": 81, "KEREVİZ SAPI": 17,
-    "KIRMIZI MEKSİKA BİBERİ": 15, "SARI DOMATES": 9, "JALAPENO BİBER": 5,
-    "MANGO": 44, "DEMİRHİNDİ 225 GR PAKET": 44
+    "KÜLTÜR MANTAR": 82, "ISTIRDYE MANTAR": 84, "KURU SOĞAN": 21
   };
+
+  // Birden fazla eşleşme bul (belirsizlik durumu için)
+  function findAllUrunMatches(productName) {
+    if (!productName) return [];
+    const upper = productName.toLocaleUpperCase('tr').trim();
+    const matches = [];
+    
+    // Tam eşleşme kontrol
+    if (URUN_SES_MAP[upper] !== undefined) {
+      return [{ name: upper, index: URUN_SES_MAP[upper], score: 100 }];
+    }
+    
+    // Kısmi eşleşmeler bul
+    for (const key of Object.keys(URUN_SES_MAP)) {
+      let score = 0;
+      if (key.includes(upper)) score = upper.length * 10; // Kullanıcı inputu tam içinde
+      else if (upper.includes(key)) score = key.length * 5; // Key tam içinde
+      else if (key.split(' ').some(w => upper.includes(w)) || upper.split(' ').some(w => key.includes(w))) {
+        score = 2; // Kelime bazlı eşleşme
+      }
+      
+      if (score > 0) {
+        matches.push({ name: key, index: URUN_SES_MAP[key], score });
+      }
+    }
+    
+    // Skorlara göre sırala, en yüksek 3 eşleşmeyi al
+    return matches.sort((a, b) => b.score - a.score).slice(0, 3);
+  }
 
   // Ürün adını normalize ederek haritada ara — index döndür
   function findUrunSes(productName) {
@@ -6165,6 +6193,61 @@ if (shipWaBtn) {
     }
     const fileName = String(idx).padStart(3, '0') + '.mp3';
     const audio = new Audio('urun_ses/' + fileName);
+    audio.addEventListener('ended', () => { if (onDone) onDone(); });
+    audio.addEventListener('error', () => { if (onDone) onDone(); });
+    audio.play().catch(() => { if (onDone) onDone(); });
+  }
+
+  // Sıralı ses çalma - sesler üst üste binmez
+  function playAudioSequence(audioFiles, onDone) {
+    if (!audioFiles || audioFiles.length === 0) {
+      if (onDone) onDone();
+      return;
+    }
+    
+    let index = 0;
+    const playNext = () => {
+      if (index >= audioFiles.length) {
+        if (onDone) onDone();
+        return;
+      }
+      
+      const file = audioFiles[index++];
+      const audio = new Audio(file);
+      audio.addEventListener('ended', playNext);
+      audio.addEventListener('error', playNext);
+      audio.play().catch(playNext);
+    };
+    
+    playNext();
+  }
+
+  // Belirsiz ürün sorgusu - "Seçim yapın: Baby muz VE İthal muz"
+  function playAmbiguousChoice(candidates, onDone) {
+    if (!candidates || candidates.length === 0) {
+      if (onDone) onDone();
+      return;
+    }
+    
+    const audioFiles = [];
+    
+    // 1. "Seçim yapın"
+    audioFiles.push('secim_yapin.mp3');
+    
+    // 2. Her ürün adı + "VE" araya
+    candidates.forEach((cand, idx) => {
+      audioFiles.push('urun_ses/' + String(cand.index).padStart(3, '0') + '.mp3');
+      if (idx < candidates.length - 1) {
+        audioFiles.push('ve.mp3');
+      }
+    });
+    
+    playAudioSequence(audioFiles, onDone);
+  }
+
+  // "Seçildi" sesini çal
+  function playSecildi(onDone) {
+    const audio = new Audio('secildi.mp3');
     audio.addEventListener('ended', () => { if (onDone) onDone(); });
     audio.addEventListener('error', () => { if (onDone) onDone(); });
     audio.play().catch(() => { if (onDone) onDone(); });
@@ -7830,6 +7913,67 @@ if (shipWaBtn) {
       const pmodal     = document.getElementById('pmodal');
       const isModalOpen= pmodal && !pmodal.classList.contains('hide');
       const B          = this.B();
+
+      // ÖNCELİK: Belirsiz ürün bekleniyor mu?
+      if (this._awaitingChoice && Date.now() < this._awaitingChoice.expiry) {
+        const ctx = this._awaitingChoice;
+        const userInput = norm(rawText);
+        
+        // Seçim yapıldı mı?
+        const matched = ctx.candidates.find(c =>
+          norm(c.name).includes(userInput) ||
+          userInput.includes(norm(c.name)) ||
+          norm(c.name).split(' ').some(w => w.length > 2 && userInput.includes(w))
+        );
+        
+        if (matched) {
+          this._awaitingChoice = null;
+          this.renderSuggestions([]);
+          
+          // "Seçildi" sesi çal
+          playSecildi(() => {
+            // Seçilen ürünle devam et
+            const p = products.find(prod => norm(prod.name) === norm(matched.name));
+            if (p) {
+              this.playTone(850, 'sine', 0.12);
+              this.showFeedback(p.name + ' seçildi', false, false);
+              playUrunSes(p.name, () => {});
+              
+              // Orijinal komutu tekrar çalıştır (ürün adı netleşti)
+              if (ctx.originalCommand) {
+                const newCmd = ctx.originalCommand.replace(ctx.ambiguousWord, p.name);
+                setTimeout(() => this.processCommand(newCmd, []), 300);
+              }
+            }
+          });
+          return;
+        }
+      }
+
+      // Akıllı Belirsizlik Kontrolü: Kullanıcı genel bir şey dedi mi? (muz, avokado, biber vs)
+      const userInput = norm(rawText);
+      const matches = findAllUrunMatches(rawText);
+      
+      if (matches.length > 1 && matches[0].score < 50) {
+        // Birden fazla eşleşme var ve hiçbiri tam eşleşme değil
+        // Belirsizlik var - soru sor
+        this._awaitingChoice = {
+          candidates: matches.slice(0, 2), // İlk 2 eşleşme
+          ambiguousWord: rawText,
+          originalCommand: rawText,
+          expiry: Date.now() + 15000 // 15 saniye bekle
+        };
+        
+        this.playTone(700, 'sine', 0.12);
+        this.showFeedback('Birden fazla eşleşme - seçim yapın', false, false);
+        
+        // Sesli soru çal: "Seçim yapın: Baby muz VE İthal muz"
+        playAmbiguousChoice(matches.slice(0, 2), () => {
+          // Öneriler göster
+          this.renderSuggestions(matches.slice(0, 2).map(m => m.name));
+        });
+        return;
+      }
 
       const intent = this.understand(rawText, alts, products, currentTab, isModalOpen);
 
