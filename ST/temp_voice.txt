@@ -1,0 +1,50 @@
+﻿"voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+        <div class="voice-wave-bar"></div>
+      </div>
+    </div>
+
+    <!-- Canlı metin dökümü ve tespit edilen niyet -->
+    <div class="voice-transcript-box">
+      <p id="voice-live-text" class="voice-live-speech empty">"Domates 3 kasa 15 kilo" veya "Muz fire 2 kilo çürük"...</p>
+      <div id="voice-intent-badge" class="voice-intent-pill" style="display:none;">
+        <span id="voice-intent-name">SAYIM</span>
+      </div>
+    </div>
+
+    <!-- Son işlem geri bildirim ve Geri Al -->
+    <div id="voice-feedback" class="voice-feedback-card" style="display:none;">
+      <span id="voice-feedback-text">İşlem tamamlandı.</span>
+      <button id="voice-undo-btn" class="voice-undo-btn" type="button">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 14L4 9l5-5"/>
+          <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/>
+        </svg>
+        <span>Geri Al</span>
+      </button>
+    </div>
+
+    <!-- Hızlı komut ipuçları (Sıfır Emoji - Temiz B2B Endüstriyel Stil) -->
+    <div class="voice-hints-bar">
+      <button class="voice-hint-chip" type="button" data-cmd="durum nedir"><span class="chip-tag">DURUM</span>Durum nedir?</button>
+      <button class="voice-hint-chip" type="button" data-cmd="sayılmayanları göster"><span class="chip-tag">FİLTRE</span>Sayılmayanlar</button>
+      <button class="voice-hint-chip" type="button" data-cmd="domates 2 kasa"><span class="chip-tag">SAYIM</span>Domates 2 kasa</button>
+      <button class="voice-hint-chip" type="button" data-cmd="muz fire 2 kilo çürük"><span class="chip-tag">FİRE</span>Muz fire 2 kg</button>
+      <button class="voice-hint-chip" type="button" data-cmd="sevkiyat başlat"><span class="chip-tag">SEVKİYAT</span>Sevkiyat başlat</button>
+      <button class="voice-hint-chip" type="button" data-cmd="domates plu 85 olsun"><span class="chip-tag">PLU</span>Domates PLU 85</button>
+      <button class="voice-hint-chip" type="button" data-cmd="domates kasa ağırlığı 5 kilo"><span class="chip-tag">KASA</span>Kasa ağırlığı 5 kg</button>
+      <button class="voice-hint-chip" type="button" data-cmd="kamera aç"><span class="chip-tag">KAMERA</span>Kamera aç</button>
+    </div>
+  </div>
+</div>
+<!-- ================= /SESLİ KOMUT ASİSTANI ================= -->
+
+
+<!-- HIZLI URUN TANIMLAMA MODALI (INLINE & KAMERA) -->
+<div id="qamodal" class="hide" style="position:fixed;inset:0;background:rgba(5,8,16,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100005;display:flex;align-items:center;justify-content:center;padding:16px;overscr

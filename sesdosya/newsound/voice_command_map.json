@@ -1,0 +1,147 @@
+{
+  "product_aliases": {
+    "domates": [
+      "domates",
+      "salkim_domates",
+      "pembe_domates",
+      "kokteyl_domates"
+    ],
+    "muz": [
+      "ithal_muz",
+      "baby_muz"
+    ],
+    "avokado": [
+      "baby_avokado"
+    ],
+    "elma": [
+      "fuji_elma",
+      "gala_elma",
+      "golden_elma",
+      "granny_smith_elma",
+      "karma_elma",
+      "starking_elma",
+      "amasya_elma"
+    ],
+    "armut": [
+      "ankara_armut",
+      "deveci_armut",
+      "santa_maria_armut",
+      "karma_armut"
+    ],
+    "patates": [
+      "patates_dokme",
+      "patates_kizartma",
+      "patates_yemeklik",
+      "mini_patates",
+      "tatli_patates"
+    ],
+    "biber": [
+      "carliston_biber",
+      "dolma_biber",
+      "kalifornia_biber",
+      "kapya_biber",
+      "koy_biber",
+      "sivri_biber"
+    ],
+    "sogan": [
+      "kuru_sogan",
+      "gumus_sogan",
+      "mor_sogan",
+      "sogan_yemeklik",
+      "arpacik_sogan"
+    ],
+    "salatalik": [
+      "salatalik",
+      "cengelkoy_salatalik",
+      "dikenli_salatalik"
+    ],
+    "patlican": [
+      "kemer_patlican",
+      "tarla_patlican"
+    ],
+    "uzum": [
+      "cekirdeksiz_kirmizi_uzum",
+      "cekirdeksiz_sultani_uzum",
+      "red_globe_uzum",
+      "siyah_uzum"
+    ],
+    "limon": [
+      "limon_enter",
+      "limon_enter_file",
+      "limon_mayer_file"
+    ],
+    "portakal": [
+      "portakal",
+      "portakal_file"
+    ],
+    "kavun": [
+      "kirkagac_kavun",
+      "kislik_kavun_kg"
+    ],
+    "mandalina": [
+      "mandalina",
+      "izmir_mandalina"
+    ],
+    "lahana": [
+      "lahana",
+      "kirmizi_lahana"
+    ],
+    "kabak": [
+      "sakiz_kabak",
+      "tarla_kabak"
+    ],
+    "havuc": [
+      "havuc",
+      "havuc_paket_kg"
+    ],
+    "pirasa": [
+      "pirasa",
+      "pirasa_paket_kg"
+    ],
+    "turp": [
+      "turp",
+      "alabas_turp"
+    ]
+  },
+  "action_keywords": {
+    "sayim": [
+      "sayım",
+      "sayim",
+      "kasa",
+      "kutu"
+    ],
+    "fire": [
+      "fire",
+      "atık",
+      "çöp"
+    ],
+    "sevkiyat": [
+      "sevkiyat",
+      "sevk",
+      "fişe",
+      "fise",
+      "yaz"
+    ]
+  },
+  "quantity_units": {
+    "kg": [
+      "kilo",
+      "kilogram",
+      "kg"
+    ],
+    "adet": [
+      "adet",
+      "tane",
+      "kutu",
+      "kasa"
+    ]
+  },
+  "page_transitions": {
+    "urunler": "ürünlersayfasıacıldi (2)",
+    "sayim": "sayımsayfasıacıldi",
+    "fire": "firesayfasıacıldi",
+    "sevkiyat": "sevkiyatsayfasıacıldi",
+    "aktar": "aktarsayfasıacıldi",
+    "pano": "panosayfası"
+  }
+}
