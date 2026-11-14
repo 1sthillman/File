@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
         webView = new WebView(this);
         setContentView(webView);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC); // ses tuşları asistan sesini ayarlasın
 
         // WebView Konfigürasyonu
         WebSettings settings = webView.getSettings();
@@ -224,6 +226,26 @@ public class MainActivity extends AppCompatActivity {
             webView.goBack();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    // 🔴 FIX #7: App background/foreground lifecycle management
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // App background'a gidince mikrofonu durdur (batarya tasarrufu + diğer app'ler mikrofon kullanabilsin)
+        if (androidBridge != null) {
+            androidBridge.onHostPause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Mikrofonu native değil JS başlatır: sürekli dinleme açıksa JS "resumed" olayıyla yeniden başlatır,
+        // kapalı/duraklatılmışsa mikrofon beklenmedik şekilde açılmaz.
+        if (androidBridge != null) {
+            androidBridge.onHostResume();
         }
     }
 

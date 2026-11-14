@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
@@ -24,6 +25,9 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.media.audiofx.NoiseSuppressor;
+import java.util.concurrent.atomic.AtomicInteger;
 import androidx.core.content.ContextCompat;
 import org.vosk.Model;
 import org.vosk.Recognizer;
@@ -219,14 +223,87 @@ public class AndroidBridge {
     private volatile boolean voskActive = false;
     private boolean pendingVoskStart = false;
     private Thread voskThread;
-    private volatile AudioRecord currentAudioRecord = null; // stopVosk anında durdursun diye
-    
-    // Kesintisiz konuşma için ek parametreler - OPTİMİZE EDİLDİ
-    private static final long WORD_MERGE_TIMEOUT_MS = 800; // kelimeler arası sessizlik toleransı (1200'den düşürüldü - daha hızlı)
-    private static final float SILENCE_THRESHOLD = 0.10f;   // sessizlik eşiği (0.08'den artırıldı - daha hassas)
-    private static final int MIN_SILENCE_FRAMES = 8;       // minimum sessiz frame sayısı (12'den düşürüldü - daha hızlı)
-    
-    private long lastSpeechTimeMs = 0;
+    private volatile AudioRecord currentAudioRecord = null;
+
+    // Her mikrofon oturumuna benzersiz kimlik: eski (zombi) iş parçacığı yeni oturumu asla bozamaz.
+    private final AtomicInteger voskSession = new AtomicInteger(0);
+    private volatile int voskRetryCount = 0;     // mikrofon beklenmedik düşerse otomatik yeniden deneme sayacı
+    private volatile boolean micWanted = false;  // kullanıcı/JS mikrofonu istiyor mu?
+    private boolean hostPaused = false;          // uygulama arka planda mı?
+    private boolean micWasOnBeforePause = false;
+
+    // Mikrofon kaynağı. VOICE_RECOGNITION: ham/temiz ses. VOICE_COMMUNICATION: bazı cihazlarda
+    // donanım yankı engelleme (AEC) daha iyi çalışır ama medya sesini kısabilir. Cihazda test ederek seçin.
+    private static final int MIC_SOURCE = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+
+    // ---------------- SIRA ALMA (HALF-DUPLEX) ----------------
+    // TEK SAHİBİ native taraf. Asistan konuşurken mikrofon fiziksel olarak serbest bırakılır,
+    // konuşma penceresi bitince native KENDİ KENDİNE yeniden açar. JS yalnızca "şu kadar ms konuşacağım" der;
+    // mikrofonu açıp kapatmaz. Böylece iki taraf birbirini çekiştiremez.
+    private static final String TURN = "VoiceTurn";
+    private static final long SPEECH_TAIL_MS = 350;   // ses bittikten sonra oda/hoparlör yankısı için bekleme
+    private static final long SPEECH_PAD_MS  = 400;   // play() başlangıç gecikmesi payı
+    private static final long SPEECH_MAX_MS  = 15000; // emniyet üst sınırı: pencere asla bundan uzun kalamaz
+    private volatile long speechWindowEndMs = 0;
+    private final Runnable reopenRunnable = this::reopenAfterSpeech;
+
+    private boolean inSpeechWindow() {
+        return SystemClock.elapsedRealtime() < speechWindowEndMs;
+    }
+
+    /** JS: asistan sesi çalmadan HEMEN ÖNCE (ve çalmaya başlayınca kalan süreyle) çağırır. */
+    @JavascriptInterface
+    public void beginAssistantSpeech(final int durationMs) {
+        final long ms = Math.max(300, Math.min(durationMs > 0 ? durationMs : 4000, SPEECH_MAX_MS));
+        mainHandler.post(() -> {
+            speechWindowEndMs = SystemClock.elapsedRealtime() + ms + SPEECH_PAD_MS + SPEECH_TAIL_MS;
+            Log.i(TURN, "SPEAK begin " + ms + "ms | mic " + (voskActive ? "KAPATILIYOR" : "zaten kapalı") + " | wanted=" + micWanted);
+            if (voskActive) stopVosk(false);   // olay göndermeden, sessizce serbest bırak
+            if (continuousMode && speechRecognizer != null) {
+                try { speechRecognizer.cancel(); isRecognizing = false; } catch (Exception ignored) {}
+            }
+            scheduleReopen();
+        });
+    }
+
+    /** JS: ses erken bittiyse (ended) pencereyi kısaltır; mikrofon tail sonrası açılır. */
+    @JavascriptInterface
+    public void endAssistantSpeech() {
+        mainHandler.post(() -> {
+            if (!inSpeechWindow()) return;
+            speechWindowEndMs = SystemClock.elapsedRealtime() + SPEECH_TAIL_MS;
+            Log.i(TURN, "SPEAK end -> mic " + SPEECH_TAIL_MS + "ms sonra açılacak");
+            scheduleReopen();
+        });
+    }
+
+    private void scheduleReopen() {
+        mainHandler.removeCallbacks(reopenRunnable);
+        long delay = Math.max(0, speechWindowEndMs - SystemClock.elapsedRealtime());
+        mainHandler.postDelayed(reopenRunnable, delay + 20);
+    }
+
+    private void reopenAfterSpeech() {
+        if (inSpeechWindow()) { scheduleReopen(); return; }   // pencere uzatıldıysa yeniden bekle
+        if (!micWanted || hostPaused) return;
+        if (voskActive) return;
+        if (continuousMode) { if (!isRecognizing) scheduleRestart(0); return; }
+        if (voskState == V_READY) { Log.i(TURN, "MIC açılıyor"); startVosk(); }
+        else if (voskState == V_LOADING) pendingVoskStart = true;
+    }
+
+    /** JS kalp atışı: native mikrofon dinliyor ya da birazdan kendisi açacak mı? */
+    @JavascriptInterface
+    public boolean isNativeListening() {
+        return voskActive || pendingVoskStart || continuousMode || (micWanted && inSpeechWindow());
+    }
+
+    // Kesintisiz konuşma için ek parametreler
+    private static final long WORD_MERGE_TIMEOUT_MS = 800;
+    private static final float SILENCE_THRESHOLD = 0.10f;
+    private static final int MIN_SILENCE_FRAMES = 8;
+
+    private volatile long lastSpeechTimeMs = 0;
     private StringBuilder speechBuffer = new StringBuilder();
     private final Object speechBufferLock = new Object();
 
@@ -258,71 +335,106 @@ public class AndroidBridge {
     }
 
     private void startVosk() {
-        if (voskActive) return;
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            sendSpeechEvent("error", "Mikrofon izni verilmedi");
-            sendSpeechEvent("end", "");
-            return;
+        if (inSpeechWindow()) { Log.i(TURN, "start ertelendi (asistan konuşuyor)"); scheduleReopen(); return; }
+        synchronized (this) {
+            if (voskActive || voskThread != null) {
+                Log.w(TAG, "Vosk zaten aktif, çift başlatma engellendi");
+                return;
+            }
+            if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED) {
+                sendSpeechEvent("error", "Mikrofon izni verilmedi");
+                sendSpeechEvent("end", "");
+                return;
+            }
+            voskActive = true;
+            final int session = voskSession.incrementAndGet();
+            voskThread = new Thread(() -> voskLoop(session), "vosk-audio");
+            voskThread.start();
         }
-        voskActive = true;
-        voskThread = new Thread(this::voskLoop, "vosk-audio");
-        voskThread.start();
     }
 
-    private void stopVosk() {
-        voskActive = false;
-        // AudioRecord'u anında durdur — ses çalmaya engel olmasın
-        AudioRecord recToStop = currentAudioRecord;
+    private void stopVosk() { stopVosk(true); }
+
+    private void stopVosk(boolean notify) {
+        AudioRecord recToStop;
+        Thread t;
+        synchronized (this) {
+            voskActive = false;
+            voskSession.incrementAndGet();      // çalışan döngüyü "eski oturum" yapar, kendiliğinden çıkar
+            recToStop = currentAudioRecord;
+            currentAudioRecord = null;
+            t = voskThread;
+            voskThread = null;                  // yeni startVosk() hemen başlayabilir
+        }
+
         if (recToStop != null) {
             try { recToStop.stop(); } catch (Exception ignored) {}
+            try { recToStop.release(); } catch (Exception e) { Log.e(TAG, "AudioRecord release error", e); }
         }
-        // Buffer'daki son veriyi gönder
+
+        // Beklemede kalan metin: asistan konuşmuyorsa kullanıcıya aittir, gönder.
         synchronized (speechBufferLock) {
             if (speechBuffer.length() > 0) {
-                sendSpeechResult(speechBuffer.toString());
+                if (notify) sendSpeechResult(speechBuffer.toString()); // asistan için kapanıyorsa bekleyen metin atılır
                 speechBuffer.setLength(0);
             }
         }
-        Thread t = voskThread;
-        voskThread = null;
+
         if (t != null && t != Thread.currentThread()) {
             t.interrupt();
-            try { t.join(300); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            try { t.join(200); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
         }
-        // Ses kanallarını kesinlikle aç — ses dosyaları çalabilsin
+
         muteBeeps(false);
-        // JS'e Vosk'un tamamen durduğunu bildir — ses çalma bu eventi bekliyor
-        sendSpeechEvent("stopped", "");
+        if (notify) sendSpeechEvent("stopped", "");
     }
 
-    private void voskLoop() {
+    private void voskLoop(final int session) {
         final int rate = 16000;
         AudioRecord rec = null;
         Recognizer recognizer = null;
+        AcousticEchoCanceler aec = null;
+        NoiseSuppressor ns = null;
+        boolean failed = false;
+        String failMsg = "";
         try {
             int minBuf = AudioRecord.getMinBufferSize(rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            // Daha küçük buffer = daha hızlı yanıt (2 saniyeden 0.5 saniyeye)
-            int bufBytes = Math.max(minBuf, rate / 2); // 0.5 saniye tampon
-            rec = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, rate,
+            int bufBytes = Math.max(minBuf * 2, rate); // ~0.5 sn tampon (taşma/underrun olmasın)
+            rec = new AudioRecord(MIC_SOURCE, rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufBytes);
             if (rec.getState() != AudioRecord.STATE_INITIALIZED) {
                 throw new IllegalStateException("Mikrofon başlatılamadı");
             }
-            currentAudioRecord = rec; // stopVosk() anında durdurabilsin
+
+            // Donanım yankı engelleme + gürültü bastırma (varsa). Kapı yine de ana savunmadır.
+            try {
+                if (AcousticEchoCanceler.isAvailable()) {
+                    aec = AcousticEchoCanceler.create(rec.getAudioSessionId());
+                    if (aec != null) aec.setEnabled(true);
+                }
+            } catch (Throwable t) { Log.w(TAG, "AEC açılamadı", t); }
+            try {
+                if (NoiseSuppressor.isAvailable()) {
+                    ns = NoiseSuppressor.create(rec.getAudioSessionId());
+                    if (ns != null) ns.setEnabled(true);
+                }
+            } catch (Throwable t) { Log.w(TAG, "NS açılamadı", t); }
+            Log.i(TAG, "Mikrofon: AEC=" + (aec != null) + " NS=" + (ns != null));
+
             recognizer = new Recognizer(voskModel, rate);
             rec.startRecording();
+            currentAudioRecord = rec;
+            voskRetryCount = 0;
             sendSpeechEvent("ready", "");
 
-            // Daha küçük chunk = daha hızlı işlem (100ms'den 50ms'ye)
-            short[] buf = new short[rate / 20]; // 50 ms chunks
+            short[] buf = new short[rate / 20]; // 50 ms
             boolean speaking = false;
             String lastPartial = "";
             int silenceFrameCount = 0;
-            long sessionStartTime = System.currentTimeMillis();
 
-            while (voskActive) {
+            while (voskActive && voskSession.get() == session) {
                 int n = rec.read(buf, 0, buf.length);
                 if (n < 0) throw new IllegalStateException("Ses kaydı hatası (" + n + ")");
                 if (n == 0) continue;
@@ -330,111 +442,111 @@ public class AndroidBridge {
                 float volume = volumeFromPcm(buf, n);
                 sendVolume01(volume);
 
-                // VAD: Sessizlik algılama
-                boolean isSilent = volume < SILENCE_THRESHOLD;
-                if (isSilent) {
-                    silenceFrameCount++;
-                } else {
-                    silenceFrameCount = 0;
-                }
+                if (volume < SILENCE_THRESHOLD) silenceFrameCount++; else silenceFrameCount = 0;
 
                 if (recognizer.acceptWaveForm(buf, n)) {
                     String text = new JSONObject(recognizer.getResult()).optString("text", "").trim();
-                    
                     if (!text.isEmpty()) {
                         long now = System.currentTimeMillis();
-                        
                         synchronized (speechBufferLock) {
-                            // Kelime birleştirme: son kelimeden bu yana geçen süre kısa mı?
                             if (speechBuffer.length() > 0 && (now - lastSpeechTimeMs) < WORD_MERGE_TIMEOUT_MS) {
-                                // Aynı cümlenin devamı, boşluk ekle
                                 speechBuffer.append(" ").append(text);
                             } else {
-                                // Yeni cümle başladı
-                                if (speechBuffer.length() > 0) {
-                                    // Önceki cümleyi gönder
-                                    sendSpeechResult(speechBuffer.toString());
-                                }
+                                if (speechBuffer.length() > 0) sendSpeechResult(speechBuffer.toString());
                                 speechBuffer.setLength(0);
                                 speechBuffer.append(text);
                             }
                             lastSpeechTimeMs = now;
                         }
-                        
                         speaking = false;
                         lastPartial = "";
                     }
                 } else {
                     String p = new JSONObject(recognizer.getPartialResult()).optString("partial", "").trim();
                     if (!p.isEmpty()) {
-                        long now = System.currentTimeMillis();
-                        lastSpeechTimeMs = now;
-                        
-                        if (!speaking) { 
-                            speaking = true; 
-                            sendSpeechEvent("start", ""); 
-                        }
-                        
-                        if (!p.equals(lastPartial)) { 
-                            lastPartial = p; 
-                            
-                            // Partial sonuçları buffer ile birleştirerek göster
+                        lastSpeechTimeMs = System.currentTimeMillis();
+                        if (!speaking) { speaking = true; sendSpeechEvent("start", ""); }
+                        if (!p.equals(lastPartial)) {
+                            lastPartial = p;
                             synchronized (speechBufferLock) {
-                                String fullPartial = speechBuffer.length() > 0 
-                                    ? speechBuffer.toString() + " " + p 
-                                    : p;
-                                sendSpeechPartial(fullPartial);
+                                sendSpeechPartial(speechBuffer.length() > 0 ? speechBuffer + " " + p : p);
                             }
                         }
                     }
                 }
-                
-                // Uzun sessizlik varsa buffer'ı gönder
+
                 if (silenceFrameCount >= MIN_SILENCE_FRAMES) {
                     synchronized (speechBufferLock) {
-                        if (speechBuffer.length() > 0) {
-                            long now = System.currentTimeMillis();
-                            if ((now - lastSpeechTimeMs) >= WORD_MERGE_TIMEOUT_MS) {
-                                sendSpeechResult(speechBuffer.toString());
-                                speechBuffer.setLength(0);
-                            }
+                        if (speechBuffer.length() > 0
+                                && (System.currentTimeMillis() - lastSpeechTimeMs) >= WORD_MERGE_TIMEOUT_MS) {
+                            sendSpeechResult(speechBuffer.toString());
+                            speechBuffer.setLength(0);
                         }
                     }
                     silenceFrameCount = 0;
                 }
             }
-            
-            // Durdurulurken son kelimeler kaybolmasın
-            String fin = new JSONObject(recognizer.getFinalResult()).optString("text", "").trim();
-            synchronized (speechBufferLock) {
-                if (!fin.isEmpty() && speechBuffer.length() > 0) {
-                    speechBuffer.append(" ").append(fin);
-                } else if (!fin.isEmpty()) {
-                    speechBuffer.append(fin);
-                }
-                if (speechBuffer.length() > 0) {
-                    sendSpeechResult(speechBuffer.toString());
-                    speechBuffer.setLength(0);
+
+            // Normal çıkış (stopVosk çağrıldı): kalan son kelimeler kaybolmasın (asistan konuşmuyorsa)
+            if (!inSpeechWindow()) {
+                String fin = new JSONObject(recognizer.getFinalResult()).optString("text", "").trim();
+                synchronized (speechBufferLock) {
+                    if (!fin.isEmpty()) {
+                        if (speechBuffer.length() > 0) speechBuffer.append(" ");
+                        speechBuffer.append(fin);
+                    }
+                    if (speechBuffer.length() > 0) {
+                        sendSpeechResult(speechBuffer.toString());
+                        speechBuffer.setLength(0);
+                    }
                 }
             }
-            
+
         } catch (Exception e) {
-            Log.e(TAG, "Vosk döngü hatası", e);
-            if (voskActive) {
-                voskActive = false;
-                sendSpeechEvent("error", String.valueOf(e.getMessage()));
-                sendSpeechEvent("end", "");
+            boolean intentional = !voskActive || voskSession.get() != session; // stopVosk AudioRecord'u serbest bıraktı
+            if (intentional) {
+                Log.d(TAG, "Vosk döngüsü bilinçli durduruldu");
+            } else {
+                Log.e(TAG, "Vosk döngü hatası", e);
+                failed = true;
+                failMsg = String.valueOf(e.getMessage());
             }
         } finally {
-            currentAudioRecord = null;
+            synchronized (this) {
+                if (currentAudioRecord == rec) currentAudioRecord = null;
+                // Yalnızca KENDİ oturumumuzsa durumu sıfırla; yeni oturumu asla bozma.
+                if (voskSession.get() == session) {
+                    voskActive = false;
+                    if (voskThread == Thread.currentThread()) voskThread = null;
+                }
+            }
+            if (aec != null) { try { aec.release(); } catch (Exception ignored) {} }
+            if (ns != null)  { try { ns.release(); }  catch (Exception ignored) {} }
             if (rec != null) {
                 try { rec.stop(); } catch (Exception ignored) {}
-                rec.release();
+                try { rec.release(); } catch (Exception ignored) {}
             }
-            if (recognizer != null) {
-                try { recognizer.close(); } catch (Exception ignored) {}
-            }
+            if (recognizer != null) { try { recognizer.close(); } catch (Exception ignored) {} }
         }
+
+        if (failed) onVoskFailure(failMsg);
+    }
+
+    /** Mikrofon beklenmedik şekilde düştüyse (başka uygulama, arama vb.) kendini toparlar. */
+    private void onVoskFailure(final String msg) {
+        mainHandler.post(() -> {
+            if (!micWanted || hostPaused) return;
+            if (voskRetryCount < 3) {
+                final int attempt = ++voskRetryCount;
+                Log.w(TAG, "Mikrofon düştü, yeniden deneniyor (" + attempt + "/3): " + msg);
+                mainHandler.postDelayed(() -> {
+                    if (micWanted && !hostPaused && !voskActive && voskState == V_READY) startVosk();
+                }, 700L * attempt);
+            } else {
+                sendSpeechEvent("error", msg);
+                sendSpeechEvent("end", "");
+            }
+        });
     }
 
     /** PCM bloğundan 0..1 arası ses seviyesi (arayüzdeki ses animasyonu için). */
@@ -447,8 +559,14 @@ public class AndroidBridge {
     }
 
     private void sendVolume01(float vol) {
-        mainHandler.post(() -> webView.evaluateJavascript(
-                "if(window.onNativeSpeechVolume) window.onNativeSpeechVolume(" + vol + ");", null));
+        mainHandler.post(() -> {
+            // 🔴 FIX #8: WebView null check before JS callback
+            if (webView == null || activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            webView.evaluateJavascript(
+                    "if(window.onNativeSpeechVolume) window.onNativeSpeechVolume(" + vol + ");", null);
+        });
     }
 
     // ---------------- JS'in çağırdığı giriş noktaları ----------------
@@ -456,6 +574,7 @@ public class AndroidBridge {
     /** JS: dinlemeyi başlatır. Vosk hazırsa onu, değilse sistem tanıyıcıyı kullanır. */
     @JavascriptInterface
     public void startNativeSpeech() {
+        micWanted = true;
         mainHandler.post(() -> {
             if (voskActive || continuousMode) return; // zaten dinliyor
             if (voskState == V_LOADING) {
@@ -471,9 +590,57 @@ public class AndroidBridge {
         });
     }
 
+    /** (Geriye uyumluluk) Dinlemeyi durdurur. Artık ses kanalı odağı İSTENMEZ: asistan sesi için
+     *  mikrofonu kapatmaya gerek yok, bunun yerine beginAssistantSpeech() kullanılır. */
+    @JavascriptInterface
+    public void pauseNativeSpeech() {
+        mainHandler.post(() -> {
+            if (voskActive) {
+                stopVosk();
+            } else if (continuousMode && speechRecognizer != null) {
+                try { speechRecognizer.cancel(); isRecognizing = false; } catch (Exception e) { Log.e(TAG, "Pause error", e); }
+            }
+        });
+    }
+
+    /** (Geriye uyumluluk) Duraklatılan dinlemeyi sürdürür. */
+    @JavascriptInterface
+    public void resumeNativeSpeech() {
+        mainHandler.post(() -> {
+            if (voskState == V_READY && !voskActive) {
+                startVosk();
+            } else if (continuousMode && !isRecognizing) {
+                scheduleRestart(100);
+            }
+        });
+    }
+
+    /** Activity.onPause: arka planda mikrofon tutulmaz. UI thread. */
+    public void onHostPause() {
+        hostPaused = true;
+        micWasOnBeforePause = micWanted;
+        if (voskActive) {
+            stopVosk();
+        } else if (continuousMode && speechRecognizer != null) {
+            try { speechRecognizer.cancel(); isRecognizing = false; } catch (Exception ignored) {}
+        }
+        if (micWasOnBeforePause) sendSpeechEvent("suspended", "");
+    }
+
+    /** Activity.onResume: JS'e "geri döndük" der; JS sürekli dinleme açıksa mikrofonu yeniden başlatır. UI thread. */
+    public void onHostResume() {
+        hostPaused = false;
+        if (micWasOnBeforePause) {
+            micWasOnBeforePause = false;
+            sendSpeechEvent("resumed", "");
+        }
+    }
+
     /** JS: dinlemeyi tamamen durdurur. */
     @JavascriptInterface
     public void stopNativeSpeech() {
+        micWanted = false;
+        voskRetryCount = 0;
         mainHandler.post(() -> {
             pendingVoskStart = false;
             stopVosk();
@@ -483,6 +650,7 @@ public class AndroidBridge {
 
     /** Activity.onDestroy içinden (UI thread) çağır. */
     public void release() {
+        micWanted = false;
         pendingVoskStart = false;
         stopVosk();
         shutdownSpeech(false);
@@ -754,24 +922,40 @@ public class AndroidBridge {
     }
 
     private void sendSpeechResult(String text) {
-        mainHandler.post(() -> webView.evaluateJavascript(
-                "if(window.onNativeSpeechResult) window.onNativeSpeechResult(" + q(text) + ");", null));
+        mainHandler.post(() -> {
+            // 🔴 FIX #8: WebView null check
+            if (webView == null || activity.isFinishing() || activity.isDestroyed()) return;
+            webView.evaluateJavascript(
+                    "if(window.onNativeSpeechResult) window.onNativeSpeechResult(" + q(text) + ");", null);
+        });
     }
 
     private void sendSpeechPartial(String text) {
-        mainHandler.post(() -> webView.evaluateJavascript(
-                "if(window.onNativeSpeechPartial) window.onNativeSpeechPartial(" + q(text) + ");", null));
+        mainHandler.post(() -> {
+            // 🔴 FIX #8: WebView null check
+            if (webView == null || activity.isFinishing() || activity.isDestroyed()) return;
+            webView.evaluateJavascript(
+                    "if(window.onNativeSpeechPartial) window.onNativeSpeechPartial(" + q(text) + ");", null);
+        });
     }
 
     private void sendSpeechEvent(String eventType, String msg) {
-        mainHandler.post(() -> webView.evaluateJavascript(
-                "if(window.onNativeSpeechEvent) window.onNativeSpeechEvent(" + q(eventType) + ", " + q(msg) + ");", null));
+        mainHandler.post(() -> {
+            // 🔴 FIX #8: WebView null check
+            if (webView == null || activity.isFinishing() || activity.isDestroyed()) return;
+            webView.evaluateJavascript(
+                    "if(window.onNativeSpeechEvent) window.onNativeSpeechEvent(" + q(eventType) + ", " + q(msg) + ");", null);
+        });
     }
 
     private void sendSpeechVolume(float rmsdB) {
         float vol = Math.max(0f, Math.min(1f, (rmsdB + 2f) / 12f));
-        mainHandler.post(() -> webView.evaluateJavascript(
-                "if(window.onNativeSpeechVolume) window.onNativeSpeechVolume(" + vol + ");", null));
+        mainHandler.post(() -> {
+            // 🔴 FIX #8: WebView null check
+            if (webView == null || activity.isFinishing() || activity.isDestroyed()) return;
+            webView.evaluateJavascript(
+                    "if(window.onNativeSpeechVolume) window.onNativeSpeechVolume(" + vol + ");", null);
+        });
     }
 
     private String getSpeechErrorMsg(int error) {
