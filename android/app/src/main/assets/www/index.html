@@ -8288,8 +8288,8 @@ if (shipWaBtn) {
       const resumeListeningAfterAudio = () => {
         this.currentAudio = null;
         this.isSpeaking = false;
-        // Ses bittikten sadece 300ms sonra tekrar dinlemeye başla
-        this._echoSuppressUntil = Date.now() + 300;
+        // Ses bittikten sadece 150ms sonra echo suppress kapat (300ms'den düşürüldü)
+        this._echoSuppressUntil = Date.now() + 150;
       };
 
       try {
@@ -8298,9 +8298,9 @@ if (shipWaBtn) {
         
         // Ses çalmaya başlayınca echo suppress başlat
         audio.onloadedmetadata = () => {
-          // Ses süresi + 500ms echo suppress
+          // Ses süresi + 300ms echo suppress (500ms'den düşürüldü)
           const duration = (audio.duration || 2) * 1000;
-          this._echoSuppressUntil = Date.now() + duration + 500;
+          this._echoSuppressUntil = Date.now() + duration + 300;
         };
         
         audio.onended = resumeListeningAfterAudio;

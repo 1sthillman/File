@@ -221,10 +221,10 @@ public class AndroidBridge {
     private Thread voskThread;
     private volatile AudioRecord currentAudioRecord = null; // stopVosk anında durdursun diye
     
-    // Kesintisiz konuşma için ek parametreler
-    private static final long WORD_MERGE_TIMEOUT_MS = 1200; // kelimeler arası sessizlik toleransı
-    private static final float SILENCE_THRESHOLD = 0.08f;   // sessizlik eşiği (0-1 arası)
-    private static final int MIN_SILENCE_FRAMES = 12;       // minimum sessiz frame sayısı (yaklaşık 1.2 saniye)
+    // Kesintisiz konuşma için ek parametreler - OPTİMİZE EDİLDİ
+    private static final long WORD_MERGE_TIMEOUT_MS = 800; // kelimeler arası sessizlik toleransı (1200'den düşürüldü - daha hızlı)
+    private static final float SILENCE_THRESHOLD = 0.10f;   // sessizlik eşiği (0.08'den artırıldı - daha hassas)
+    private static final int MIN_SILENCE_FRAMES = 8;       // minimum sessiz frame sayısı (12'den düşürüldü - daha hızlı)
     
     private long lastSpeechTimeMs = 0;
     private StringBuilder speechBuffer = new StringBuilder();
@@ -303,7 +303,8 @@ public class AndroidBridge {
         try {
             int minBuf = AudioRecord.getMinBufferSize(rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            int bufBytes = Math.max(minBuf, rate * 2); // en az ~1 sn tampon
+            // Daha küçük buffer = daha hızlı yanıt (2 saniyeden 0.5 saniyeye)
+            int bufBytes = Math.max(minBuf, rate / 2); // 0.5 saniye tampon
             rec = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufBytes);
             if (rec.getState() != AudioRecord.STATE_INITIALIZED) {
@@ -314,7 +315,8 @@ public class AndroidBridge {
             rec.startRecording();
             sendSpeechEvent("ready", "");
 
-            short[] buf = new short[rate / 10]; // 100 ms
+            // Daha küçük chunk = daha hızlı işlem (100ms'den 50ms'ye)
+            short[] buf = new short[rate / 20]; // 50 ms chunks
             boolean speaking = false;
             String lastPartial = "";
             int silenceFrameCount = 0;
