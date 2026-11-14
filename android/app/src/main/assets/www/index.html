@@ -2766,6 +2766,11 @@ nav button{font-size:10.5px!important;padding:8px 0 7px!important}nav button svg
   <div class="big"><span id="frKg">0</span><small>kg</small></div>
   <div class="gl"><div><b id="frN">0</b>kayıt</div><div><b id="frTl">—</b>₺ zarar</div></div></div>
  
+ <div class="card" style="margin-bottom:12px">
+  <p class="sub" style="margin:0 0 6px">Fire raporu tarihi</p>
+  <input type="date" id="fire-date" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:15px" />
+ </div>
+
  <div class="sc"><svg viewBox="0 0 24 24" id="i3"></svg><input id="sc-fire" data-tab="fire" inputmode="none" placeholder="Terazi etiketini okutun" autocomplete="off"><button class="g camb" aria-label="Kamerayla okut"></button><button class="g kb" aria-label="Klavyeyi aç veya kapat"></button></div>
  <div class="unk hide" id="unk-fire"></div>
  <p class="sub" style="margin:0 0 6px 4px">Fire nedeni (okutulan her etikete uygulanır)</p>
@@ -5648,9 +5653,32 @@ function editFire(i){const d=day(),a=WL(d).slice(),w=a[i];if(!w||!M.products.has
   const b=WL(d).slice();if(!b[i]||b[i].t!==w.t){o.remove();return fireR()}b[i]=Object.assign({},b[i],{why:$('#fedw').value});if($('#fedu').value==='adet'){b[i].n=Math.max(1,Math.round(v));b[i].kg=0}else{delete b[i].n;b[i].kg=+v.toFixed(3)};await XS('w|'+d,b);o.remove();vib(10);toast('Fire güncellendi');fireR()}}
 $('#ffl').onclick=async e=>{const ey=e.target.closest('button[data-eye]');if(ey){const k=ey.closest('.fcd').dataset.k,V=fqv();V.has(k)?V.delete(k):V.add(k);await save('meta',{k:'x|fqv',v:[...V]});fireR();return}const b=e.target.closest('button[data-i]');if(!b){if(e.target.closest('.fqb'))return;const r=e.target.closest('.fcd');if(r)editFire(+r.dataset.i);return}if(!await ask('Bu fire kaydı silinsin mi?'))return;const d=day(),a=WL(d).slice();a.splice(+b.dataset.i,1);if(a.length)await XS('w|'+d,a);else await remove('meta','x|w|'+d);fireR()};
 $('#fadd2').onclick=async()=>{const id=$('#fp2').value,kg=num($('#fk2').value);if(!id||!kg)return toast('Ürün seçip fire kg girin');$('#fk2').value='';await addFire(id,kg,FW,'elle','',$('#fu2').value)};
-function rep(){const d=day(),L=WL(d).filter(w=>M.products.has(w.id));if(!L.length)return'';let kg=0,tl=0;
- const rows=L.map(w=>{kg+=w.kg;tl+=w.kg*PB(w.id);return'• '+M.products.get(w.id).name+': '+(w.n?w.n+' adet':fmt(w.kg)+' kg')+' ('+w.why+')'});
- return'*Fire raporu*\n'+long(d)+'\n'+rows.join('\n')+'\nToplam: '+fmt(kg)+' kg'+(tl?', yaklaşık '+fmt(tl)+' ₺':'')}
+// Fire raporu - seçilen tarihe göre
+function getSelectedFireDate() {
+  const dateInput = $('#fire-date');
+  return dateInput && dateInput.value ? dateInput.value : day();
+}
+
+function rep(){
+  const d=getSelectedFireDate();
+  const L=WL(d).filter(w=>M.products.has(w.id));
+  if(!L.length)return'';
+  let kg=0,tl=0;
+  const rows=L.map(w=>{kg+=w.kg;tl+=w.kg*PB(w.id);return'• '+M.products.get(w.id).name+': '+(w.n?w.n+' adet':fmt(w.kg)+' kg')+' ('+w.why+')'});
+  return'*Fire raporu*\n'+long(d)+'\n'+rows.join('\n')+'\nToplam: '+fmt(kg)+' kg'+(tl?', yaklaşık '+fmt(tl)+' ₺':'')
+}
+
+// Tarih seçici başlangıç değeri ve değişiklik dinleyicisi
+(function initFireDatePicker() {
+  const dateInput = $('#fire-date');
+  if (dateInput) {
+    dateInput.value = day();
+    dateInput.addEventListener('change', () => {
+      fireR(); // Fire listesini yenile
+    });
+  }
+})();
+
 $('#frcp').onclick=async()=>{const t=rep();if(!t)return toast('Fire kaydı yok');try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(x){}a.remove()}toast('Fire raporu kopyalandı')};
 $('#frwa').onclick=()=>{const t=rep();if(!t)return toast('Fire kaydı yok');window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener')};
 $('#t-fire .camb').onclick=()=>camStart(c=>scan(c,'fire'));
@@ -6561,13 +6589,14 @@ if (shipWaBtn) {
     const qWords = q.split(' ').filter(Boolean);
 
     let best = null, bestScore = -1;
+    let secondBest = null, secondScore = -1; // İKİNCİ EN İYİ EŞLEŞME
 
     for (const p of products) {
       const pn = norm(p.name);
       const pWords = pn.split(' ').filter(Boolean);
 
-      // 1. Birebir tam isim eşleşmesi
-      if (q === pn) return { p, score: 3.0 };
+      // 1. Birebir tam isim eşleşmesi - BELİRSİZLİK YOK
+      if (q === pn) return { p, score: 3.0, isExact: true };
 
       // 2. Staple synonym önceliği
       let score = 0;
@@ -6628,7 +6657,21 @@ if (shipWaBtn) {
       }
       score = Math.max(score, simScore);
 
-      if (score > bestScore) { bestScore = score; best = p; }
+      // En iyi ve ikinci en iyi skoru takip et
+      if (score > bestScore) { 
+        secondScore = bestScore;
+        secondBest = best;
+        bestScore = score; 
+        best = p; 
+      } else if (score > secondScore) {
+        secondScore = score;
+        secondBest = p;
+      }
+    }
+
+    // BELİRSİZLİK KONTROLÜ: İki yüksek skorlu eşleşme varsa NULL dön
+    if (bestScore >= 0.52 && secondScore >= 0.50 && Math.abs(bestScore - secondScore) < 0.25) {
+      return null; // BELİRSİZLİK - processCommand belirsizlik sistemini tetikleyecek
     }
 
     return bestScore >= 0.52 ? { p: best, score: bestScore } : null;
@@ -7950,32 +7993,45 @@ if (shipWaBtn) {
         }
       }
 
-      // Akıllı Belirsizlik Kontrolü: Kullanıcı genel bir şey dedi mi? (muz, avokado, biber vs)
-      const userInput = norm(rawText);
-      const matches = findAllUrunMatches(rawText);
-      
-      if (matches.length > 1 && matches[0].score < 50) {
-        // Birden fazla eşleşme var ve hiçbiri tam eşleşme değil
-        // Belirsizlik var - soru sor
-        this._awaitingChoice = {
-          candidates: matches.slice(0, 2), // İlk 2 eşleşme
-          ambiguousWord: rawText,
-          originalCommand: rawText,
-          expiry: Date.now() + 15000 // 15 saniye bekle
-        };
+      const intent = this.understand(rawText, alts, products, currentTab, isModalOpen);
+
+      // BELİRSİZLİK KONTROLÜ: Intent NULL ise birden fazla eşleşme var mı kontrol et
+      if (!intent) {
+        const userInput = norm(rawText);
+        const matches = findAllUrunMatches(rawText);
         
-        this.playTone(700, 'sine', 0.12);
-        this.showFeedback('Birden fazla eşleşme - seçim yapın', false, false);
+        if (matches.length >= 2) {
+          // Belirsizlik var - soru sor
+          this._awaitingChoice = {
+            candidates: matches.slice(0, 2),
+            ambiguousWord: rawText,
+            originalCommand: rawText,
+            expiry: Date.now() + 15000
+          };
+          
+          this.playTone(700, 'sine', 0.12);
+          this.showFeedback('Birden fazla eşleşme - lütfen seçin', false, false);
+          
+          // Sesli soru çal: "Seçim yapın: Baby muz VE İthal muz"
+          playAmbiguousChoice(matches.slice(0, 2), () => {
+            this.renderSuggestions(matches.slice(0, 2).map(m => m.name));
+          });
+          return;
+        }
         
-        // Sesli soru çal: "Seçim yapın: Baby muz VE İthal muz"
-        playAmbiguousChoice(matches.slice(0, 2), () => {
-          // Öneriler göster
-          this.renderSuggestions(matches.slice(0, 2).map(m => m.name));
-        });
+        // Normal "anlaşılamadı" akışı
+        this.playTone(320, 'sine', 0.12);
+        this.showIntent('?');
+        this._pendingLearn = norm(rawText);
+        const sg = suggest(norm(rawText), products, currentTab, isModalOpen);
+        this.showFeedback(sg.length ? 'Tam anlayamadım — şunlardan biri mi?' : 'Anlayamadım. Örnek: "domates 5 kilo", "muz fire"', true, false);
+        this.renderSuggestions(sg);
+        const now = Date.now();
+        if (rawText.length >= 4 && (now - this._lastNotUnderstoodTime > 3000)) {
+          this._lastNotUnderstoodTime = now;
+        }
         return;
       }
-
-      const intent = this.understand(rawText, alts, products, currentTab, isModalOpen);
 
       if (!intent) {
         this.playTone(320, 'sine', 0.12);
