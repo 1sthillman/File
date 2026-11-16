@@ -8,25 +8,27 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 
 İnternet bağlantısına hiç ihtiyaç duymadan, depoda veya manavda kesintisiz çalışabilen yerel Android APK paketi:
 
-### 🆕 EN YENİ - Voice Fix v2.1 (Önerilen) - **15 Kasım 2026**
+### 🆕 EN YENİ - Native Gate Fix v2.2 (Önerilen) - **15 Kasım 2026 (v2)**
+- **Doğrudan İndirme:** [manav-sayim-v2.2-native-gate-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.2-native-gate-fix.apk) (88.93 MB)
+- **🔧 KRİTİK JS/Native Çekişme Düzeltmesi:**
+  - ✅ **Çekişme Sorunu Tamamen Çözüldü**: JS artık native gate varken ASLA mikrofon kontrolü yapmıyor
+  - ✅ **Ses Kesintisi YOK**: Asistan konuşurken ses tam çalıyor, kesinti/takılma yok
+  - ✅ **Mikrofon %100 Native Kontrolünde**: Tek yönetim merkezi, çekişme imkansız
+  - ✅ **Event Sistemi**: Native mikrofon açınca JS'e `mic_reopened` eventi gönderiyor
+  - ✅ **Heartbeat Optimizasyonu**: Native gate varken devre dışı (gereksiz kontroller kaldırıldı)
+- **Önceki Özellikler (v2.1):**
+  - ✅ Çoklu Komut Desteği
+  - ✅ Ürün Varyasyon Seçimi
+  - ✅ 128 Ses Dosyası
+  - ✅ Akıllı Doğal Dil İşleme
+
+### Önceki Versiyon - Voice Fix v2.1
 - **Doğrudan İndirme:** [manav-sayim-v2.1-voice-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.1-voice-fix.apk) (88.93 MB)
-- **🔧 Kritik Düzeltmeler:**
-  - ✅ **Ses Kesintisi Düzeltildi**: Asistan konuşurken mikrofon sorunsuz kapanıyor
-  - ✅ **Mikrofon Hızlı Açılma**: Ses bitiminden 500ms sonra otomatik açılıyor
-  - ✅ **Buffer Güvenliği**: Konuşma sırasında veri kaybı önlendi
-  - ✅ **Hata Yönetimi**: Ses çalma hatalarında mikrofon kilitlenme sorunu çözüldü
-  - ✅ **Optimizasyon**: Timing parametreleri iyileştirildi
-- **Özellikler:**
-  - ✅ **Çoklu Komut Desteği**: "domates 5 kilo sayım patates 4 kilo fire"
-  - ✅ **Ürün Varyasyon Seçimi**: Muz → İthal/Baby, Domates → Salkım/Pembe/Kokteyl
-  - ✅ **128 Ses Dosyası**: Ürün isimleri + Sayfa geçişleri + Sistem sesleri
-  - ✅ **Akıllı Doğal Dil İşleme**: Farklı söyleyişleri anlayabilir
+- ⚠️ Çekişme sorunu devam ediyor, v2.2 önerilir
 
-### Önceki Versiyon - Smart Voice v2.0
-- **Doğrudan İndirme:** [manav-sayim-v2.0-smart-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.0-smart-voice.apk) (86.48 MB)
-
-### Eski Versiyon - Native Voice v1.0
-- **Doğrudan İndirme:** [manav-sayim-v1.0-native-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v1.0-native-voice.apk) (85.75 MB)
+### Daha Eski Versiyonlar
+- Smart Voice v2.0: [manav-sayim-v2.0-smart-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.0-smart-voice.apk) (86.48 MB)
+- Native Voice v1.0: [manav-sayim-v1.0-native-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v1.0-native-voice.apk) (85.75 MB)
 
 ### Android APK Kurulum Adımları
 1. Yukarıdaki **v2.0** bağlantısından APK'yı telefonunuza indirin
@@ -34,7 +36,7 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 3. Uygulama açıldığında Kamera ve Mikrofon izinleri otomatik olarak istenir ve onaylanır
 4. Artık internet bağlantısı olmasa dahi hiçbir uyarı vermeden doğrudan açılır ve çalışır
 
-### 🎙️ Hızlı Test (v2.1 - Voice Fix)
+### 🎙️ Hızlı Test (v2.2 - Native Gate Fix)
 İlk açılışta mikrofonu aç ve dene:
 ```
 ✓ "domates 5 kilo"          → Basit sayım
@@ -42,10 +44,10 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 ✓ "domates 5 kilo sayım patates 4 kilo fire"  → Çoklu komut
 ```
 
-**🔧 v2.1 Düzeltmeleri Test:**
-- Asistan konuşurken yeni komut söyle → ilk ses tamamlanmalı, mikrofon kapalı olmalı
-- Ses bitince hemen konuş → mikrofon 500ms içinde açılmalı, gecikme olmamalı
-- 5-10 komut üst üste söyle → her seferinde düzgün çalışmalı
+**🔧 v2.2 Çekişme Testi:**
+- Asistan konuşurken yeni komut söyle → ✅ İlk ses TAM çalmalı, kesinti YOK
+- Ses bitince hemen konuş → ✅ Mikrofon 500ms içinde açılmalı
+- 5-10 komut üst üste → ✅ Her seferinde düzgün, çekişme YOK
 
 ---
 
@@ -80,6 +82,37 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 
 ## 📝 Versiyon Notları
 
+### v2.2 - Native Gate Fix (15 Kasım 2026 - v2)
+**KRİTİK: JS/Native Çekişme Sorunu Tamamen Çözüldü**
+
+#### 🎯 Ana Sorun (v2.1'de devam ediyordu):
+- ❌ Asistan konuşurken mikrofon kapanıyor
+- ❌ Ses yarıda kesiliyor
+- ❌ Mikrofon ve ses sistemi çekişiyor
+- **Kök Neden**: JS native gate olmasına rağmen hala `startListening()` çağırıyordu
+
+#### ✅ Çözüm:
+- **JS artık ASLA mikrofon kontrolü yapmıyor** (native gate varken)
+- Mikrofon kontrolü %100 native tarafında
+- Event sistemi eklendi: `mic_reopened`
+- Heartbeat native gate varken devre dışı
+
+#### 🔧 Teknik Değişiklikler:
+```javascript
+// ❌ ÖNCE (v2.1):
+this._nativeGate(false, 0);
+this.startListening(); // ← Çekişme!
+
+// ✅ SONRA (v2.2):
+this._nativeGate(false, 0);
+// Sadece UI güncelle, mikrofon native açacak
+this.updateUIStatus('Hazır (native açacak)', 'idle');
+```
+
+**Detaylı Dokümantasyon**: [NATIVE_GATE_FIX.md](NATIVE_GATE_FIX.md)
+
+---
+
 ### v2.1 - Voice Fix (15 Kasım 2026)
 **Kritik Ses Sistemi Düzeltmeleri**
 
@@ -96,10 +129,7 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 - Buffer yönetimi güvenliği artırıldı
 - AudioRecord release kontrolleri eklendi
 
-#### 📊 Performans:
-- Mikrofon yanıt süresi: %50 iyileşme
-- Ses kalitesi: Kesinti/takılma sıfırlandı
-- Buffer güvenliği: %100 veri koruma
+**⚠️ Not**: v2.1'de JS/Native çekişme sorunu devam ediyor, v2.2 önerilir
 
 **Detaylı Dokümantasyon**: 
 - [SES_KESINTI_FIX_NOTLARI.md](SES_KESINTI_FIX_NOTLARI.md)

@@ -241,8 +241,8 @@ public class AndroidBridge {
     // konuşma penceresi bitince native KENDİ KENDİNE yeniden açar. JS yalnızca "şu kadar ms konuşacağım" der;
     // mikrofonu açıp kapatmaz. Böylece iki taraf birbirini çekiştiremez.
     private static final String TURN = "VoiceTurn";
-    private static final long SPEECH_TAIL_MS = 350;   // ses bittikten sonra oda/hoparlör yankısı için bekleme
-    private static final long SPEECH_PAD_MS  = 400;   // play() başlangıç gecikmesi payı
+    private static final long SPEECH_TAIL_MS = 500;   // 🔴 FIX: 350 → 500 (ses bittikten sonra hoparlör buffer temizliği)
+    private static final long SPEECH_PAD_MS  = 300;   // 🔴 FIX: 400 → 300 (play() zaten hızlı başlıyor)
     private static final long SPEECH_MAX_MS  = 15000; // emniyet üst sınırı: pencere asla bundan uzun kalamaz
     private volatile long speechWindowEndMs = 0;
     private final Runnable reopenRunnable = this::reopenAfterSpeech;
@@ -257,10 +257,20 @@ public class AndroidBridge {
         final long ms = Math.max(300, Math.min(durationMs > 0 ? durationMs : 4000, SPEECH_MAX_MS));
         mainHandler.post(() -> {
             speechWindowEndMs = SystemClock.elapsedRealtime() + ms + SPEECH_PAD_MS + SPEECH_TAIL_MS;
-            Log.i(TURN, "SPEAK begin " + ms + "ms | mic " + (voskActive ? "KAPATILIYOR" : "zaten kapalı") + " | wanted=" + micWanted);
-            if (voskActive) stopVosk(false);   // olay göndermeden, sessizce serbest bırak
+            // 🔴 FIX: Detaylı log
+            Log.i(TURN, "🔴 SPEAK BEGIN " + ms + "ms | pad=" + SPEECH_PAD_MS + "ms | tail=" + SPEECH_TAIL_MS + "ms | mic=" + 
+                  (voskActive ? "KAPATILIYOR" : "zaten kapalı") + " | wanted=" + micWanted + " | inWindow=" + inSpeechWindow());
+            
+            if (voskActive) {
+                Log.i(TURN, "  → stopVosk() çağrılıyor (sessizce)");
+                stopVosk(false);   // olay göndermeden, sessizce serbest bırak
+            }
             if (continuousMode && speechRecognizer != null) {
-                try { speechRecognizer.cancel(); isRecognizing = false; } catch (Exception ignored) {}
+                try { 
+                    Log.i(TURN, "  → SpeechRecognizer.cancel()");
+                    speechRecognizer.cancel(); 
+                    isRecognizing = false; 
+                } catch (Exception ignored) {}
             }
             scheduleReopen();
         });
@@ -270,9 +280,13 @@ public class AndroidBridge {
     @JavascriptInterface
     public void endAssistantSpeech() {
         mainHandler.post(() -> {
-            if (!inSpeechWindow()) return;
+            if (!inSpeechWindow()) {
+                Log.i(TURN, "⚠️ END çağrıldı ama pencere zaten bitmiş");
+                return;
+            }
+            long oldEnd = speechWindowEndMs;
             speechWindowEndMs = SystemClock.elapsedRealtime() + SPEECH_TAIL_MS;
-            Log.i(TURN, "SPEAK end -> mic " + SPEECH_TAIL_MS + "ms sonra açılacak");
+            Log.i(TURN, "🟢 SPEAK END | pencere kısaltıldı (" + (oldEnd - speechWindowEndMs) + "ms) | mic " + SPEECH_TAIL_MS + "ms sonra açılacak");
             scheduleReopen();
         });
     }
@@ -284,12 +298,38 @@ public class AndroidBridge {
     }
 
     private void reopenAfterSpeech() {
-        if (inSpeechWindow()) { scheduleReopen(); return; }   // pencere uzatıldıysa yeniden bekle
-        if (!micWanted || hostPaused) return;
-        if (voskActive) return;
-        if (continuousMode) { if (!isRecognizing) scheduleRestart(0); return; }
-        if (voskState == V_READY) { Log.i(TURN, "MIC açılıyor"); startVosk(); }
-        else if (voskState == V_LOADING) pendingVoskStart = true;
+        if (inSpeechWindow()) { 
+            Log.i(TURN, "  reopen: pencere henüz aktif, yeniden zamanlanıyor");
+            scheduleReopen(); 
+            return; 
+        }   // pencere uzatıldıysa yeniden bekle
+        if (!micWanted || hostPaused) {
+            Log.i(TURN, "  reopen: micWanted=" + micWanted + " hostPaused=" + hostPaused + " → mikrofon açılmayacak");
+            return;
+        }
+        if (voskActive) {
+            Log.i(TURN, "  reopen: mikrofon zaten açık");
+            return;
+        }
+        if (continuousMode) { 
+            if (!isRecognizing) {
+                Log.i(TURN, "🎤 MIC AÇILIYOR (continuousMode)");
+                scheduleRestart(0); 
+            }
+            return; 
+        }
+        if (voskState == V_READY) { 
+            Log.i(TURN, "🎤 MIC AÇILIYOR (Vosk)"); 
+            startVosk();
+            // 🔴 KRİTİK: JS'e mikrofon açıldığını bildir
+            sendSpeechEvent("mic_reopened", "");
+        }
+        else if (voskState == V_LOADING) {
+            Log.i(TURN, "  reopen: Vosk yükleniyor, pendingVoskStart=true");
+            pendingVoskStart = true;
+        } else {
+            Log.w(TURN, "  reopen: voskState=" + voskState + " → mikrofon açılamıyor");
+        }
     }
 
     /** JS kalp atışı: native mikrofon dinliyor ya da birazdan kendisi açacak mı? */
@@ -357,6 +397,7 @@ public class AndroidBridge {
     private void stopVosk() { stopVosk(true); }
 
     private void stopVosk(boolean notify) {
+        Log.i(TAG, "🔴 stopVosk(" + notify + ") çağrıldı | voskActive=" + voskActive);
         AudioRecord recToStop;
         Thread t;
         synchronized (this) {
@@ -369,14 +410,24 @@ public class AndroidBridge {
         }
 
         if (recToStop != null) {
-            try { recToStop.stop(); } catch (Exception ignored) {}
-            try { recToStop.release(); } catch (Exception e) { Log.e(TAG, "AudioRecord release error", e); }
+            Log.i(TAG, "  → AudioRecord durduruluyor ve release() ediliyor");
+            try { recToStop.stop(); } catch (Exception e) { Log.w(TAG, "AudioRecord.stop() hatası", e); }
+            try { recToStop.release(); Log.i(TAG, "  ✅ AudioRecord.release() başarılı"); } 
+            catch (Exception e) { Log.e(TAG, "  ❌ AudioRecord.release() hatası", e); }
+        } else {
+            Log.i(TAG, "  → AudioRecord zaten null");
         }
 
         // Beklemede kalan metin: asistan konuşmuyorsa kullanıcıya aittir, gönder.
         synchronized (speechBufferLock) {
             if (speechBuffer.length() > 0) {
-                if (notify) sendSpeechResult(speechBuffer.toString()); // asistan için kapanıyorsa bekleyen metin atılır
+                Log.i(TAG, "  → speechBuffer içinde " + speechBuffer.length() + " karakter var | notify=" + notify);
+                if (notify) {
+                    Log.i(TAG, "  → Buffer içeriği kullanıcıya gönderiliyor: \"" + speechBuffer.toString() + "\"");
+                    sendSpeechResult(speechBuffer.toString()); // asistan için kapanıyorsa bekleyen metin atılır
+                } else {
+                    Log.i(TAG, "  → Buffer içeriği atılıyor (asistan konuşuyor)");
+                }
                 speechBuffer.setLength(0);
             }
         }
@@ -388,6 +439,7 @@ public class AndroidBridge {
 
         muteBeeps(false);
         if (notify) sendSpeechEvent("stopped", "");
+        Log.i(TAG, "✅ stopVosk tamamlandı");
     }
 
     private void voskLoop(final int session) {

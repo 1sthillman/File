@@ -9451,52 +9451,77 @@ if (shipWaBtn) {
       this.clearWatchdog();
       if (this._interimTimer) { clearTimeout(this._interimTimer); this._interimTimer = null; }
       if (this.restartTimer) { clearTimeout(this.restartTimer); this.restartTimer = null; }
+      
       /* v29: Android'de mikrofon KAPANMAZ. Native taraf asistan konuşurken sesi Vosk'a vermez (yankı kapısı). */
       if (this._hasNativeGate()) {
+        console.log('[VoiceAudio] 🔴 _pauseMicForAudio: beginAssistantSpeech(' + (this._speakMs || 0) + 'ms) çağrılıyor');
         this.showTranscript('', false);            // havada kalan kelime/harfleri temizle
         this._nativeGate(true, this._speakMs || 0); // native: 'şu kadar ms konuşacağım' -> mikrofonu KENDİ kapatır, KENDİ açar
+        console.log('[VoiceAudio] ✅ Native gate açıldı, mikrofon native tarafından yönetiliyor');
         return;
       }
+      
+      console.log('[VoiceAudio] ⚠️ Native gate YOK, klasik pause yöntemi kullanılıyor');
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.stopNativeSpeech === 'function') {
           window.AndroidBridge.stopNativeSpeech();
         } else if (this.recognition) {
           this.recognition.abort(); // stop() değil abort(): bekleyen sonuçlar da atılır
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('[VoiceAudio] Mikrofon durdurma hatası:', e);
+      }
       this.isRecognizing = false;
       this.setListeningVisuals(false);
     }
 
     _finishSpeaking(token) {
-      if (token !== this._speakToken) return;           // eski/iptal edilmiş çalma, yok say
+      if (token !== this._speakToken) {
+        console.log('[VoiceAudio] ⚠️ _finishSpeaking: eski token (' + token + ' vs ' + this._speakToken + '), yok sayılıyor');
+        return;           // eski/iptal edilmiş çalma, yok say
+      }
+      console.log('[VoiceAudio] 🟢 _finishSpeaking: ses bitti, mikrofon açılıyor');
+      
       if (this._speakSafety) { clearTimeout(this._speakSafety); this._speakSafety = null; }
       this.currentAudio = null;
       this._lastSpokeAt = Date.now();
+      
       if (this._hasNativeGate()) {
-        // Mikrofon hiç kapanmadı: kapıyı aç (native 450 ms hoparlör kuyruğunu kendi süzer), bekleme yok.
+        console.log('[VoiceAudio] ✅ Native gate var: endAssistantSpeech() çağrılıyor');
+        // 🔴 KRİTİK: Native gate varken mikrofon TAMAMEN native tarafından yönetilir
+        // JS ASLA startListening() çağırmamalı, native kendisi açacak
         this.isSpeaking = false;
         this._echoSuppressUntil = 0;
         this._nativeGate(false, 0);
         if (this._resumeTimer) { clearTimeout(this._resumeTimer); this._resumeTimer = null; }
+        
+        // 🔴 FIX: Native kontrol varken UI'ı güncelle ama startListening() ÇAĞIRMA
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          if (this.isRecognizing) { this.updateUIStatus('Dinleniyor', 'listening'); this.setListeningVisuals(true); }
-          else this.startListening();
-        } else if (!this.isRecognizing) {
+          console.log('[VoiceAudio] Native mikrofonu kendi açacak, sadece UI güncelleniyor');
+          this.updateUIStatus('Hazır (native açacak)', 'idle');
+          // isRecognizing flag'i TRUE yapmıyoruz çünkü native açana kadar false kalmalı
+        } else {
+          console.log('[VoiceAudio] Dinleme devam etmeyecek');
           this.updateUIStatus('Hazır', 'idle');
         }
         return;
       }
+      console.log('[VoiceAudio] ⚠️ Native gate YOK: 700ms yankı bastırma + 750ms mikrofon açma gecikmesi');
       // Ses bittikten sonra hoparlör kuyruğu/yankı için kısa bir süre daha dinleme yok
       this._echoSuppressUntil = Date.now() + 700;
       this.isSpeaking = false;
       if (this._resumeTimer) clearTimeout(this._resumeTimer);
       this._resumeTimer = setTimeout(() => {
         this._resumeTimer = null;
-        if (this.isSpeaking) return;                    // bu arada yeni ses başladıysa o açacak
+        if (this.isSpeaking) {
+          console.log('[VoiceAudio] Yeni ses başladı, mikrofon açılmayacak');
+          return;                    // bu arada yeni ses başladıysa o açacak
+        }
         if (this.shouldKeepListening() && !this.manuallyPaused && !this.isRecognizing) {
+          console.log('[VoiceAudio] Mikrofon yeniden başlatılıyor');
           this.startListening();
         } else if (!this.isRecognizing) {
+          console.log('[VoiceAudio] Dinleme devam etmeyecek');
           this.updateUIStatus('Hazır', 'idle');
         }
       }, 750);
@@ -9524,6 +9549,8 @@ if (shipWaBtn) {
       // Konuşma başladı: mikrofonu kapat ve her şeyi yut
       this.isSpeaking = true;
       this._echoSuppressUntil = Date.now() + 15000; // gerçek süre metadata ile güncellenir, emniyet için geniş başlar
+
+      // 🔴 FIX: Mikrofon kontrolünü ÖNCE yap (audio.play() başarısız olabilir)
       this._pauseMicForAudio();
 
       // Emniyet: 'ended' hiç gelmezse mikrofon sonsuza dek kapalı kalmasın
@@ -9537,26 +9564,43 @@ if (shipWaBtn) {
         audio.preload = 'auto';
         audio.volume = 1;
         this.currentAudio = audio;
+        
         audio.onloadedmetadata = () => {
           if (token !== this._speakToken) return;
           const d = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 3;
+          // 🔴 FIX: İlk beginAssistantSpeech zaten _pauseMicForAudio'da çağrıldı, burada güncelle
           this._nativeGate(true, Math.round(d * 1000));
           if (this._speakSafety) clearTimeout(this._speakSafety);
           this._speakSafety = setTimeout(() => this._finishSpeaking(token), d * 1000 + 2500);
         };
+        
+        // 🔴 FIX: onplaying'de tekrar _nativeGate çağırmaya gerek yok (zaten metadata'da yapıldı)
         audio.onplaying = () => {
           if (token !== this._speakToken) return;
-          const rem = isFinite(audio.duration) && audio.duration > 0 ? Math.round((audio.duration - audio.currentTime) * 1000) : this._speakMs;
-          this._nativeGate(true, rem);
+          console.log('[VoiceAudio] Çalma başladı');
         };
-        audio.onended = () => this._finishSpeaking(token);
-        audio.onerror = () => { console.warn('[VoiceAudio] ses hatası'); this._finishSpeaking(token); };
-        const p = audio.play();
-        if (p && p.catch) p.catch((err) => {
-          console.error('[VoiceAudio] play() hatası:', err && err.message ? err.message : err);
+        
+        audio.onended = () => {
+          console.log('[VoiceAudio] Ses bitti, mikrofon açılıyor');
           this._finishSpeaking(token);
-        });
+        };
+        
+        audio.onerror = (err) => {
+          console.warn('[VoiceAudio] Ses hatası:', err);
+          this._finishSpeaking(token);
+        };
+        
+        // 🔴 FIX: play() başarısız olursa HEMEN endAssistantSpeech çağır
+        const p = audio.play();
+        if (p && p.catch) {
+          p.catch((err) => {
+            console.error('[VoiceAudio] play() hatası:', err && err.message ? err.message : err);
+            // Ses çalamadı, mikrofonu hemen aç
+            this._finishSpeaking(token);
+          });
+        }
       } catch(e) {
+        console.error('[VoiceAudio] Audio oluşturma hatası:', e);
         this._finishSpeaking(token);
       }
     }
@@ -9854,6 +9898,12 @@ if (shipWaBtn) {
           eng.isRecognizing = true;
           eng.updateUIStatus(eng.isSpeaking ? 'Yanıt veriliyor…' : 'Dinleniyor', eng.isSpeaking ? 'idle' : 'listening');
           eng.setListeningVisuals(true);
+        } else if (ev === 'mic_reopened') {
+          // 🔴 KRİTİK: Native mikrofonu açtı, JS UI'ı güncelle ama startListening() ÇAĞIRMA
+          console.log('[NativeSpeech] 🎤 Native mikrofon açıldı, UI güncelleniyor');
+          eng.isRecognizing = true;
+          eng.updateUIStatus('Dinleniyor', 'listening');
+          eng.setListeningVisuals(true);
         } else if (ev === 'suspended') {            // uygulama arka plana gitti
           eng.isRecognizing = false;
           eng.setListeningVisuals(false);
@@ -9872,10 +9922,16 @@ if (shipWaBtn) {
         }
       };
       // Kalp atışı: arayüz "dinliyor" derken native mikrofon ölmüşse kendini onar.
+      // 🔴 FIX: Native gate varken heartbeat gerekmiyor (native kendi yönetiyor)
       setInterval(() => {
         try {
           const B = window.AndroidBridge;
           if (!B || typeof B.isNativeListening !== 'function') return;
+          // Native gate varsa heartbeat'i atla
+          if (engine._hasNativeGate && engine._hasNativeGate()) {
+            // Native gate var, kontrol etme
+            return;
+          }
           if (engine.isRecognizing && !engine.manuallyPaused && !engine._starting && !B.isNativeListening()) {
             console.warn('[VC Heartbeat] Native mikrofon kapalı, yeniden başlatılıyor');
             engine.isRecognizing = false;
