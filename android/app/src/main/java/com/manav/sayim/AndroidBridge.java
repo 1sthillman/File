@@ -262,8 +262,12 @@ public class AndroidBridge {
                   (voskActive ? "KAPATILIYOR" : "zaten kapalı") + " | wanted=" + micWanted + " | inWindow=" + inSpeechWindow());
             
             if (voskActive) {
-                Log.i(TURN, "  → stopVosk() çağrılıyor (sessizce)");
-                stopVosk(false);   // olay göndermeden, sessizce serbest bırak
+                Log.i(TURN, "  → stopVosk() çağrılıyor (sessizce) - ARKA PLAN THREAD'DE");
+                // 🔴 KRİTİK: stopVosk()'u arka plan thread'inde çalıştır ki UI bloklanmasın
+                new Thread(() -> {
+                    stopVosk(false);
+                    Log.i(TURN, "  → stopVosk() TAMAMEN tamamlandı, mikrofon KAPALI");
+                }, "stop-vosk-async").start();
             }
             if (continuousMode && speechRecognizer != null) {
                 try { 
@@ -398,48 +402,60 @@ public class AndroidBridge {
 
     private void stopVosk(boolean notify) {
         Log.i(TAG, "🔴 stopVosk(" + notify + ") çağrıldı | voskActive=" + voskActive);
+        
+        // 🔴 KRİTİK: ÖNCE flag'i false yap
+        voskActive = false;
+        voskSession.incrementAndGet();
+        
         AudioRecord recToStop;
         Thread t;
         synchronized (this) {
-            voskActive = false;
-            voskSession.incrementAndGet();      // çalışan döngüyü "eski oturum" yapar, kendiliğinden çıkar
             recToStop = currentAudioRecord;
             currentAudioRecord = null;
             t = voskThread;
-            voskThread = null;                  // yeni startVosk() hemen başlayabilir
+            voskThread = null;
         }
 
+        // 🔴 KRİTİK: AudioRecord'u HEMEN durdur
         if (recToStop != null) {
-            Log.i(TAG, "  → AudioRecord durduruluyor ve release() ediliyor");
-            try { recToStop.stop(); } catch (Exception e) { Log.w(TAG, "AudioRecord.stop() hatası", e); }
-            try { recToStop.release(); Log.i(TAG, "  ✅ AudioRecord.release() başarılı"); } 
-            catch (Exception e) { Log.e(TAG, "  ❌ AudioRecord.release() hatası", e); }
-        } else {
-            Log.i(TAG, "  → AudioRecord zaten null");
+            Log.i(TAG, "  → AudioRecord HEMEN durduruluyor...");
+            try { recToStop.stop(); Log.i(TAG, "  → stop() OK"); } 
+            catch (Exception e) { Log.w(TAG, "stop() hata", e); }
+            
+            try { recToStop.release(); Log.i(TAG, "  ✅ release() OK - MİK SERBEST"); } 
+            catch (Exception e) { Log.e(TAG, "  ❌ release() hata", e); }
         }
 
-        // Beklemede kalan metin: asistan konuşmuyorsa kullanıcıya aittir, gönder.
+        // 🔴 KRİTİK: Thread TAMAMEN durana kadar bekle (500ms)
+        if (t != null && t != Thread.currentThread()) {
+            Log.i(TAG, "  → Thread join bekleniyor...");
+            t.interrupt();
+            try { 
+                t.join(500); // 200ms → 500ms
+                Log.i(TAG, "  ✅ Thread join tamamlandı");
+            } catch (InterruptedException ie) { 
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "  ⚠️ join kesildi");
+            }
+        }
+
+        // Buffer yönetimi
         synchronized (speechBufferLock) {
             if (speechBuffer.length() > 0) {
-                Log.i(TAG, "  → speechBuffer içinde " + speechBuffer.length() + " karakter var | notify=" + notify);
+                Log.i(TAG, "  → Buffer: " + speechBuffer.length() + " | notify=" + notify);
                 if (notify) {
-                    Log.i(TAG, "  → Buffer içeriği kullanıcıya gönderiliyor: \"" + speechBuffer.toString() + "\"");
-                    sendSpeechResult(speechBuffer.toString()); // asistan için kapanıyorsa bekleyen metin atılır
+                    Log.i(TAG, "  → Gönder: \"" + speechBuffer.toString() + "\"");
+                    sendSpeechResult(speechBuffer.toString());
                 } else {
-                    Log.i(TAG, "  → Buffer içeriği atılıyor (asistan konuşuyor)");
+                    Log.i(TAG, "  → Atıldı (asistan konuş)");
                 }
                 speechBuffer.setLength(0);
             }
         }
 
-        if (t != null && t != Thread.currentThread()) {
-            t.interrupt();
-            try { t.join(200); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-        }
-
         muteBeeps(false);
         if (notify) sendSpeechEvent("stopped", "");
-        Log.i(TAG, "✅ stopVosk tamamlandı");
+        Log.i(TAG, "✅ stopVosk TAMAMEN tamamlandı");
     }
 
     private void voskLoop(final int session) {
@@ -487,6 +503,12 @@ public class AndroidBridge {
             int silenceFrameCount = 0;
 
             while (voskActive && voskSession.get() == session) {
+                // 🔴 KRİTİK: Her iterasyonda kontrol - stopVosk() çağrıldıysa HEMEN çık
+                if (!voskActive || voskSession.get() != session) {
+                    Log.i(TAG, "voskLoop: flag false oldu, çıkılıyor");
+                    break;
+                }
+                
                 int n = rec.read(buf, 0, buf.length);
                 if (n < 0) throw new IllegalStateException("Ses kaydı hatası (" + n + ")");
                 if (n == 0) continue;
