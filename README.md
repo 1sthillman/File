@@ -8,25 +8,25 @@ Zebra el terminalleri, Android cihazlar ve mobil tarayıcılar için optimize ed
 
 İnternet bağlantısına hiç ihtiyaç duymadan, depoda veya manavda kesintisiz çalışabilen yerel Android APK paketi:
 
-### 🆕 EN YENİ - Native Gate Fix v2.2 (Önerilen) - **15 Kasım 2026 (v2)**
-- **Doğrudan İndirme:** [manav-sayim-v2.2-native-gate-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.2-native-gate-fix.apk) (88.93 MB)
-- **🔧 KRİTİK JS/Native Çekişme Düzeltmesi:**
-  - ✅ **Çekişme Sorunu Tamamen Çözüldü**: JS artık native gate varken ASLA mikrofon kontrolü yapmıyor
-  - ✅ **Ses Kesintisi YOK**: Asistan konuşurken ses tam çalıyor, kesinti/takılma yok
-  - ✅ **Mikrofon %100 Native Kontrolünde**: Tek yönetim merkezi, çekişme imkansız
-  - ✅ **Event Sistemi**: Native mikrofon açınca JS'e `mic_reopened` eventi gönderiyor
-  - ✅ **Heartbeat Optimizasyonu**: Native gate varken devre dışı (gereksiz kontroller kaldırıldı)
-- **Önceki Özellikler (v2.1):**
+### 🆕 EN YENİ - Search UI v2.3 (Önerilen) - **15 Kasım 2026 (v3)**
+- **Doğrudan İndirme:** [manav-sayim-v2.3-search-ui.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.3-search-ui.apk) (88.93 MB)
+- **✨ Modern Arama Kutusu Tasarımı:**
+  - ✅ **Silme (X) Butonu**: Arama metnini tek tıkla temizle
+  - ✅ **Mikrofon Butonu**: Arama kutusundan direkt sesle ara
+  - ✅ **Arama İkonu**: Modern, görsel olarak zengin arayüz
+  - ✅ **Hover Efektleri**: Butonlar üzerine gelindiğinde renkli animasyon
+  - ✅ **İki Arama Kutusu**: Sayım sekmesi + Ürünler sekmesi
+- **Önceki Özellikler (v2.2):**
+  - ✅ JS/Native Çekişme YOK
+  - ✅ Ses Kesintisi YOK
   - ✅ Çoklu Komut Desteği
-  - ✅ Ürün Varyasyon Seçimi
   - ✅ 128 Ses Dosyası
-  - ✅ Akıllı Doğal Dil İşleme
 
-### Önceki Versiyon - Voice Fix v2.1
-- **Doğrudan İndirme:** [manav-sayim-v2.1-voice-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.1-voice-fix.apk) (88.93 MB)
-- ⚠️ Çekişme sorunu devam ediyor, v2.2 önerilir
+### Önceki Versiyon - Native Gate Fix v2.2
+- **Doğrudan İndirme:** [manav-sayim-v2.2-native-gate-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.2-native-gate-fix.apk) (88.93 MB)
 
 ### Daha Eski Versiyonlar
+- Voice Fix v2.1: [manav-sayim-v2.1-voice-fix.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.1-voice-fix.apk) (88.93 MB)
 - Smart Voice v2.0: [manav-sayim-v2.0-smart-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v2.0-smart-voice.apk) (86.48 MB)
 - Native Voice v1.0: [manav-sayim-v1.0-native-voice.apk](https://github.com/1sthillman/File/raw/main/releases/manav-sayim-v1.0-native-voice.apk) (85.75 MB)
 

@@ -257,26 +257,11 @@ public class AndroidBridge {
         final long ms = Math.max(300, Math.min(durationMs > 0 ? durationMs : 4000, SPEECH_MAX_MS));
         mainHandler.post(() -> {
             speechWindowEndMs = SystemClock.elapsedRealtime() + ms + SPEECH_PAD_MS + SPEECH_TAIL_MS;
-            // 🔴 FIX: Detaylı log
-            Log.i(TURN, "🔴 SPEAK BEGIN " + ms + "ms | pad=" + SPEECH_PAD_MS + "ms | tail=" + SPEECH_TAIL_MS + "ms | mic=" + 
-                  (voskActive ? "KAPATILIYOR" : "zaten kapalı") + " | wanted=" + micWanted + " | inWindow=" + inSpeechWindow());
+            // 🔴 YENİ YAKLAŞIM: Mikrofonu KAPATMIYORUZ - sürekli açık!
+            Log.i(TURN, "🔴 SPEAK BEGIN " + ms + "ms | pad=" + SPEECH_PAD_MS + "ms | tail=" + SPEECH_TAIL_MS + "ms | mic=AÇIK KALACAK (yankı filtresi) | wanted=" + micWanted + " | inWindow=" + inSpeechWindow());
             
-            if (voskActive) {
-                Log.i(TURN, "  → stopVosk() çağrılıyor (sessizce) - ARKA PLAN THREAD'DE");
-                // 🔴 KRİTİK: stopVosk()'u arka plan thread'inde çalıştır ki UI bloklanmasın
-                new Thread(() -> {
-                    stopVosk(false);
-                    Log.i(TURN, "  → stopVosk() TAMAMEN tamamlandı, mikrofon KAPALI");
-                }, "stop-vosk-async").start();
-            }
-            if (continuousMode && speechRecognizer != null) {
-                try { 
-                    Log.i(TURN, "  → SpeechRecognizer.cancel()");
-                    speechRecognizer.cancel(); 
-                    isRecognizing = false; 
-                } catch (Exception ignored) {}
-            }
-            scheduleReopen();
+            // Vosk çalışmaya devam eder, JS tarafı isSpeaking=true iken sonuçları filtreleyecek
+            Log.i(TURN, "  → Mikrofon açık, Vosk tanımaya devam ediyor (JS filtre aktif)");
         });
     }
 
@@ -290,8 +275,9 @@ public class AndroidBridge {
             }
             long oldEnd = speechWindowEndMs;
             speechWindowEndMs = SystemClock.elapsedRealtime() + SPEECH_TAIL_MS;
-            Log.i(TURN, "🟢 SPEAK END | pencere kısaltıldı (" + (oldEnd - speechWindowEndMs) + "ms) | mic " + SPEECH_TAIL_MS + "ms sonra açılacak");
-            scheduleReopen();
+            Log.i(TURN, "🟢 SPEAK END | pencere kısaltıldı (" + (oldEnd - speechWindowEndMs) + "ms) | MİKROFON ZATEN AÇIK (filtre kalkacak)");
+            // Artık scheduleReopen() çağırmıyoruz - mikrofon zaten açık!
+            // JS tarafında isSpeaking=false olunca filtre kalkacak
         });
     }
 
@@ -469,7 +455,8 @@ public class AndroidBridge {
         try {
             int minBuf = AudioRecord.getMinBufferSize(rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            int bufBytes = Math.max(minBuf * 2, rate); // ~0.5 sn tampon (taşma/underrun olmasın)
+            // 🔴 LATENCY FIX: Buffer'ı küçült (rate yerine minBuf*2 = ~100-200ms)
+            int bufBytes = Math.max(minBuf * 2, 8000); // Daha düşük latency
             rec = new AudioRecord(MIC_SOURCE, rate,
                     AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufBytes);
             if (rec.getState() != AudioRecord.STATE_INITIALIZED) {
@@ -496,13 +483,22 @@ public class AndroidBridge {
             currentAudioRecord = rec;
             voskRetryCount = 0;
             sendSpeechEvent("ready", "");
+            Log.i(TAG, "🎙️ voskLoop: Kayıt başladı, döngüye giriliyor...");
 
-            short[] buf = new short[rate / 20]; // 50 ms
+            short[] buf = new short[rate / 20]; // 50 ms (800 sample)
             boolean speaking = false;
             String lastPartial = "";
             int silenceFrameCount = 0;
+            int loopCount = 0;
+            long lastReadTime = System.currentTimeMillis();
 
             while (voskActive && voskSession.get() == session) {
+                loopCount++;
+                long nowMs = System.currentTimeMillis();
+                if (loopCount % 100 == 0) { // Her 5 saniyede bir
+                    Log.i(TAG, "voskLoop: çalışıyor, iterasyon=" + loopCount + ", avg_read_ms=" + ((nowMs - lastReadTime) / 100));
+                    lastReadTime = nowMs;
+                }
                 // 🔴 KRİTİK: Her iterasyonda kontrol - stopVosk() çağrıldıysa HEMEN çık
                 if (!voskActive || voskSession.get() != session) {
                     Log.i(TAG, "voskLoop: flag false oldu, çıkılıyor");
@@ -515,11 +511,16 @@ public class AndroidBridge {
 
                 float volume = volumeFromPcm(buf, n);
                 sendVolume01(volume);
+                
+                if (loopCount % 20 == 0) { // Her saniye (50ms * 20)
+                    Log.i(TAG, "voskLoop: n=" + n + " volume=" + String.format("%.3f", volume));
+                }
 
                 if (volume < SILENCE_THRESHOLD) silenceFrameCount++; else silenceFrameCount = 0;
 
                 if (recognizer.acceptWaveForm(buf, n)) {
                     String text = new JSONObject(recognizer.getResult()).optString("text", "").trim();
+                    Log.i(TAG, "voskLoop: RESULT=" + text);
                     if (!text.isEmpty()) {
                         long now = System.currentTimeMillis();
                         synchronized (speechBufferLock) {
@@ -538,6 +539,7 @@ public class AndroidBridge {
                 } else {
                     String p = new JSONObject(recognizer.getPartialResult()).optString("partial", "").trim();
                     if (!p.isEmpty()) {
+                        if (loopCount % 10 == 0) Log.i(TAG, "voskLoop: PARTIAL=" + p);
                         lastSpeechTimeMs = System.currentTimeMillis();
                         if (!speaking) { speaking = true; sendSpeechEvent("start", ""); }
                         if (!p.equals(lastPartial)) {

@@ -1566,6 +1566,14 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .sc svg{color:var(--m1);flex:none}.sc input{border:0;background:transparent;padding:10px 4px;flex:1;min-width:0;font-size:17px}.sc input:focus{outline:0}
 .unk{background:var(--card);border-left:5px solid var(--warn);border-radius:16px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:14px}
 .tools{display:flex;gap:8px;margin-bottom:10px}.tools input{flex:1}
+.search-box{position:relative;display:flex;align-items:center;flex:1}
+.search-box input{padding-left:38px;padding-right:80px;flex:1}
+.search-icon{position:absolute;left:12px;color:var(--mute);pointer-events:none}
+.search-clear,.search-clear-uq,.search-mic,.search-mic-uq{position:absolute;background:transparent;border:0;padding:8px;display:flex;align-items:center;justify-content:center;color:var(--mute);cursor:pointer;border-radius:8px;transition:all .2s}
+.search-clear:hover,.search-clear-uq:hover{color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.search-mic:hover,.search-mic-uq:hover{color:var(--m1,#10b981);background:color-mix(in srgb,var(--m1,#10b981) 10%,transparent)}
+.search-clear,.search-clear-uq{right:40px}
+.search-mic,.search-mic-uq{right:4px}
 .seg{display:flex;background:var(--chip);border-radius:14px;padding:4px;gap:4px;margin-bottom:10px}.seg button{flex:1;background:transparent;color:var(--mute);padding:9px;border-radius:11px;font-weight:600}.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
 input,select,textarea{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit}
 input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid color-mix(in srgb,var(--m1) 55%,transparent);outline-offset:1px}
@@ -3233,6 +3241,13 @@ console.log('[SmartVoiceProcessor] Yüklendi ✓');
         window.onNativeSpeechResult = function(text) {
             console.log('[VoiceBridge] Speech result:', text);
             
+            // 🔴 FİLTRE: Asistan konuşurken gelen sonuçları yok say
+            const eng = window.__voiceEngine;
+            if (eng && (eng.isSpeaking || Date.now() < (eng._echoSuppressUntil || 0))) {
+                console.log('[VoiceBridge] 🚫 Asistan konuşurken sonuç filtrelendi:', text);
+                return;
+            }
+            
             // Önce SmartVoiceProcessor'a gönder
             handleSmartVoiceCommand(text);
             
@@ -3417,7 +3432,25 @@ console.log('[SmartVoiceProcessor] Yüklendi ✓');
   <button class="g" id="btn-quick-zebra" style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;border-radius:16px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>Toplu Zebra QR</button>
   <button class="g" id="btn-say-wa" style="flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;border-radius:16px;color:#25d366;border-color:color-mix(in srgb,#25d366 35%,transparent)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>WhatsApp</button>
  </div>
- <div class="tools"><input type="date" id="date" aria-label="Sayım tarihi"><input id="q" placeholder="Ürün ara"></div>
+ <div class="tools">
+   <input type="date" id="date" aria-label="Sayım tarihi">
+   <div class="search-box">
+     <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+       <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+     </svg>
+     <input id="q" placeholder="Ürün ara">
+     <button class="search-clear" title="Temizle" style="display:none">
+       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+         <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/>
+       </svg>
+     </button>
+     <button class="search-mic" title="Sesle ara">
+       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+       </svg>
+     </button>
+   </div>
+ </div>
  <div class="seg" id="chips"><button data-f="all" class="on">Tümü</button><button data-f="done">Sayılan</button><button data-f="todo">Sayılmayan</button></div>
  <div class="seg" id="cats"></div>
  <div id="list"></div>
@@ -3471,7 +3504,23 @@ console.log('[SmartVoiceProcessor] Yüklendi ✓');
    </div>
   </div>
  </div>
- <input id="uq" placeholder="Üründe ara: ad, PLU veya barkod" style="margin-bottom:10px"><div class="row" style="margin-bottom:10px"><button class="d" id="uclr">Tüm ürünleri sil</button></div><div id="plist"></div>
+ <div class="search-box" style="margin-bottom:10px">
+   <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+     <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+   </svg>
+   <input id="uq" placeholder="Üründe ara: ad, PLU veya barkod">
+   <button class="search-clear-uq" title="Temizle" style="display:none">
+     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+       <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/>
+     </svg>
+   </button>
+   <button class="search-mic-uq" title="Sesle ara">
+     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+     </svg>
+   </button>
+ </div>
+ <div class="row" style="margin-bottom:10px"><button class="d" id="uclr">Tüm ürünleri sil</button></div><div id="plist"></div>
 </section>
 
 <section id="t-aktar" class="hide">
@@ -5114,6 +5163,91 @@ function tick() {
 document.querySelectorAll('.camb').forEach(b=>b.onclick=()=>b.dataset.fill?camStart(c=>{const d=dg(c);if(!d)return;(d.length>6?$('#pb'):$('#pp')).value=d;beep(1);pulse();setTimeout(camStop,120)}):camStart(c=>{const p=findP(dg(c));scan(c,tab);if(p)setTimeout(()=>showCP(p.id),80)}));
 document.querySelectorAll('.sc input').forEach(i=>i.addEventListener('input',()=>{const v=i.value;if(!/\D/.test(v))return;const t=v.split(/\D+/),lastTok=/\D$/.test(v)?'':t.pop();t.filter(Boolean).forEach(x=>scan(x,i.dataset.tab));i.value=lastTok}));
 $('#uq').oninput=renderP;
+
+/* ✨ Arama Kutusu Butonları */
+(function initSearchBoxes() {
+  // #q için (sayım sekmesi)
+  const qInput = $('#q');
+  const qClear = document.querySelector('.search-clear');
+  const qMic = document.querySelector('.search-mic');
+  
+  if (qInput && qClear && qMic) {
+    // Input değiştiğinde clear butonu göster/gizle
+    qInput.addEventListener('input', () => {
+      qClear.style.display = qInput.value ? 'flex' : 'none';
+    });
+    
+    // Clear butonu
+    qClear.addEventListener('click', () => {
+      qInput.value = '';
+      qInput.dispatchEvent(new Event('input'));
+      qInput.focus();
+      beep(0);
+    });
+    
+    // Mikrofon butonu
+    qMic.addEventListener('click', () => {
+      const engine = window.__voiceEngine;
+      if (!engine) return;
+      
+      if (engine.isRecognizing) {
+        // Mikrofon aktifse söylediğini #q'ya yaz
+        beep(1);
+        setTimeout(() => {
+          engine.showFeedback('Ürün adı söyleyin', false, false);
+        }, 100);
+      } else {
+        // Mikrofonu başlat
+        engine.startListening();
+        beep(1);
+        setTimeout(() => {
+          engine.showFeedback('Ürün adı söyleyin', false, false);
+        }, 100);
+      }
+    });
+  }
+  
+  // #uq için (ürünler sekmesi)
+  const uqInput = $('#uq');
+  const uqClear = document.querySelector('.search-clear-uq');
+  const uqMic = document.querySelector('.search-mic-uq');
+  
+  if (uqInput && uqClear && uqMic) {
+    // Input değiştiğinde clear butonu göster/gizle
+    uqInput.addEventListener('input', () => {
+      uqClear.style.display = uqInput.value ? 'flex' : 'none';
+    });
+    
+    // Clear butonu
+    uqClear.addEventListener('click', () => {
+      uqInput.value = '';
+      uqInput.dispatchEvent(new Event('input'));
+      uqInput.focus();
+      beep(0);
+    });
+    
+    // Mikrofon butonu
+    uqMic.addEventListener('click', () => {
+      const engine = window.__voiceEngine;
+      if (!engine) return;
+      
+      if (engine.isRecognizing) {
+        // Mikrofon aktifse söylediğini #uq'ya yaz
+        beep(1);
+        setTimeout(() => {
+          engine.showFeedback('Ürün adı söyleyin', false, false);
+        }, 100);
+      } else {
+        // Mikrofonu başlat
+        engine.startListening();
+        beep(1);
+        setTimeout(() => {
+          engine.showFeedback('Ürün adı söyleyin', false, false);
+        }, 100);
+      }
+    });
+  }
+})();
 const short=a=>a.slice(0,6).join(', ')+(a.length>6?' ve '+(a.length-6)+' ürün daha':'');
 function chkList(el,rows){el.innerHTML=rows.length?'<div class="chk">'+rows.map(r=>`<b><i class="${r.c}"></i>${r.t}</b>${r.s?'<p>'+esc(r.s)+'</p>':''}`).join('')+'</div>':'';stats()}
 function chkSay(ps){const un=ps.filter(p=>{const c=cnt(p.id);return !c.crates&&!c.loose&&!c.z}),nk=ps.filter(p=>!p.kg&&cnt(p.id).crates),r=[];
@@ -8371,6 +8505,60 @@ if (shipWaBtn) {
         console.log('[VC Echo Gate] Asistan konuşurken gelen metin yutuldu:', finalClean);
         return;
       }
+      
+      // 🔴 YANKIYI FİLTRELE: Asistanın tüm ses dosyalarındaki metinleri filtrele
+      const asistanCumleleri = [
+        'yazılımcısı sedat dağlıdır',
+        'sayım kaydedildi',
+        'ürün sayımdan çıkarıldı',
+        'sayım miktarı güncellendi',
+        'yeni sevkiyat başlatıldı',
+        'sevkiyat kapatıldı',
+        'ürün sevkiyata eklendi',
+        'ürün sevkiyattan çıkarıldı',
+        'açık sevkiyat yok',
+        'fire kaydı başarıyla oluşturuldu',
+        'ürün düzenleme ekranı açıldı',
+        'kasa ağırlığı ayarlandı',
+        'ürün birimi güncellendi',
+        'ürün başarıyla kaydedildi',
+        'düzenleme iptal edildi',
+        'ilgili sayfa açıldı',
+        'filtre uygulandı',
+        'kamera açıldı',
+        'kamera kapatıldı',
+        'whatsapp raporu hazırlanıyor',
+        'son işlem geri alındı',
+        'geri alınacak işlem bulunmuyor',
+        'anlaşılamadı',
+        'lütfen tekrar edin',
+        'sesli asistan kapatıldı',
+        'sesli asistan hazır',
+        'sizi dinliyorum',
+        'yeni ürün ekleme formu açıldı',
+        'p l u kodu güncellendi',
+        'plu kodu güncellendi',
+        'barkod güncellendi',
+        'ürün adı güncellendi',
+        'sayım durumu özetlendi',
+        'günlük fire raporu hazırlandı',
+        'sevkiyat durumu özetlendi',
+        'belirtilen ürün',
+        'kod bulunamadı',
+        'ürün bulunamadı',
+        'ürün bulundu',
+        'seçildi',
+        'mikrofon duraklatıldı'
+      ];
+      
+      const normalized = norm(finalClean);
+      for (const phrase of asistanCumleleri) {
+        if (normalized.includes(norm(phrase)) || norm(phrase).includes(normalized)) {
+          console.log('[VC Echo Gate] 🚫 Asistan sesi filtrelendi:', finalClean);
+          return;
+        }
+      }
+      
       // Harfler boşlukla bölünmüş gelse bile ("ses li as i s ta n ...") yakalamak için boşluksuz karşılaştır
       const _sq = norm(finalClean).replace(/ /g, '');
       if (_sq.includes('sesliasistanhazir') || _sq.includes('sizidinliyorum') || _sq.includes('asistanhazir')) {
@@ -9488,21 +9676,18 @@ if (shipWaBtn) {
       
       if (this._hasNativeGate()) {
         console.log('[VoiceAudio] ✅ Native gate var: endAssistantSpeech() çağrılıyor');
-        // 🔴 KRİTİK: Native gate varken mikrofon TAMAMEN native tarafından yönetilir
-        // JS ASLA startListening() çağırmamalı, native kendisi açacak
+        // 🔴 YENİ YAKLAŞIM: Mikrofon HİÇ KAPANMIYOR, sadece filtre kaldırılıyor
         this.isSpeaking = false;
-        this._echoSuppressUntil = 0;
+        this._echoSuppressUntil = 0; // Yankı filtresi hemen kalkıyor
         this._nativeGate(false, 0);
         if (this._resumeTimer) { clearTimeout(this._resumeTimer); this._resumeTimer = null; }
         
-        // 🔴 FIX: Native kontrol varken UI'ı güncelle ama startListening() ÇAĞIRMA
+        // Mikrofon zaten açık, tanıma sonuçları artık geçecek
+        console.log('[VoiceAudio] 🎤 Mikrofon zaten açık, filtre kalktı - tanıma aktif!');
         if (this.shouldKeepListening() && !this.manuallyPaused) {
-          console.log('[VoiceAudio] Native mikrofonu kendi açacak, sadece UI güncelleniyor');
-          this.updateUIStatus('Hazır (native açacak)', 'idle');
-          // isRecognizing flag'i TRUE yapmıyoruz çünkü native açana kadar false kalmalı
-        } else {
-          console.log('[VoiceAudio] Dinleme devam etmeyecek');
-          this.updateUIStatus('Hazır', 'idle');
+          this.updateUIStatus('Dinleniyor', 'listening');
+          this.setListeningVisuals(true);
+          this.isRecognizing = true; // Vosk zaten çalışıyor
         }
         return;
       }
@@ -9546,6 +9731,11 @@ if (shipWaBtn) {
       }
 
       this._speakMs = (typeof VOICE_DURATIONS_MS !== 'undefined' && VOICE_DURATIONS_MS[key]) || Math.round(dataUri.length * 0.75 * 8 / 128);
+      
+      // 🔴 YANKIYI FİLTRELEMEK İÇİN: Asistanın söyleyeceği metni kaydet
+      this._lastAssistantKey = key;
+      this._lastAssistantTime = Date.now();
+      
       // Konuşma başladı: mikrofonu kapat ve her şeyi yut
       this.isSpeaking = true;
       this._echoSuppressUntil = Date.now() + 15000; // gerçek süre metadata ile güncellenir, emniyet için geniş başlar
