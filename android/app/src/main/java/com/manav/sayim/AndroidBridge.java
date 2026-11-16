@@ -516,6 +516,17 @@ public class AndroidBridge {
                     Log.i(TAG, "voskLoop: n=" + n + " volume=" + String.format("%.3f", volume));
                 }
 
+                // 🔴 VOLUME-BASED SUPPRESSION: Asistan konuşurken yüksek volume → Vosk'a gönderme
+                if (inSpeechWindow() && volume > 0.15f) {
+                    // Asistan konuşuyor ve yüksek ses var → bu asistanın sesi, Vosk'a gönderme!
+                    if (loopCount % 20 == 0) {
+                        Log.i(TAG, "🔇 Volume suppression: " + String.format("%.3f", volume) + " (asistan konuşuyor)");
+                    }
+                    // Buffer'ı oku ama Vosk'a gönderme - mikrofon açık kalsın, sadece tanıma yapma
+                    silenceFrameCount = 0; // Sessizlik sayacını sıfırla
+                    continue; // Vosk'u atla!
+                }
+
                 if (volume < SILENCE_THRESHOLD) silenceFrameCount++; else silenceFrameCount = 0;
 
                 if (recognizer.acceptWaveForm(buf, n)) {
@@ -997,7 +1008,93 @@ public class AndroidBridge {
         return JSONObject.quote(s == null ? "" : s); // tırnak, ters bölü, satır sonu vb. güvenle kaçırılır
     }
 
+    // 🔴 ASISTAN CEVAPLARINI FİLTRELE - SADECE asistanın konuştuğu tam cümleler
+    // NOT: Kullanıcı komutları ("geri al", "sayım", "seçildi") burada OLMAMALI!
+    private static final String[] ASISTAN_CUMLELERI = {
+        "yazılımcısı sedat dağlıdır",
+        "sayım kaydedildi",
+        "ürün sayımdan çıkarıldı",
+        "sayım miktarı güncellendi",
+        "yeni sevkiyat başlatıldı",
+        "sevkiyat kapatıldı",
+        "ürün sevkiyata eklendi",
+        "ürün sevkiyattan çıkarıldı",
+        "açık sevkiyat yok önce sevkiyat başlatın",
+        "fire kaydı başarıyla oluşturuldu",
+        "ürün düzenleme ekranı açıldı",
+        "kasa ağırlığı ayarlandı",
+        "ürün birimi güncellendi",
+        "ürün başarıyla kaydedildi",
+        "düzenleme iptal edildi",
+        "ilgili sayfa açıldı",
+        "filtre uygulandı",
+        "kamera açıldı",
+        "kamera kapatıldı",
+        "whatsapp raporu hazırlanıyor",
+        "son işlem geri alındı",
+        "geri alınacak işlem bulunmuyor",
+        "anlaşılamadı lütfen tekrar edin",
+        "sesli asistan kapatıldı",
+        "sesli asistan hazır sizi dinliyorum",
+        "yeni ürün ekleme formu açıldı",
+        "p l u kodu güncellendi",
+        "plu kodu güncellendi",
+        "barkod güncellendi",
+        "ürün adı güncellendi",
+        "sayım durumu özetlendi",
+        "günlük fire raporu hazırlandı",
+        "sevkiyat durumu özetlendi",
+        "belirtilen ürün veya kod bulunamadı",
+        "ürün bulundu ve seçildi",
+        "mikrofon duraklatıldı"
+    };
+
+    private boolean isAssistantEcho(String text) {
+        if (text == null || text.trim().isEmpty()) return false;
+        String normalized = normalizeTurkish(text.toLowerCase().trim());
+        
+        // 🔴 KRİTİK: SADECE uzun cümleler için substring match
+        // Kısa komutlar için EXACT match gerekli (yoksa "geri al" komutunu da filtreliyoruz!)
+        for (String phrase : ASISTAN_CUMLELERI) {
+            String normalizedPhrase = normalizeTurkish(phrase.toLowerCase());
+            
+            // Asistan cümlesi 5 kelimeden uzunsa substring match OK
+            boolean isLongPhrase = normalizedPhrase.split("\\s+").length >= 5;
+            
+            if (isLongPhrase) {
+                // Uzun cümleler: substring match
+                if (normalized.contains(normalizedPhrase) || normalizedPhrase.contains(normalized)) {
+                    Log.i(TAG, "🚫 Native Echo Filter (substring): '" + text + "' ~ '" + phrase + "'");
+                    return true;
+                }
+            } else {
+                // Kısa cümleler: exact match (kelime sınırları kontrol et)
+                if (normalized.equals(normalizedPhrase)) {
+                    Log.i(TAG, "🚫 Native Echo Filter (exact): '" + text + "' == '" + phrase + "'");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String normalizeTurkish(String text) {
+        return text.replaceAll("[üû]", "u")
+                   .replaceAll("[îı]", "i")
+                   .replaceAll("[öô]", "o")
+                   .replaceAll("[çć]", "c")
+                   .replaceAll("[şś]", "s")
+                   .replaceAll("[ğ]", "g")
+                   .replaceAll("[^a-z0-9]", "");
+    }
+
     private void sendSpeechResult(String text) {
+        // 🔴 ECHO FİLTRESİ: Asistan seslerini JS'e göndermeden filtrele
+        if (isAssistantEcho(text)) {
+            return; // Loop'u önle!
+        }
+        
+        Log.i(TAG, "✅ Kullanıcı komutu JS'e gönderiliyor: " + text);
         mainHandler.post(() -> {
             // 🔴 FIX #8: WebView null check
             if (webView == null || activity.isFinishing() || activity.isDestroyed()) return;

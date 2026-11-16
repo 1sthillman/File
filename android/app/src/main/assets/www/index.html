@@ -3264,6 +3264,8 @@ console.log('[SmartVoiceProcessor] Yüklendi ✓');
      * Smart Voice Processor entegrasyonu
      */
     async function handleSmartVoiceCommand(text) {
+        console.log('[handleSmartVoiceCommand] 📥 Komut alındı:', text);
+        
         // Live text'i güncelle
         updateLiveTranscript(text);
         
@@ -8496,84 +8498,20 @@ if (shipWaBtn) {
     }
 
     handleSpeechResult(rawText, alts) {
-      // SES ÇALARKEN MİKROFON KAPANMASIN! Sadece asistanın kendi sesini filtrele
+      console.log('[VC handleSpeechResult] 📥 Metin alındı:', rawText);
+      
       const finalClean = String(rawText || '').trim();
       if (!finalClean) return;
 
-      // Asistan konuşurken veya yankı süresi içindeyken gelen sonuçlar (Android/Vosk yolu dahil) asistanın kendi sesidir.
+      // 🔴 TEK FİLTRE: Asistan konuşurken volume-based suppression
+      // Native tarafında zaten string filter var, burada sadece timing kontrolü
       if (this.isSpeaking || Date.now() < (this._echoSuppressUntil || 0)) {
-        console.log('[VC Echo Gate] Asistan konuşurken gelen metin yutuldu:', finalClean);
-        return;
-      }
-      
-      // 🔴 YANKIYI FİLTRELE: Asistanın tüm ses dosyalarındaki metinleri filtrele
-      const asistanCumleleri = [
-        'yazılımcısı sedat dağlıdır',
-        'sayım kaydedildi',
-        'ürün sayımdan çıkarıldı',
-        'sayım miktarı güncellendi',
-        'yeni sevkiyat başlatıldı',
-        'sevkiyat kapatıldı',
-        'ürün sevkiyata eklendi',
-        'ürün sevkiyattan çıkarıldı',
-        'açık sevkiyat yok',
-        'fire kaydı başarıyla oluşturuldu',
-        'ürün düzenleme ekranı açıldı',
-        'kasa ağırlığı ayarlandı',
-        'ürün birimi güncellendi',
-        'ürün başarıyla kaydedildi',
-        'düzenleme iptal edildi',
-        'ilgili sayfa açıldı',
-        'filtre uygulandı',
-        'kamera açıldı',
-        'kamera kapatıldı',
-        'whatsapp raporu hazırlanıyor',
-        'son işlem geri alındı',
-        'geri alınacak işlem bulunmuyor',
-        'anlaşılamadı',
-        'lütfen tekrar edin',
-        'sesli asistan kapatıldı',
-        'sesli asistan hazır',
-        'sizi dinliyorum',
-        'yeni ürün ekleme formu açıldı',
-        'p l u kodu güncellendi',
-        'plu kodu güncellendi',
-        'barkod güncellendi',
-        'ürün adı güncellendi',
-        'sayım durumu özetlendi',
-        'günlük fire raporu hazırlandı',
-        'sevkiyat durumu özetlendi',
-        'belirtilen ürün',
-        'kod bulunamadı',
-        'ürün bulunamadı',
-        'ürün bulundu',
-        'seçildi',
-        'mikrofon duraklatıldı'
-      ];
-      
-      const normalized = norm(finalClean);
-      for (const phrase of asistanCumleleri) {
-        if (normalized.includes(norm(phrase)) || norm(phrase).includes(normalized)) {
-          console.log('[VC Echo Gate] 🚫 Asistan sesi filtrelendi:', finalClean);
-          return;
-        }
-      }
-      
-      // Harfler boşlukla bölünmüş gelse bile ("ses li as i s ta n ...") yakalamak için boşluksuz karşılaştır
-      const _sq = norm(finalClean).replace(/ /g, '');
-      if (_sq.includes('sesliasistanhazir') || _sq.includes('sizidinliyorum') || _sq.includes('asistanhazir')) {
-        console.log('[VC Echo Filter] WAKEUP sesi filtrelendi:', finalClean);
+        console.log('[VC Echo Gate] ⏸️ Asistan konuşurken - timing filter:', finalClean);
         return;
       }
 
-      if (this._isRecentAssistantEcho(finalClean)) {
-        console.log('[VC Echo Fuzzy] Asistan yankısı süzüldü:', finalClean);
-        return;
-      }
-
+      console.log('[VC handleSpeechResult] ✅ İşleniyor:', finalClean);
       const nIn = norm(finalClean);
-      
-      // Echo Filter: Asistanın kendi ses dosyalarındaki kelimeleri filtrele
       if (nIn === 'anlasilamadi' || nIn.includes('tekrar edin') || nIn === 'lutfen tekrar edin' ||
           nIn.includes('sayim kaydedildi') || nIn.includes('yazilimcisi sedat daglidir') ||
           nIn.includes('urun bulundu') || nIn.includes('fire kaydedildi') ||
