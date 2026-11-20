@@ -1,4 +1,4 @@
-const CACHE_NAME = 'file-manav-sayim-v40-20261113';
+const CACHE_NAME = 'file-manav-sayim-v41-20261120';
 
 // Cache-safe asset list (UTF-8 safe and relative to SW scope)
 const ASSETS = [
