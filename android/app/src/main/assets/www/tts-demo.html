@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title>Profesyonel TTS Ses Yönetim Sistemi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f1f5f9;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .app-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .app-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .app-subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .voice-panel, .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .voice-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .voice-search {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        
+        .voice-search:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .voice-grid {
+            display: grid;
+            gap: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .voice-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .voice-grid::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+        
+        .voice-grid::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+        
+        .voice-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .voice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .voice-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+        
+        .voice-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        .voice-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .voice-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+            flex: 1;
+        }
+        
+        .voice-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .voice-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .badge-local {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-cloud {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-turkish {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .badge-premium {
+            background: #fae8ff;
+            color: #86198f;
+        }
+        
+        .badge-female {
+            background: #ffe4e6;
+            color: #be123c;
+        }
+        
+        .badge-male {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .voice-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+        
+        .voice-quality {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quality-stars {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .star {
+            color: #fbbf24;
+        }
+        
+        .voice-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .voice-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-test {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-test:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .btn-select {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-select:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .slider-group {
+            margin-bottom: 25px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .slider-value {
+            color: var(--primary);
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--light);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .quick-tests {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .quick-test-btn {
+            padding: 15px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .quick-test-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .status-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .status-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            color: #64748b;
+        }
+        
+        .status-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .spinner {
+            border: 4px solid var(--light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .quick-tests {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .platform-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .voice-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .rating-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .rating-stars {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .rating-star {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .rating-star:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="app-title">
+                <span>🎤</span>
+                <span>Profesyonel TTS Ses Yönetim Sistemi</span>
+            </div>
+            <div class="app-subtitle">
+                Gelişmiş AI Destekli Sesli Asistan - Tüm Sesler, Akıllı Analiz, Profesyonel Kontrol
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">Toplam Ses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-turkish">0</div>
+                    <div class="stat-label">Türkçe Ses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-local">0</div>
+                    <div class="stat-label">Cihaz İçi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-premium">0</div>
+                    <div class="stat-label">Premium</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Voice Selection Panel -->
+            <div class="voice-panel">
+                <div class="panel-title">
+                    <span>🗣️ Ses Seçimi ve Yönetimi</span>
+                    <span style="font-size: 14px; font-weight: normal; color: #64748b;" id="voice-count">0 ses</span>
+                </div>
+                
+                <!-- Filters -->
+                <div class="voice-filters">
+                    <button class="filter-btn active" data-filter="all">
+                        <span>🌐</span>
+                        <span>Tümü</span>
+                    </button>
+                    <button class="filter-btn" data-filter="turkish">
+                        <span>🇹🇷</span>
+                        <span>Türkçe</span>
+                    </button>
+                    <button class="filter-btn" data-filter="local">
+                        <span>📱</span>
+                        <span>Cihaz İçi</span>
+                    </button>
+                    <button class="filter-btn" data-filter="cloud">
+                        <span>☁️</span>
+                        <span>Bulut</span>
+                    </button>
+                    <button class="filter-btn" data-filter="premium">
+                        <span>⭐</span>
+                        <span>Premium</span>
+                    </button>
+                    <button class="filter-btn" data-filter="female">
+                        <span>👩</span>
+                        <span>Kadın</span>
+                    </button>
+                    <button class="filter-btn" data-filter="male">
+                        <span>👨</span>
+                        <span>Erkek</span>
+                    </button>
+                </div>
+                
+                <!-- Search -->
+                <input type="text" class="voice-search" id="voice-search" placeholder="🔍 Ses ara... (İsim, dil, platform)">
+                
+                <!-- Voice Grid -->
+                <div class="voice-grid" id="voice-grid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Sesler yükleniyor ve analiz ediliyor...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="panel-title">🎛️ Kontrol Paneli</div>
+                
+                <!-- Text Input -->
+                <textarea class="text-input" id="text-input" placeholder="Seslendirilecek metni buraya yazın...">Merhaba, ben profesyonel sesli asistanınızım. Lütfen bir ses modeli seçin ve beni test edin.</textarea>
+                
+                <!-- Speed Control -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>⚡ Hız</span>
+                        <span class="slider-value" id="rate-value">1.0x</span>
+                    </div>
+                    <input type="range" class="slider" id="rate-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+                </div>
+                
+                <!-- Pitch Control -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>🎵 Ton</span>
+                        <span class="slider-value" id="pitch-value">1.0</span>
+                    </div>
+                    <input type="range" class="slider" id="pitch-slider" min="0.1" max="2.0" step="0.1" value="1.0">
+                </div>
+                
+                <!-- Volume Control -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>🔊 Ses</span>
+                        <span class="slider-value" id="volume-value">100%</span>
+                    </div>
+                    <input type="range" class="slider" id="volume-slider" min="0" max="1" step="0.05" value="1.0">
+                </div>
+                
+                <!-- Action Buttons -->
+                <button class="action-btn btn-primary" id="speak-btn">
+                    <span>🔊</span>
+                    <span>Seslendir</span>
+                </button>
+                
+                <button class="action-btn btn-danger" id="stop-btn">
+                    <span>⏹️</span>
+                    <span>Durdur</span>
+                </button>
+                
+                <!-- Quick Tests -->
+                <div class="quick-tests">
+                    <button class="quick-test-btn" onclick="quickTest('sayim')">📋 Sayım Sayfası</button>
+                    <button class="quick-test-btn" onclick="quickTest('urunler')">📦 Ürünler</button>
+                    <button class="quick-test-btn" onclick="quickTest('sevkiyat')">🚚 Sevkiyat</button>
+                    <button class="quick-test-btn" onclick="quickTest('pano')">📊 Pano</button>
+                </div>
+                
+                <!-- Status Panel -->
+                <div class="status-panel">
+                    <div class="status-title">📊 Durum Bilgisi</div>
+                    <div class="status-item">
+                        <span class="status-label">Durum</span>
+                        <span class="status-value" id="status-state">Hazır</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Seçili Ses</span>
+                        <span class="status-value" id="status-voice">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Platform</span>
+                        <span class="status-value" id="status-platform">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Kalite</span>
+                        <span class="status-value" id="status-quality">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Konuşma Sayısı</span>
+                        <span class="status-value" id="status-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TTS Engine -->
+    <script src="native-tts-engine.js"></script>
+    <script src="tts-integration.js"></script>
+    
+    <script>
+        // 🔴 NATIVE ANDROID TTS (TÜM TÜRKÇE SESLER)
+        const nativeTTS = new NativeTTSEngine();
+        const ttsIntegration = new TTSIntegration(nativeTTS);
+        
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let allVoices = [];
+        
+        // Native TTS hazır olduğunda
+        nativeTTS.onReady = () => {
+            console.log('✅ Native TTS sistemi hazır!');
+            allVoices = nativeTTS.voices;
+            updateStatistics();
+            renderVoices();
+        };
+        
+        // Sesler yüklendiğinde
+        nativeTTS.onVoicesLoaded = (voices) => {
+            console.log(`📋 ${voices.length} ses yüklendi`);
+            allVoices = voices;
+            updateStatistics();
+            renderVoices();
+        };
+        
+        // Konuşma başladığında
+        nativeTTS.onSpeechStart = (id) => {
+            document.getElementById('status-state').textContent = '🔊 Konuşuyor';
+            document.getElementById('speak-btn').innerHTML = '<span>🔊</span><span>Konuşuyor...</span>';
+            document.getElementById('speak-btn').disabled = true;
+        };
+        
+        // Konuşma bittiğinde
+        nativeTTS.onSpeechEnd = (id) => {
+            document.getElementById('status-state').textContent = '✅ Hazır';
+            document.getElementById('speak-btn').innerHTML = '<span>🔊</span><span>Seslendir</span>';
+            document.getElementById('speak-btn').disabled = false;
+            document.getElementById('status-count').textContent = nativeTTS.metrics.totalSpeeches;
+        };
+        
+        // İstatistikleri güncelle
+        function updateStatistics() {
+            const stats = nativeTTS.getStatistics();
+            document.getElementById('stat-total').textContent = stats.voices.total;
+            document.getElementById('stat-turkish').textContent = stats.voices.turkish;
+            document.getElementById('stat-local').textContent = stats.voices.local;
+            document.getElementById('stat-premium').textContent = stats.voices.premium;
+        }
+        
+        // Sesleri render et
+        function renderVoices() {
+            const grid = document.getElementById('voice-grid');
+            const voices = filterVoices();
+            
+            document.getElementById('voice-count').textContent = `${voices.length} ses`;
+            
+            if (voices.length === 0) {
+                grid.innerHTML = '<div class="loading">Hiç ses bulunamadı</div>';
+                return;
+            }
+            
+            grid.innerHTML = voices.map(voice => createVoiceCard(voice)).join('');
+            
+            // Seçili sesi işaretle
+            updateSelectedVoice();
+        }
+        
+        // Ses kartı oluştur
+        function createVoiceCard(voice) {
+            const metadata = nativeTTS.voiceMetadata.get(voice.name);
+            const isSelected = nativeTTS.selectedVoice?.name === voice.name;
+            
+            const badges = [];
+            if (metadata.isLocal) badges.push('<span class="voice-badge badge-local">📱 Cihaz İçi</span>');
+            else badges.push('<span class="voice-badge badge-cloud">☁️ Bulut</span>');
+            
+            if (metadata.turkishSupport) badges.push('<span class="voice-badge badge-turkish">🇹🇷 Türkçe</span>');
+            if (metadata.qualityScore >= 8) badges.push('<span class="voice-badge badge-premium">⭐ Premium</span>');
+            
+            if (metadata.gender === 'female') badges.push('<span class="voice-badge badge-female">👩 Kadın</span>');
+            else if (metadata.gender === 'male') badges.push('<span class="voice-badge badge-male">👨 Erkek</span>');
+            
+            const qualityStars = '★'.repeat(Math.floor(metadata.qualityScore / 2)) + '☆'.repeat(5 - Math.floor(metadata.qualityScore / 2));
+            
+            return `
+                <div class="voice-card ${isSelected ? 'selected' : ''}" data-voice-name="${voice.name}">
+                    <div class="voice-header">
+                        <div class="voice-name">${voice.name}</div>
+                    </div>
+                    <div class="voice-badges">
+                        ${badges.join('')}
+                        <span class="platform-badge">${metadata.platform}</span>
+                    </div>
+                    <div class="voice-meta">
+                        <span>🌐 ${voice.locale}</span>
+                        <span class="voice-quality">
+                            <span class="quality-stars">${qualityStars}</span>
+                            <span>${metadata.qualityScore.toFixed(1)}</span>
+                        </span>
+                    </div>
+                    <div class="voice-actions">
+                        <button class="voice-btn btn-test" onclick="testVoice('${voice.name}')">
+                            🔊 Test
+                        </button>
+                        <button class="voice-btn btn-select" onclick="selectVoice('${voice.name}')">
+                            ✓ Seç
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Sesleri filtrele
+        function filterVoices() {
+            let filtered = allVoices;
+            
+            // Kategori filtresi
+            if (currentFilter !== 'all') {
+                filtered = nativeTTS.voiceCategories[currentFilter] || [];
+            }
+            
+            // Arama filtresi
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filtered = filtered.filter(voice => {
+                    const metadata = nativeTTS.voiceMetadata.get(voice.name);
+                    return voice.name.toLowerCase().includes(query) ||
+                           voice.locale.toLowerCase().includes(query) ||
+                           metadata.platform.toLowerCase().includes(query);
+                });
+            }
+            
+            return filtered;
+        }
+        
+        // Filtre değiştir
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderVoices();
+            });
+        });
+        
+        // Arama
+        document.getElementById('voice-search').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderVoices();
+        });
+        
+        // Ses test et
+        window.testVoice = function(voiceName) {
+            const voice = allVoices.find(v => v.name === voiceName);
+            if (!voice) return;
+            
+            nativeTTS.setVoice(voiceName);
+            nativeTTS.speak('Merhaba, ben ' + voice.name + '. Sesim nasıl?');
+        };
+        
+        // Ses seç
+        window.selectVoice = function(voiceName) {
+            nativeTTS.setVoice(voiceName);
+            updateSelectedVoice();
+            updateStatusPanel();
+        };
+        
+        // Seçili sesi güncelle
+        function updateSelectedVoice() {
+            document.querySelectorAll('.voice-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            if (nativeTTS.selectedVoice) {
+                const card = document.querySelector(`[data-voice-name="${nativeTTS.selectedVoice.name}"]`);
+                if (card) card.classList.add('selected');
+            }
+        }
+        
+        // Durum panelini güncelle
+        function updateStatusPanel() {
+            if (nativeTTS.selectedVoice) {
+                const metadata = nativeTTS.voiceMetadata.get(nativeTTS.selectedVoice.name);
+                document.getElementById('status-voice').textContent = nativeTTS.selectedVoice.name;
+                document.getElementById('status-platform').textContent = metadata.platform;
+                document.getElementById('status-quality').textContent = metadata.qualityScore.toFixed(1) + '/10';
+            }
+        }
+        
+        // Kontroller
+        document.getElementById('rate-slider').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            nativeTTS.setRate(value);
+            document.getElementById('rate-value').textContent = value.toFixed(1) + 'x';
+        });
+        
+        document.getElementById('pitch-slider').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            nativeTTS.setPitch(value);
+            document.getElementById('pitch-value').textContent = value.toFixed(1);
+        });
+        
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            nativeTTS.setVolume(value);
+            document.getElementById('volume-value').textContent = Math.round(value * 100) + '%';
+        });
+        
+        document.getElementById('speak-btn').addEventListener('click', () => {
+            const text = document.getElementById('text-input').value.trim();
+            if (!text) {
+                alert('Lütfen metin girin!');
+                return;
+            }
+            nativeTTS.speak(text);
+        });
+        
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            nativeTTS.stop();
+        });
+        
+        // Hızlı test
+        window.quickTest = function(type) {
+            const texts = {
+                sayim: 'Sayım sayfası açıldı. Ürünleri sayabilirsiniz.',
+                urunler: 'Ürünler sayfası açıldı. Lütfen seçim yapın.',
+                sevkiyat: 'Sevkiyat sayfası açıldı. Gönderilecek ürünleri seçin.',
+                pano: 'Pano sayfası açıldı. İstatistikler gösteriliyor.'
+            };
+            
+            nativeTTS.speak(texts[type] || 'Test mesajı');
+        };
+        
+        // Sayfa yüklendiğinde
+        setTimeout(() => {
+            if (nativeTTS.isReady && nativeTTS.voices.length > 0) {
+                allVoices = nativeTTS.voices;
+                updateStatistics();
+                renderVoices();
+                updateStatusPanel();
+                
+                console.log('✅ Sistem tamamen hazır!');
+                console.log('📊 İstatistikler:', nativeTTS.getStatistics());
+            }
+        }, 1500);
+    </script>
+</body>
+</html>

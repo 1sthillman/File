@@ -1,0 +1,20 @@
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Android Build & Cache
+android/.gradle/
+android/build/
+android/local.properties
+android/.idea/
+*.iml
+
+# Keep release APK in root (for GitHub releases)
+!manav-sayim-*.apk
+
+# Ignore intermediate build files
+android/app/build/intermediates/
+android/app/build/tmp/
+android/app/build/.transforms/
